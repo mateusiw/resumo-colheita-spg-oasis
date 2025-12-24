@@ -39,7 +39,7 @@
         <div class="flex gap-2">
             <button type="button" onclick="downloadImage()" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-emerald-600/20 transition-all active:scale-95 active:bg-emerald-800">
                 <i data-lucide="download" class="w-4 h-4"></i>
-                <span>Baixar</span>
+                <span>Baixar (HD)</span>
             </button>
         </div>
     </div>
@@ -56,14 +56,31 @@
                 </h2>
                 <div class="text-[10px] text-blue-600/70 mb-3 leading-relaxed">* Estes dados aparecem uma vez no final do relatório.</div>
                 
+                <!-- AJUSTE: Estimativas de Caixas movido para o topo -->
+                <div class="mb-2">
+                    <label class="text-[10px] font-bold text-slate-500 mb-1 block">Estimativas de Caixas (Qtd)</label>
+                    <input type="text" id="estimatedBoxes" oninput="renderReport()" placeholder="Ex: 200" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <!-- AJUSTE: Qtd Pessoas e Dia da Estimativa lado a lado em baixo -->
                 <div class="grid grid-cols-2 gap-3 mb-2">
                     <div>
                         <label class="text-[10px] font-bold text-slate-500 mb-1 block">Qtd Pessoas</label>
                         <input type="text" id="crewCount" oninput="renderReport()" placeholder="Ex: 5" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 mb-1 block">Estimativas de Caixas</label>
-                        <input type="text" id="estimatedBoxes" oninput="renderReport()" placeholder="Ex: 200" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="text-[10px] font-bold text-slate-500 mb-1 block">Dia da Estimativa</label>
+                        <select id="estimateDay" oninput="renderReport()" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="">(Vazio)</option>
+                            <option value="Segunda">Segunda-feira</option>
+                            <option value="Terça">Terça-feira</option>
+                            <option value="Quarta">Quarta-feira</option>
+                            <option value="Quinta">Quinta-feira</option>
+                            <option value="Sexta">Sexta-feira</option>
+                            <option value="Sábado">Sábado</option>
+                            <option value="Domingo">Domingo</option>
+                            <option value="Amanhã">Amanhã</option>
+                        </select>
                     </div>
                 </div>
                 
@@ -464,7 +481,8 @@
                             <!-- Linha 3: Caixas e Unidades Hoje -->
                             <div class="grid grid-cols-2 gap-2">
                                 ${createStatItem('box', item.boxes, 'Caixas', true)}
-                                ${createStatItem('package', item.dailyUnits, 'Unidades (hoje)')}
+                                <!-- AJUSTE AQUI: Mudou de 'Unidades (hoje)' para 'Unidades' -->
+                                ${createStatItem('package', item.dailyUnits, 'Unidades')}
                             </div>
                         </div>
 
@@ -484,6 +502,7 @@
             // RODAPÉ OPERACIONAL (SEM BORDAS)
             const crew = document.getElementById('crewCount').value || '-';
             const est = document.getElementById('estimatedBoxes').value || '-';
+            const estDay = document.getElementById('estimateDay').value || ''; // Novo campo de dia
             const start = document.getElementById('startTime').value || '--:--';
             const end = document.getElementById('endTime').value || '--:--';
             const interval = document.getElementById('intervalDuration').value || '0';
@@ -491,6 +510,9 @@
             const totalHours = calculateTimeDifference(start, end, interval);
             const sumBoxesStr = sumBoxes.toLocaleString('pt-BR');
             const sumDailyUnitsStr = sumDailyUnits.toLocaleString('pt-BR');
+
+            // Formatando o label da estimativa
+            const estimateLabel = estDay ? `Est. Caixas (${estDay}):` : 'Estimativas de Caixas:';
 
             footerContainer.innerHTML = `
                 <!-- NOVO PAINEL DE TOTAIS -->
@@ -513,7 +535,7 @@
                     </div>
                      <div class="flex items-center gap-2">
                         <!-- Icone de Estimativas REMOVIDO -->
-                        <span class="text-[10px] font-bold text-emerald-700">Estimativas: <span class="text-xs">${est} Cx</span></span>
+                        <span class="text-[10px] font-bold text-emerald-700">${estimateLabel} <span class="text-xs">${est} Cx</span></span>
                     </div>
                 </div>
                 
@@ -563,7 +585,15 @@
             const originalText = document.querySelector('button[onclick="downloadImage()"] span').innerText;
             document.querySelector('button[onclick="downloadImage()"] span').innerText = "Gerando...";
             setTimeout(() => {
-                html2canvas(element, { scale: 2, backgroundColor: null, useCORS: true, allowTaint: true, scrollY: -window.scrollY }).then(canvas => {
+                // Aumentando a escala para 8x para simular resolução "8K" no mobile
+                // Valores acima de 8-10x podem causar crash em dispositivos com pouca RAM.
+                html2canvas(element, { 
+                    scale: 8, 
+                    backgroundColor: null, 
+                    useCORS: true, 
+                    allowTaint: true, 
+                    scrollY: -window.scrollY 
+                }).then(canvas => {
                     const image = canvas.toDataURL("image/png");
                     const link = document.createElement('a');
                     link.href = image;
