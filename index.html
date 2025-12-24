@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Resumo de Colheita SPG Oásis</title>
+    <title>Resumo de Colheita SPG Oásis - 2026</title>
     
     <!-- Configurações PWA -->
     <link rel="manifest" href='data:application/manifest+json,{"name":"SPG Oásis 2026","short_name":"SPG Oásis","start_url":".","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","icons":[{"src":"https://i.imgur.com/qKTYiGT.png","sizes":"512x512","type":"image/png"}]}'>
@@ -24,6 +24,20 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Fix para ícones no html2canvas */
+        .icon-fix { 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center;
+            width: 14px; 
+            height: 14px; 
+            min-width: 14px; /* Impede encolhimento */
+        }
+        .icon-fix svg {
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen pb-20 select-none">
@@ -248,7 +262,6 @@
             document.getElementById('headerDateTime').innerText = `Colheita: ${day}/${month}/${year}`;
         }
 
-        // Calcula total de horas (Fim - Início - Intervalo)
         function calculateTimeDifference(start, end, interval) {
             if (!start || !end || start === "--:--" || end === "--:--") return "--:--";
 
@@ -269,7 +282,6 @@
             return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
         }
 
-        // Calcula Dias de Produção (Hoje - Data Início)
         function calculateDaysFromStart(isoDateStr) {
             if (!isoDateStr) return 0;
             const [year, month, day] = isoDateStr.split('-').map(Number);
@@ -289,7 +301,6 @@
             return parseFloat(cleanStr) || 0;
         }
 
-        // Função para formatar YYYY-MM-DD para DD/MM/YYYY
         function formatDateBR(isoStr) {
             if(!isoStr) return "";
             const [year, month, day] = isoStr.split('-');
@@ -305,20 +316,17 @@
             document.getElementById('totalUnits').value = '';
             document.getElementById('boxes').value = '';
             document.getElementById('dailyUnits').value = '';
-            // Resetar cultura para o padrão
             document.getElementById('variety').selectedIndex = 0; 
         }
 
         function addItem(e) {
             e.preventDefault();
 
-            // Pega valores
             const plantsRaw = document.getElementById('plants').value;
             const totalUnitsRaw = document.getElementById('totalUnits').value;
             const startDateVal = document.getElementById('startDate').value;
             const dateVal = document.getElementById('date').value; 
 
-            // Cálculos
             const plantsVal = parsePTBRNumber(plantsRaw);
             const totalUnitsVal = parsePTBRNumber(totalUnitsRaw);
             let calculatedPercentage = 0;
@@ -327,7 +335,6 @@
             }
 
             const calculatedDays = calculateDaysFromStart(startDateVal);
-            
             const formattedStartDate = formatDateBR(startDateVal);
             const formattedDate = formatDateBR(dateVal);
 
@@ -395,6 +402,9 @@
             const footerContainer = document.getElementById('operationalFooter');
 
             container.innerHTML = '';
+            let sumBoxes = 0;
+            let sumDailyUnits = 0;
+
             if (harvestData.length === 0) {
                 container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs italic">Adicione dados no formulário ao lado para visualizar.</div>`;
             } else {
@@ -406,12 +416,15 @@
 
                     const displayVariety = item.commercialVariety ? `${item.variety} - ${item.commercialVariety}` : item.variety;
                     const remainingPercentage = Math.max(0, 100 - item.percentage);
+                    
+                    sumBoxes += parsePTBRNumber(item.boxes);
+                    sumDailyUnits += parsePTBRNumber(item.dailyUnits);
 
                     const html = `
                     <div class="p-5 hover:bg-slate-50 transition-colors group">
-                        <!-- Topo -->
+                        <!-- Topo com Progresso -->
                         <div class="flex justify-between items-start mb-4">
-                            <div class="flex flex-col gap-1">
+                            <div class="flex flex-col gap-1 w-2/3">
                                 <div class="flex items-center gap-2">
                                     <span class="text-base font-bold text-slate-800">
                                         Bloco ${item.talhao}
@@ -421,23 +434,15 @@
                                         <span class="text-[10px] font-bold text-slate-500 uppercase">${displayVariety}</span>
                                     </div>
                                 </div>
-                            </div>
-                            <!-- Barra -->
-                            <div class="flex flex-col items-end min-w-[80px]">
-                                <div class="text-[10px] font-bold text-slate-400 mb-1">(%) Colhido</div>
-                                <div class="flex items-center gap-2 justify-end w-full">
-                                    <div class="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="mt-2 w-full">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <div class="text-[10px] font-bold text-emerald-600">(%) Colhido: ${item.percentage}%</div>
+                                        <div class="text-[10px] font-medium text-slate-400">
+                                            Total: <b>${item.totalUnits}</b> <span class="mx-1">•</span> Falta: <b>${remainingPercentage}%</b>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                                         <div class="h-full rounded-full ${progressColor}" style="width: ${item.percentage}%"></div>
-                                    </div>
-                                    <span class="text-xs font-bold ${textColor}">${item.percentage}%</span>
-                                </div>
-                                <!-- TOTAL E FALTA -->
-                                <div class="flex flex-col items-end mt-1">
-                                    <div class="text-[10px] font-medium text-slate-500">
-                                        Total: <span class="font-bold text-slate-700">${item.totalUnits} un.</span>
-                                    </div>
-                                    <div class="text-[9px] font-bold text-slate-400">
-                                        Falta: <span class="text-red-400">${remainingPercentage}%</span>
                                     </div>
                                 </div>
                             </div>
@@ -445,12 +450,12 @@
 
                         <!-- Grid de Estatísticas (SEM BORDAS) -->
                         <div class="flex flex-col gap-2">
-                            <!-- Linha 1: Métricas Quantitativas (Apenas Transplantio) -->
+                            <!-- Linha 1 -->
                             <div class="grid grid-cols-1 gap-2">
                                 ${createStatItem('leaf', item.plants, 'Transplantio')}
                             </div>
                             
-                            <!-- Linha 2: Datas (Início e Transplantio) -->
+                            <!-- Linha 2 -->
                             <div class="grid grid-cols-2 gap-2">
                                  <div class="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-50">
                                     <div class="mb-1 text-slate-400"><i data-lucide="calendar" width="14"></i></div>
@@ -464,7 +469,7 @@
                                 </div>
                             </div>
 
-                            <!-- Linha 3: Caixas e Unidades Hoje -->
+                            <!-- Linha 3 -->
                             <div class="grid grid-cols-2 gap-2">
                                 ${createStatItem('box', item.boxes, 'Caixas', true)}
                                 ${createStatItem('package', item.dailyUnits, 'Unidades (hoje)')}
@@ -482,7 +487,6 @@
                 });
             }
 
-            // RODAPÉ OPERACIONAL (SEM BORDAS)
             const crew = document.getElementById('crewCount').value || '-';
             const est = document.getElementById('estimatedBoxes').value || '-';
             const start = document.getElementById('startTime').value || '--:--';
@@ -490,15 +494,30 @@
             const interval = document.getElementById('intervalDuration').value || '0';
             
             const totalHours = calculateTimeDifference(start, end, interval);
+            const sumBoxesStr = sumBoxes.toLocaleString('pt-BR');
+            const sumDailyUnitsStr = sumDailyUnits.toLocaleString('pt-BR');
 
             footerContainer.innerHTML = `
+                <!-- NOVO PAINEL DE TOTAIS -->
+                <div class="bg-emerald-50 rounded-lg p-3 mb-3 flex justify-around items-center">
+                    <div class="text-center">
+                        <div class="text-[10px] text-emerald-600 font-bold uppercase mb-0.5">Total Caixas</div>
+                        <div class="text-lg font-extrabold text-emerald-800">${sumBoxesStr}</div>
+                    </div>
+                    <div class="w-px h-8 bg-emerald-200"></div>
+                    <div class="text-center">
+                        <div class="text-[10px] text-emerald-600 font-bold uppercase mb-0.5">Total Unidades</div>
+                        <div class="text-lg font-extrabold text-emerald-800">${sumDailyUnitsStr}</div>
+                    </div>
+                </div>
+
                 <div class="flex justify-between items-center mb-3 pb-3 border-b border-slate-200 border-dashed">
                      <div class="flex items-center gap-2">
-                        <i data-lucide="users" class="text-slate-400" width="14"></i>
+                        <i data-lucide="users" class="text-slate-400 icon-fix"></i>
                         <span class="text-[10px] font-bold text-slate-600">Equipe: <span class="text-slate-800 text-xs">${crew}</span></span>
                     </div>
                      <div class="flex items-center gap-2">
-                        <i data-lucide="package-search" class="text-emerald-500" width="14"></i>
+                        <i data-lucide="package-search" class="text-emerald-500 icon-fix"></i>
                         <span class="text-[10px] font-bold text-emerald-700">Estimativas de Caixas: <span class="text-xs">${est} Cx</span></span>
                     </div>
                 </div>
@@ -526,7 +545,7 @@
             lucide.createIcons();
         }
 
-        // Helper (SEM BORDAS)
+        // Helper (CORRIGIDO: FIX ICON SIZE E ALIGNMENT)
         function createStatItem(iconName, value, label, highlight = false) {
             const textColor = highlight ? 'text-emerald-800' : 'text-slate-700';
             const labelColor = highlight ? 'text-emerald-600/70' : 'text-slate-400';
@@ -535,7 +554,7 @@
 
             return `
             <div class="flex flex-col items-center justify-center p-2 rounded-xl ${bgColor}">
-                <div class="mb-1 ${iconColor}"><i data-lucide="${iconName}" width="14"></i></div>
+                <div class="mb-1 ${iconColor} icon-fix"><i data-lucide="${iconName}"></i></div>
                 <span class="text-xs font-bold ${textColor}">${value}</span>
                 <span class="text-[9px] uppercase tracking-wider font-semibold ${labelColor}">${label}</span>
             </div>
@@ -566,4 +585,3 @@
     </script>
 </body>
 </html>
-
