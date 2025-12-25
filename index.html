@@ -22,6 +22,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- 1. Importar Biblioteca jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -44,10 +46,10 @@
             </div>
         </div>
         <div class="flex gap-2">
-            <!-- Botão Atualizado para indicar Máxima Qualidade -->
-            <button type="button" onclick="downloadImage()" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-emerald-600/20 transition-all active:scale-95 active:bg-emerald-800">
-                <i data-lucide="download" class="w-4 h-4"></i>
-                <span>Enviar Resumo WhatsApp</span>
+            <!-- 2. Botão HTML de Baixar PDF -->
+            <button type="button" onclick="downloadPDF()" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-emerald-600/20 transition-all active:scale-95 active:bg-emerald-800">
+                <i data-lucide="file-down" class="w-4 h-4"></i>
+                <span>Baixar PDF</span>
             </button>
         </div>
     </div>
@@ -822,29 +824,28 @@
             `;
         }
 
-        function downloadImage() {
+        // 3. Função JavaScript para Baixar PDF (Infinito) - REVERTIDA PARA A LÓGICA ANTERIOR (INFINITA)
+        async function downloadPDF() {
+            const { jsPDF } = window.jspdf;
             const element = document.getElementById('report-card');
-            if (!element) return;
-            const originalText = document.querySelector('button[onclick="downloadImage()"] span').innerText;
-            document.querySelector('button[onclick="downloadImage()"] span').innerText = "Gerando...";
-            
-            setTimeout(() => {
-                // Configuração ajustada para: Resolução iPhone Pro Max (Vertical e Nítida)
-                // Largura fixa de ~450px escalada em 8x = Imagem final de ~3600px de largura (Ultra HD Mobile)
-                html2canvas(element, { 
-                    scale: 8, // Escala aumentada para 8
-                    backgroundColor: '#ffffff', // Garante fundo branco opaco
-                    useCORS: true, 
-                    allowTaint: true, 
+            const originalText = document.querySelector('button[onclick="downloadPDF()"] span').innerText;
+            document.querySelector('button[onclick="downloadPDF()"] span').innerText = "Gerando PDF...";
+
+            try {
+                // Captura o elemento como Canvas
+                const canvas = await html2canvas(element, {
+                    scale: 2, // Melhora a qualidade
+                    useCORS: true, // Permite carregar imagens externas se configurado no servidor
+                    allowTaint: true,
                     scrollY: -window.scrollY,
-                    windowWidth: 480, // Força o contexto a pensar que é um celular
+                    windowWidth: 480, // Simula largura mobile
                     onclone: (clonedDoc) => {
                         const clonedElement = clonedDoc.getElementById('report-card');
                         const clonedContent = clonedDoc.getElementById('reportContent');
 
-                        // Melhoria de Tipografia para maior nitidez
+                        // Ajustes de estilo para garantir que tudo apareça no PDF
                         const style = clonedDoc.createElement('style');
-                        // AJUSTE: Removido 'text-rendering: optimizeLegibility' para evitar problemas de aglutinação
+                        // Removido text-rendering: optimizeLegibility para evitar problemas de espaçamento de texto
                         style.innerHTML = `
                             * { 
                                 -webkit-font-smoothing: antialiased !important; 
@@ -854,38 +855,44 @@
                         clonedDoc.head.appendChild(style);
 
                         if (clonedElement) {
-                            // Define largura de celular grande (aprox iPhone Pro Max)
                             clonedElement.style.width = '450px';
                             clonedElement.style.maxWidth = 'none';
-                            clonedElement.style.height = 'auto'; // Cresce infinitamente para baixo
+                            clonedElement.style.height = 'auto'; 
                             clonedElement.style.margin = '0';
-                            clonedElement.style.borderRadius = '0'; // Remove bordas arredondadas na imagem
-                            clonedElement.style.border = 'none'; // Remove borda externa
+                            clonedElement.style.borderRadius = '0'; 
+                            clonedElement.style.border = 'none'; 
                             clonedElement.style.boxShadow = 'none';
                             clonedElement.style.overflow = 'visible';
                         }
 
-                        // Garante que todo o conteúdo interno seja exibido
                         if (clonedContent) {
                             clonedContent.style.height = 'auto';
                             clonedContent.style.overflow = 'visible';
                             clonedContent.style.flex = 'none';
                         }
                     }
-                }).then(canvas => {
-                    const image = canvas.toDataURL("image/png");
-                    const link = document.createElement('a');
-                    link.href = image;
-                    link.download = `Relatorio-SPG-Oasis-${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.png`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    document.querySelector('button[onclick="downloadImage()"] span').innerText = originalText;
-                }).catch(err => {
-                    alert("Erro: " + err);
-                    document.querySelector('button[onclick="downloadImage()"] span').innerText = originalText;
                 });
-            }, 500);
+
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+
+                // Cria o PDF com o tamanho exato da imagem gerada (Página Infinita)
+                const pdf = new jsPDF({
+                    orientation: 'p',
+                    unit: 'px',
+                    format: [imgWidth, imgHeight]
+                });
+
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                pdf.save(`Relatorio-SPG-Oasis-${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
+
+            } catch (err) {
+                alert("Erro ao gerar PDF: " + err);
+                console.error(err);
+            } finally {
+                document.querySelector('button[onclick="downloadPDF()"] span').innerText = originalText;
+            }
         }
     </script>
 </body>
