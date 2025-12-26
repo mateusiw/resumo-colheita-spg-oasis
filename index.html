@@ -754,8 +754,8 @@
             const sumBoxesStr = sumBoxes.toLocaleString('pt-BR');
             const sumDailyUnitsStr = sumDailyUnits.toLocaleString('pt-BR');
 
-            // Formatando o label da estimativa
-            const estimateLabel = estDay ? `Est. Caixas (${estDay}):` : 'Estimativas de Caixas:';
+            // AJUSTE: Rótulo com dia da semana (ex: Estimativas de Caixas (Segunda):)
+            const estimateLabel = estDay ? `Estimativas de Caixas (${estDay}):` : 'Estimativas de Caixas:';
 
             footerContainer.innerHTML = `
                 <!-- NOVO PAINEL DE TOTAIS -->
@@ -780,7 +780,7 @@
                      <div class="flex items-center gap-2">
                         <!-- Icone de Estimativas REMOVIDO -->
                         <!-- AJUSTE: Aumentado de text-[10px] para text-xs e valor para text-sm -->
-                        <span class="text-xs font-bold text-emerald-700">${estimateLabel} <span class="text-emerald-900 text-sm font-extrabold">${est} Cx</span></span>
+                        <span class="text-xs font-bold text-emerald-700">${estimateLabel} <span class="text-emerald-900 text-sm font-extrabold">${est}</span></span>
                     </div>
                 </div>
                 
