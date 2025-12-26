@@ -291,11 +291,17 @@
     <script>
         console.log("Aplicação 'Resumo de Colheita SPG Oásis' carregada com sucesso.");
 
-        let harvestData = [];
-        let editingIndex = -1; // Variável para controlar se estamos editando um item
+        // 1. CARREGAR DADOS SALVOS (LISTA) - Alterado para carregar do localStorage
+        let harvestData = JSON.parse(localStorage.getItem('spg_harvestData')) || [];
+        let editingIndex = -1;
 
         lucide.createIcons();
-        updateDynamicTitle(); // Atualiza título e data no novo formato
+        updateDynamicTitle(); 
+        
+        // 2. CARREGAR INPUTS SALVOS - Nova função chamada ao iniciar
+        loadInputs();
+
+        // Renderiza tudo
         renderList(); 
         renderReport(); 
 
@@ -345,7 +351,6 @@
 
         // --- FUNÇÕES DE FORMATAÇÃO E CÁLCULO ---
 
-        // --- NOVA FUNÇÃO DE MÁSCARA ---
         function formatNumberInput(input) {
             // Remove tudo que não for dígito
             let value = input.value.replace(/\D/g, '');
@@ -404,15 +409,51 @@
             return `${day}/${month}/${year}`;
         }
 
+        // --- NOVO SISTEMA DE PERSISTÊNCIA (STORAGE) ---
+
+        // Salva a lista de itens gerados
+        function saveData() {
+            localStorage.setItem('spg_harvestData', JSON.stringify(harvestData));
+        }
+
+        // Salva os campos operacionais (estimativa, hora, equipe...)
+        function saveInputs() {
+            const inputs = {
+                estimatedBoxes: document.getElementById('estimatedBoxes').value,
+                crewCount: document.getElementById('crewCount').value,
+                estimateDay: document.getElementById('estimateDay').value,
+                startTime: document.getElementById('startTime').value,
+                endTime: document.getElementById('endTime').value,
+                intervalDuration: document.getElementById('intervalDuration').value
+            };
+            localStorage.setItem('spg_inputs', JSON.stringify(inputs));
+        }
+
+        // Carrega os campos operacionais ao abrir
+        function loadInputs() {
+            const saved = localStorage.getItem('spg_inputs');
+            if (saved) {
+                try {
+                    const inputs = JSON.parse(saved);
+                    if(inputs.estimatedBoxes) document.getElementById('estimatedBoxes').value = inputs.estimatedBoxes;
+                    if(inputs.crewCount) document.getElementById('crewCount').value = inputs.crewCount;
+                    if(inputs.estimateDay) document.getElementById('estimateDay').value = inputs.estimateDay;
+                    if(inputs.startTime) document.getElementById('startTime').value = inputs.startTime;
+                    if(inputs.endTime) document.getElementById('endTime').value = inputs.endTime;
+                    if(inputs.intervalDuration) document.getElementById('intervalDuration').value = inputs.intervalDuration;
+                } catch (e) {
+                    console.error("Erro ao carregar inputs salvos", e);
+                }
+            }
+        }
+
         // --- FUNÇÕES DE OPERAÇÃO DA LISTA E FORMULÁRIO ---
 
-        // AJUSTE: Função para atualizar campo Var. Comercial Dinamicamente
         function updateCommercialInput() {
             const variety = document.getElementById('variety').value;
             const wrapper = document.getElementById('commercialVarietyWrapper');
             
             if (variety === 'Brócolis') {
-                // Se for Brócolis, muda para Select com opções específicas
                 wrapper.innerHTML = `
                     <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Var. Comercial</label>
                     <select id="commercialVariety" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white">
@@ -424,7 +465,6 @@
                     </select>
                 `;
             } else if (variety === 'Couve-Flor') {
-                // Se for Couve-Flor, muda para Select com opções específicas
                 wrapper.innerHTML = `
                     <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Var. Comercial</label>
                     <select id="commercialVariety" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white">
@@ -439,7 +479,6 @@
                     </select>
                 `;
             } else {
-                // Se for outro, volta para Input Texto
                 wrapper.innerHTML = `
                     <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Var. Comercial</label>
                     <input type="text" id="commercialVariety" placeholder="Ex: Avenger" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
@@ -447,7 +486,6 @@
             }
         }
 
-        // LIMPAR / CANCELAR EDIÇÃO
         function clearBlockForm() {
             document.getElementById('talhao').value = '';
             document.getElementById('startDate').value = '';
@@ -457,18 +495,15 @@
             document.getElementById('boxes').value = '';
             document.getElementById('dailyUnits').value = '';
             
-            // Reseta Cultura e Atualiza Var. Comercial
             const varietySelect = document.getElementById('variety');
             varietySelect.selectedIndex = 0;
-            updateCommercialInput(); // Reseta para input texto
+            updateCommercialInput(); 
 
-            // RESETA ESTADO DE EDIÇÃO
             editingIndex = -1;
             const submitBtn = document.getElementById('submitBtn');
             const formTitle = document.getElementById('formTitle');
             const formContainer = document.getElementById('formContainer');
 
-            // Volta para estilo de "Adicionar"
             submitBtn.innerHTML = '<i data-lucide="plus-circle" class="w-4 h-4"></i> <span>Adicionar ao Relatório</span>';
             submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
             submitBtn.classList.add('bg-slate-800', 'hover:bg-slate-900');
@@ -479,28 +514,23 @@
             lucide.createIcons();
         }
 
-        // --- NOVA LÓGICA DE EDITAR: POPULA FORM SEM APAGAR ---
         function editItem(index) {
             const item = harvestData[index];
-            editingIndex = index; // MARCA O ÍNDICE QUE ESTÁ SENDO EDITADO
+            editingIndex = index; 
 
-            // Preenche o formulário
             document.getElementById('talhao').value = item.talhao;
             document.getElementById('variety').value = item.variety;
-            updateCommercialInput(); // Atualiza o HTML do Var. Comercial
+            updateCommercialInput(); 
             document.getElementById('commercialVariety').value = item.commercialVariety;
 
-            // Datas (converte DD/MM/AAAA -> YYYY-MM-DD)
             if (item.date) document.getElementById('date').value = item.date.split('/').reverse().join('-');
             if (item.startDate) document.getElementById('startDate').value = item.startDate.split('/').reverse().join('-');
 
-            // Números
             document.getElementById('plants').value = item.plants;
             document.getElementById('totalUnits').value = item.totalUnits;
             document.getElementById('boxes').value = item.boxes;
             document.getElementById('dailyUnits').value = item.dailyUnits;
 
-            // MUDA A APARÊNCIA PARA "MODO EDIÇÃO"
             const submitBtn = document.getElementById('submitBtn');
             const formTitle = document.getElementById('formTitle');
             const formContainer = document.getElementById('formContainer');
@@ -512,15 +542,10 @@
             formTitle.innerHTML = '<i data-lucide="pencil" class="text-blue-600"></i> Editando Bloco';
             formContainer.classList.add('border-blue-300', 'ring-2', 'ring-blue-100');
 
-            // Rola até o formulário para facilitar no mobile
             formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
             
-            // Re-renderiza a lista para mostrar o indicador "(Editando)"
             renderList();
-            
             lucide.createIcons();
-            
-            // NÃO CHAMAMOS removeItem(index) AQUI!
         }
 
         function addItem(e) {
@@ -557,31 +582,28 @@
             };
 
             if (editingIndex >= 0) {
-                // SE ESTIVER EM MODO EDIÇÃO, ATUALIZA O ITEM EXISTENTE
                 harvestData[editingIndex] = newItem;
-                // Reseta o modo de edição após salvar
                 clearBlockForm(); 
             } else {
-                // SE NÃO, ADICIONA NOVO
                 harvestData.push(newItem);
-                clearBlockForm(); // Limpa o formulário para o próximo
+                clearBlockForm(); 
             }
-
+            
+            saveData(); // AJUSTE: Salvar após adicionar/editar
             renderReport();
             renderList();
         }
 
         function removeItem(index) {
-            // Se estiver editando este item específico, cancela a edição primeiro
             if (editingIndex === index) {
                 clearBlockForm();
             }
-            // Se remover um item que vem antes do que está sendo editado, ajusta o índice
             else if (editingIndex > index) {
                 editingIndex--;
             }
 
             harvestData.splice(index, 1);
+            saveData(); // AJUSTE: Salvar após remover
             renderReport();
             renderList();
         }
@@ -589,7 +611,8 @@
         function clearAll() {
             if(confirm('Tem certeza?')) {
                 harvestData = [];
-                clearBlockForm(); // Garante que saia do modo de edição
+                saveData(); // AJUSTE: Salvar após limpar
+                clearBlockForm(); 
                 renderReport();
                 renderList();
             }
@@ -611,10 +634,7 @@
 
             harvestData.forEach((item, index) => {
                 const li = document.createElement('li');
-                // Adiciona destaque visual se for o item sendo editado
                 const activeClass = (index === editingIndex) ? 'border-blue-400 bg-blue-50 ring-1 ring-blue-200' : 'border-slate-100 bg-slate-50';
-                
-                // Extrai "DD/MM" da data (item.date formato DD/MM/AAAA)
                 const shortDate = item.date ? item.date.substring(0, 5) : '';
 
                 li.className = `flex justify-between items-center p-2 rounded border ${activeClass} transition-all`;
@@ -635,6 +655,9 @@
         }
 
         function renderReport() {
+            // AJUSTE: Salvar inputs sempre que renderizar (significa que algo mudou nos inputs ou lista)
+            saveInputs();
+
             const container = document.getElementById('reportContent');
             const footerContainer = document.getElementById('operationalFooter');
 
@@ -643,7 +666,6 @@
             let sumDailyUnits = 0;
 
             if (harvestData.length === 0) {
-                // AJUSTE: Centralizar mensagem de vazio
                 container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs italic leading-relaxed h-full flex items-center justify-center">Adicione dados no formulário ao lado para visualizar.</div>`;
             } else {
                 harvestData.forEach(item => {
@@ -658,32 +680,26 @@
                     sumBoxes += parsePTBRNumber(item.boxes);
                     sumDailyUnits += parsePTBRNumber(item.dailyUnits);
 
-                    // AJUSTE: REORGANIZAÇÃO COMPLETA DO LAYOUT DO CARD
                     const html = `
                     <div class="p-5 hover:bg-slate-50 transition-colors group">
                         
-                        <!-- 1. TOPO: TÍTULO + TAG (LADO A LADO) -->
                         <div class="flex items-center gap-3 mb-3">
                             <span class="text-base font-bold text-slate-800 leading-normal">
                                 Bloco ${item.talhao}
                             </span>
-                            <!-- AJUSTE: Ícone de tag removido -->
                             <div class="flex items-center gap-1">
                                 <span class="text-[10px] font-bold text-slate-600 uppercase leading-normal tracking-wide">${displayVariety}</span>
                             </div>
                         </div>
 
-                        <!-- 2. BARRA DE PROGRESSO + INFO (ABAIXO DO TÍTULO) -->
                         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 mb-4">
                             <div class="flex justify-between items-end mb-1">
                                 <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Colhido</div>
                                 <div class="flex items-center gap-2">
-                                    <!-- AJUSTE: Aumentado de text-[10px] para text-xs -->
                                     <span class="text-xs font-medium text-slate-500">
                                         Total: <span class="font-bold text-slate-700">${item.totalUnits} un.</span>
                                     </span>
                                     <span class="text-slate-300 text-xs">|</span>
-                                    <!-- AJUSTE: Aumentado de text-[10px] para text-xs -->
                                     <span class="text-xs font-bold text-slate-400">
                                         Falta: <span class="text-red-400">${remainingPercentage}%</span>
                                     </span>
@@ -694,19 +710,15 @@
                                 <div class="flex-1 h-2.5 bg-slate-200 rounded-full overflow-hidden">
                                     <div class="h-full rounded-full ${progressColor}" style="width: ${item.percentage}%"></div>
                                 </div>
-                                <!-- AJUSTE: Aumentado de text-xs para text-sm e font-extrabold -->
                                 <span class="text-sm font-extrabold ${textColor}">${item.percentage}%</span>
                             </div>
                         </div>
 
-                        <!-- Grid de Estatísticas (SEM BORDAS) -->
-                        <div class="flex flex-col gap-3"> <!-- Aumentado de gap-2 para gap-3 -->
-                            <!-- Linha 1: Métricas Quantitativas (Apenas Transplantio) -->
+                        <div class="flex flex-col gap-3"> 
                             <div class="grid grid-cols-1 gap-2">
                                 ${createStatItem('leaf', item.plants, 'Transplantio')}
                             </div>
                             
-                            <!-- Linha 2: Datas (REVERTIDA ORDEM NO CARD) -->
                             <div class="grid grid-cols-2 gap-2">
                                  <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50">
                                     <div class="mb-1 text-slate-400"><i data-lucide="calendar" width="14"></i></div>
@@ -720,18 +732,14 @@
                                 </div>
                             </div>
 
-                            <!-- Linha 3: Caixas e Unidades Hoje -->
                             <div class="grid grid-cols-2 gap-2">
                                 ${createStatItem('box', item.boxes, 'Caixas', true)}
-                                <!-- AJUSTE AQUI: Mudou de 'Unidades (hoje)' para 'Unidades' -->
                                 ${createStatItem('package', item.dailyUnits, 'Unidades')}
                             </div>
                         </div>
 
-                        <!-- AJUSTE: mt-4 para não grudar no grid de cima -->
                         <div class="mt-4 flex items-center justify-between text-[10px] text-slate-400 font-medium bg-slate-50/50 px-2 py-2 rounded-lg">
                             <span class="flex items-center gap-1">
-                                <!-- Ícone removido aqui -->
                                 Dias de Produção: ${item.days} dias
                             </span>
                         </div>
@@ -741,11 +749,10 @@
                 });
             }
 
-            // RODAPÉ OPERACIONAL (SEM BORDAS)
             const crewInput = document.getElementById('crewCount').value;
             const crew = crewInput ? (parseInt(crewInput) === 1 ? `${crewInput} Colaborador` : `${crewInput} Colaboradores`) : '-';
             const est = document.getElementById('estimatedBoxes').value || '-';
-            const estDay = document.getElementById('estimateDay').value || ''; // Novo campo de dia
+            const estDay = document.getElementById('estimateDay').value || ''; 
             const start = document.getElementById('startTime').value || '--:--';
             const end = document.getElementById('endTime').value || '--:--';
             const interval = document.getElementById('intervalDuration').value || '0';
@@ -754,11 +761,9 @@
             const sumBoxesStr = sumBoxes.toLocaleString('pt-BR');
             const sumDailyUnitsStr = sumDailyUnits.toLocaleString('pt-BR');
 
-            // AJUSTE: Rótulo com dia da semana (ex: Estimativas de Caixas (Segunda):)
             const estimateLabel = estDay ? `Estimativas de Caixas (${estDay}):` : 'Estimativas de Caixas:';
 
             footerContainer.innerHTML = `
-                <!-- NOVO PAINEL DE TOTAIS -->
                 <div class="bg-emerald-50 rounded-lg p-4 mb-4 flex justify-around items-center">
                     <div class="text-center">
                         <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">Total Caixas</div>
@@ -771,15 +776,12 @@
                     </div>
                 </div>
 
-                <!-- LINHA EQUIPE - Centralizada agora que está sozinha -->
                 <div class="flex justify-center items-center mb-4 pb-4 border-b border-slate-200 border-dashed">
                      <div class="flex items-center gap-2">
-                        <!-- Icone de Equipe REMOVIDO -->
                         <span class="text-xs font-bold text-slate-600">Equipe: <span class="text-slate-800 text-sm font-extrabold">${crew}</span></span>
                     </div>
                 </div>
                 
-                <!-- GRID DE TEMPOS -->
                 <div class="grid grid-cols-4 gap-2 text-[10px] text-slate-500 font-medium mb-4 mt-2">
                     <div class="flex flex-col items-center">
                         <span class="text-green-600 font-bold mb-0.5 uppercase tracking-wide">Início</span>
@@ -799,17 +801,14 @@
                     </div>
                 </div>
 
-                <!-- ESTIMATIVAS MOVIDAS PARA BAIXO (ACIMA DO RODAPÉ DA MARCA) -->
-                <!-- AJUSTE: Text-xl (Extra Grande) para o rótulo e Text-2xl para o valor -->
-                <div class="flex justify-center items-center pt-4 border-t border-slate-100"> <!-- Aumentei o pt para dar mais ar -->
-                    <span class="text-xl font-bold text-blue-700">${estimateLabel} <span class="text-blue-900 text-2xl font-extrabold">${est}</span></span>
+                <div class="flex justify-center items-center pt-4 border-t border-slate-100">
+                    <span class="text-xl font-bold text-[#00838f]">${estimateLabel} <span class="text-emerald-600 text-2xl font-extrabold">${est}</span></span>
                 </div>
             `;
 
             lucide.createIcons();
         }
 
-        // Helper (SEM BORDAS)
         function createStatItem(iconName, value, label, highlight = false) {
             const textColor = highlight ? 'text-emerald-800' : 'text-slate-700';
             const labelColor = highlight ? 'text-emerald-600/70' : 'text-slate-400';
@@ -825,7 +824,6 @@
             `;
         }
 
-        // 3. Função JavaScript para Baixar PDF (Infinito) - REVERTIDA PARA A LÓGICA ANTERIOR (INFINITA)
         async function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const element = document.getElementById('report-card');
@@ -833,20 +831,17 @@
             document.querySelector('button[onclick="downloadPDF()"] span').innerText = "Gerando PDF...";
 
             try {
-                // Captura o elemento como Canvas
                 const canvas = await html2canvas(element, {
-                    scale: 2, // Melhora a qualidade
-                    useCORS: true, // Permite carregar imagens externas se configurado no servidor
+                    scale: 2, 
+                    useCORS: true, 
                     allowTaint: true,
                     scrollY: -window.scrollY,
-                    windowWidth: 480, // Simula largura mobile
+                    windowWidth: 480, 
                     onclone: (clonedDoc) => {
                         const clonedElement = clonedDoc.getElementById('report-card');
                         const clonedContent = clonedDoc.getElementById('reportContent');
 
-                        // Ajustes de estilo para garantir que tudo apareça no PDF
                         const style = clonedDoc.createElement('style');
-                        // Removido text-rendering: optimizeLegibility para evitar problemas de espaçamento de texto
                         style.innerHTML = `
                             * { 
                                 -webkit-font-smoothing: antialiased !important; 
@@ -878,14 +873,12 @@
                 const imgWidth = canvas.width;
                 const imgHeight = canvas.height;
 
-                // Cria o PDF com o tamanho exato da imagem gerada (Página Infinita)
                 const pdf = new jsPDF({
                     orientation: 'p',
                     unit: 'px',
                     format: [imgWidth, imgHeight]
                 });
 
-                // NOVA LÓGICA DE NOME DO ARQUIVO
                 const now = new Date();
                 const daysOfWeek = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
                 const dayOfWeek = daysOfWeek[now.getDay()];
@@ -893,9 +886,8 @@
                 const day = String(now.getDate()).padStart(2, '0');
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const year = now.getFullYear();
-                const weekNumber = getWeekNumber(now); // Reuse the existing function
+                const weekNumber = getWeekNumber(now); 
 
-                // Filename with date and week. Using dashes for date to ensure valid filename.
                 const filename = `Resumo Colheita - ${dayOfWeek} ${day}-${month}-${year} Semana ${weekNumber} - SPG Oásis.pdf`;
 
                 pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
