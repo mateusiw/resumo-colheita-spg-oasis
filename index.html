@@ -79,7 +79,7 @@
                         <input type="text" id="crewCount" oninput="formatNumberInput(this); renderReport()" placeholder="Ex: 5" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 mb-1 block">Dia da Estimativa</label>
+                        <label class="text-[10px] font-bold text-slate-500 mb-1 block">Estimativa Para</label>
                         <select id="estimateDay" oninput="renderReport()" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
                             <option value="">(Vazio)</option>
                             <option value="Segunda">Segunda-feira</option>
@@ -764,8 +764,10 @@
             const estimateLabel = estDay ? `Estimativas de Caixas (${estDay}):` : 'Estimativas de Caixas:';
 
             footerContainer.innerHTML = `
+                <!-- NOVO PAINEL DE TOTAIS -->
                 <div class="bg-emerald-50 rounded-lg p-4 mb-4 flex justify-around items-center">
                     <div class="text-center">
+                        <!-- Revertido para o original (verde esmeralda) -->
                         <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">Total Caixas</div>
                         <div class="text-xl font-extrabold text-emerald-800">${sumBoxesStr}</div>
                     </div>
@@ -776,12 +778,14 @@
                     </div>
                 </div>
 
+                <!-- LINHA EQUIPE - Centralizada agora que está sozinha -->
                 <div class="flex justify-center items-center mb-4 pb-4 border-b border-slate-200 border-dashed">
                      <div class="flex items-center gap-2">
                         <span class="text-xs font-bold text-slate-600">Equipe: <span class="text-slate-800 text-sm font-extrabold">${crew}</span></span>
                     </div>
                 </div>
                 
+                <!-- GRID DE TEMPOS -->
                 <div class="grid grid-cols-4 gap-2 text-[10px] text-slate-500 font-medium mb-4 mt-2">
                     <div class="flex flex-col items-center">
                         <span class="text-green-600 font-bold mb-0.5 uppercase tracking-wide">Início</span>
@@ -801,8 +805,9 @@
                     </div>
                 </div>
 
+                <!-- COR ALTERADA: Frase completa com #00838f -->
                 <div class="flex justify-center items-center pt-4 border-t border-slate-100">
-                    <span class="text-xl font-bold text-[#00838f]">${estimateLabel} <span class="text-emerald-600 text-2xl font-extrabold">${est}</span></span>
+                    <span class="text-xl font-bold text-[#00838f]">${estimateLabel} <span class="text-[#00838f] text-2xl font-extrabold">${est}</span></span>
                 </div>
             `;
 
