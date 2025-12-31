@@ -241,7 +241,6 @@
 
         <!-- PREVIEW -->
         <div class="w-full lg:w-2/3 flex flex-col bg-slate-200/50 p-4 rounded-3xl border border-slate-300/50 min-h-[calc(100vh-6rem)]">
-            <!-- AJUSTE: Alterado de rounded-3xl para rounded-none (cantos retos) -->
             <div id="report-card" class="w-full flex-1 flex flex-col bg-white rounded-none shadow-2xl overflow-hidden border border-slate-100 relative">
                 
                 <!-- Cabeçalho -->
@@ -667,8 +666,11 @@
                                 ${createStatItem('calendar-days', item.startDate, 'DATA DE INÍCIO COLHEITA')}
                             </div>
                             <div class="grid grid-cols-2 gap-2">
+                                <!-- AJUSTE: INVERSÃO DE POSIÇÃO DOS CARDS -->
+                                <!-- UNIDADES (HOJE) à ESQUERDA (com destaque verde) -->
+                                ${createStatItem('package', item.dailyUnits, 'UNIDADES (HOJE)', true)}
+                                <!-- CAIXAS (HOJE) à DIREITA -->
                                 ${createStatItem('box', item.boxes, 'CAIXAS (HOJE)')}
-                                ${createStatItem('package', item.dailyUnits, 'UNIDADES (HOJE)')}
                             </div>
                         </div>
                     </div>`;
@@ -681,13 +683,16 @@
             footer.innerHTML = `
                 <div class="bg-emerald-50 rounded-lg p-4 mb-4 flex justify-around items-center">
                     <div class="text-center">
-                        <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">TOTAL DE CAIXAS (HOJE)</div>
-                        <div class="text-xl font-extrabold text-emerald-800">${sumBoxes.toLocaleString('pt-BR')}</div>
+                        <!-- AJUSTE: INVERSÃO DOS TOTAIS NO RODAPÉ -->
+                        <!-- TOTAL DE UNIDADES À ESQUERDA -->
+                        <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">TOTAL DE UNIDADES (HOJE)</div>
+                        <div class="text-xl font-extrabold text-emerald-800">${sumDailyUnits.toLocaleString('pt-BR')}</div>
                     </div>
                     <div class="w-px h-10 bg-emerald-200"></div>
                     <div class="text-center">
-                        <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">TOTAL DE UNIDADES (HOJE)</div>
-                        <div class="text-xl font-extrabold text-emerald-800">${sumDailyUnits.toLocaleString('pt-BR')}</div>
+                        <!-- TOTAL DE CAIXAS À DIREITA -->
+                        <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">TOTAL DE CAIXAS (HOJE)</div>
+                        <div class="text-xl font-extrabold text-emerald-800">${sumBoxes.toLocaleString('pt-BR')}</div>
                     </div>
                 </div>
                 <div class="flex justify-center items-center mb-4 pb-4 border-b border-slate-200 border-dashed">
@@ -713,12 +718,18 @@
             lucide.createIcons();
         }
 
-        function createStatItem(iconName, value, label) {
+        // --- FUNÇÃO ATUALIZADA: createStatItem com highlight ---
+        function createStatItem(iconName, value, label, highlight = false) {
+            const bgClass = highlight ? 'bg-emerald-50' : 'bg-slate-50';
+            const iconClass = highlight ? 'text-emerald-600' : 'text-slate-400';
+            const valueClass = highlight ? 'text-emerald-800' : 'text-slate-700';
+            const labelClass = highlight ? 'text-emerald-600' : 'text-slate-400';
+
             return `
-            <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50">
-                <div class="mb-1 text-slate-400 icon-fix"><i data-lucide="${iconName}" width="14"></i></div>
-                <span class="text-xs font-bold text-slate-700">${value}</span>
-                <span class="text-[9px] uppercase tracking-wider font-semibold text-slate-400 mt-1 text-center leading-tight">${label}</span>
+            <div class="flex flex-col items-center justify-center p-3 rounded-xl ${bgClass}">
+                <div class="mb-1 ${iconClass} icon-fix"><i data-lucide="${iconName}" width="14"></i></div>
+                <span class="text-xs font-bold ${valueClass}">${value}</span>
+                <span class="text-[9px] uppercase tracking-wider font-semibold ${labelClass} mt-1 text-center leading-tight">${label}</span>
             </div>`;
         }
 
