@@ -5,12 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Resumo de Colheita SPG Oásis - 2026</title>
     
-    <!-- Configurações PWA com Ícone Personalizado -->
-    <!-- Ícone para navegadores -->
+    <!-- Configurações PWA -->
     <link rel="icon" type="image/png" href="https://i.imgur.com/wEozr34.png">
-    <!-- Ícone para iOS (iPhone/iPad) -->
     <link rel="apple-touch-icon" href="https://i.imgur.com/wEozr34.png">
-    <!-- Manifesto Web App com ícones definidos -->
     <link rel="manifest" href='data:application/manifest+json,{"name":"SPG Oásis 2026","short_name":"SPG Oásis","start_url":".","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","icons":[{"src":"https://i.imgur.com/wEozr34.png","sizes":"192x192","type":"image/png"},{"src":"https://i.imgur.com/wEozr34.png","sizes":"512x512","type":"image/png"}]}'>
     
     <meta name="theme-color" content="#ffffff">
@@ -22,15 +19,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- 1. Importar Biblioteca jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        /* Garante espaçamento melhor em inputs no mobile */
-        input, select { line-height: 1.5; }
+        input, select, textarea { line-height: 1.5; }
+        .animate-fade-in-down { animation: fadeInDown 0.3s ease-out forwards; }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen pb-20 select-none">
@@ -38,7 +35,6 @@
     <!-- Navbar -->
     <div class="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shadow-sm sticky top-0 z-40">
         <div class="flex items-center gap-3">
-            <!-- Ícone PWA Adicionado na Navbar -->
             <img src="https://i.imgur.com/wEozr34.png" alt="Logo SPG" class="w-8 h-8 rounded-lg shadow-sm border border-slate-100">
             <div>
                 <h1 class="text-sm font-bold text-slate-800 leading-tight">SPG Oásis</h1>
@@ -46,7 +42,6 @@
             </div>
         </div>
         <div class="flex gap-2">
-            <!-- 2. Botão HTML de Baixar PDF -->
             <button type="button" onclick="downloadPDF()" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-emerald-600/20 transition-all active:scale-95 active:bg-emerald-800">
                 <i data-lucide="file-down" class="w-4 h-4"></i>
                 <span>Baixar PDF</span>
@@ -59,20 +54,18 @@
         <!-- COLUNA DA ESQUERDA: CONTROLES -->
         <div class="w-full lg:w-1/3 space-y-4">
             
-            <!-- 1. DADOS GERAIS DO DIA (Operacional) -->
+            <!-- 1. DADOS GERAIS -->
             <div class="bg-blue-50 p-6 rounded-2xl shadow-sm border border-blue-100">
                 <h2 class="text-sm font-bold text-blue-800 mb-3 flex items-center gap-2">
                     <i data-lucide="clock" class="text-blue-600"></i> Dados Gerais do Dia
                 </h2>
                 <div class="text-[10px] text-blue-600/70 mb-3 leading-relaxed">* Estes dados aparecem uma vez no final do relatório.</div>
                 
-                <!-- AJUSTE: Estimativas de Caixas movido para o topo -->
                 <div class="mb-2">
                     <label class="text-[10px] font-bold text-slate-500 mb-1 block">Estimativas de Caixas (Qtd)</label>
                     <input type="text" id="estimatedBoxes" oninput="formatNumberInput(this); renderReport()" placeholder="Ex: 200" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
 
-                <!-- AJUSTE: Qtd Pessoas e Dia da Estimativa lado a lado em baixo -->
                 <div class="grid grid-cols-2 gap-3 mb-2">
                     <div>
                         <label class="text-[10px] font-bold text-slate-500 mb-1 block">Qtd Pessoas</label>
@@ -82,11 +75,11 @@
                         <label class="text-[10px] font-bold text-slate-500 mb-1 block">Estimativa Para</label>
                         <select id="estimateDay" oninput="renderReport()" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
                             <option value="">(Vazio)</option>
-                            <option value="Segunda">Segunda-feira</option>
-                            <option value="Terça">Terça-feira</option>
-                            <option value="Quarta">Quarta-feira</option>
-                            <option value="Quinta">Quinta-feira</option>
-                            <option value="Sexta">Sexta-feira</option>
+                            <option value="Segunda-feira">Segunda-feira</option>
+                            <option value="Terça-feira">Terça-feira</option>
+                            <option value="Quarta-feira">Quarta-feira</option>
+                            <option value="Quinta-feira">Quinta-feira</option>
+                            <option value="Sexta-feira">Sexta-feira</option>
                             <option value="Sábado">Sábado</option>
                             <option value="Domingo">Domingo</option>
                             <option value="Amanhã">Amanhã</option>
@@ -123,22 +116,22 @@
                 
                 <form id="harvestForm" onsubmit="addItem(event)" class="space-y-4">
                     
-                    <!-- CAMPO BLOCO (AGORA UM SELECT) -->
+                    <!-- CAMPO BLOCO -->
                     <div>
                         <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Nº Bloco</label>
                         <select id="talhao" required class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white">
                             <option value="">Selecione...</option>
-                            <option value="1 - A">1 - A</option>
-                            <option value="2 - A">2 - A</option>
-                            <option value="3 - A">3 - A</option>
-                            <option value="4 - A">4 - A</option>
-                            <option value="5 - A">5 - A</option>
-                            <option value="6 - A">6 - A</option>
-                            <option value="7 - A">7 - A</option>
-                            <option value="8 - A">8 - A</option>
-                            <option value="9 - A">9 - A</option>
-                            <option value="10 - A">10 - A</option>
-                            <option value="11 - A">11 - A</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
                             <option value="1 - B">1 - B</option>
                             <option value="2 - B">2 - B</option>
                             <option value="3 - B">3 - B</option>
@@ -151,7 +144,6 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Cultura</label>
-                            <!-- AJUSTE: Adicionado onchange para atualizar variedades -->
                             <select id="variety" onchange="updateCommercialInput()" required class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white">
                                 <option value="">Selecione...</option>
                                 <option value="Brócolis">Brócolis</option>
@@ -160,7 +152,6 @@
                         </div>
                         <div id="commercialVarietyWrapper">
                             <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Var. Comercial</label>
-                            <!-- O conteúdo deste input será alterado via JS dependendo da cultura -->
                             <input type="text" id="commercialVariety" placeholder="Ex: Avenger" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
                         </div>
                     </div>
@@ -169,7 +160,6 @@
                     <div class="border-t border-slate-100 my-2 pt-2">
                         <label class="text-xs font-bold text-slate-400 block mb-3">Informações Adicionais</label>
                         
-                        <!-- Linha 1: Datas - ORDEM INVERTIDA NO FORMULÁRIO -->
                         <div class="grid grid-cols-2 gap-3 mb-3">
                             <div>
                                 <label class="text-[10px] font-bold text-slate-500 mb-1 block">DAT</label>
@@ -181,10 +171,17 @@
                             </div>
                         </div>
 
-                        <!-- Linha 2: Quantidades Iniciais -->
+                        <!-- QTD PLANTADA COM TOGGLE DE ETAPAS -->
                         <div class="grid grid-cols-2 gap-3 mb-3">
                             <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block">Transplantio (Qtd)</label>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="text-[10px] font-bold text-slate-500 block">Qtd. Plantada</label>
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="hasStages" onchange="toggleDetailsField()" class="sr-only peer">
+                                        <div class="relative w-7 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+                                        <span class="ms-1 text-[9px] font-medium text-slate-500">Etapas?</span>
+                                    </label>
+                                </div>
                                 <input type="text" id="plants" oninput="formatNumberInput(this)" placeholder="Ex: 10.000" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
                             </div>
                             <div>
@@ -193,7 +190,20 @@
                             </div>
                         </div>
 
-                        <!-- Linha 3: Caixas e Dia -->
+                        <!-- CAMPO: DETALHAMENTO DAS ETAPAS (DINÂMICO) -->
+                        <div id="detailsContainer" class="hidden mt-2 mb-3 bg-blue-50 p-3 rounded-lg border border-blue-100 animate-fade-in-down">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="text-[10px] font-bold text-blue-700 flex items-center gap-1">
+                                    <i data-lucide="list-tree" class="w-3 h-3"></i> Detalhamento das Etapas
+                                </label>
+                                <button type="button" onclick="addStageRow()" class="text-[10px] bg-blue-100 text-blue-600 hover:bg-blue-200 px-2 py-1 rounded font-bold transition-colors">
+                                    + Adicionar
+                                </button>
+                            </div>
+                            <div id="stagesList" class="space-y-2"></div>
+                            <textarea id="details" class="hidden" style="display:none;"></textarea>
+                        </div>
+
                         <div class="grid grid-cols-2 gap-2 mb-2">
                              <div>
                                 <label class="text-[10px] font-bold text-slate-500 mb-1 block">Caixas</label>
@@ -230,55 +240,32 @@
         </div>
 
         <!-- PREVIEW -->
-        <!-- AJUSTE: Container cinza agora é flex-col para controlar a altura -->
         <div class="w-full lg:w-2/3 flex flex-col bg-slate-200/50 p-4 rounded-3xl border border-slate-300/50 min-h-[calc(100vh-6rem)]">
-            
-            <!-- AJUSTE: 
-                 - max-w-md REMOVIDO para w-full
-                 - flex-1 adicionado para ocupar altura
-                 - flex-col adicionado para rodapé fixo
-            -->
-            <div id="report-card" class="w-full flex-1 flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 relative">
+            <!-- AJUSTE: Alterado de rounded-3xl para rounded-none (cantos retos) -->
+            <div id="report-card" class="w-full flex-1 flex flex-col bg-white rounded-none shadow-2xl overflow-hidden border border-slate-100 relative">
                 
-                <!-- Cabeçalho (AJUSTADO PARA MOBILE) -->
+                <!-- Cabeçalho -->
                 <div class="bg-gradient-to-br from-emerald-600 to-emerald-800 p-6 text-white relative overflow-hidden flex flex-col justify-start shrink-0 gap-3">
-                    
-                    <!-- LOGO ADICIONADA: ABSOLUTE TOP RIGHT -->
-                    <!-- AJUSTE: Tamanho DIMINUÍDO (w-20 h-20) e bordas removidas -->
                     <img src="https://i.imgur.com/wEozr34.png" alt="Logo SPG" class="absolute top-4 right-4 w-20 h-20 z-0">
-
-                    <!-- AJUSTE: Padding DIMINUÍDO (pr-24) para acompanhar a logo menor -->
                     <div class="relative z-10 w-full pr-24"> 
-                        <!-- TÍTULO DINÂMICO DE 2 LINHAS -->
-                        <!-- AJUSTE: Tamanho do texto reduzido de text-lg para text-base, adicionado tracking-normal -->
-                        <h2 id="reportTitle" class="text-base font-bold leading-snug tracking-normal">
-                            <!-- Injetado via JS -->
-                        </h2>
-                        
-                        <!-- LINHA DE DATA DESTAQUE (Line 3) -->
+                        <h2 id="reportTitle" class="text-base font-bold leading-snug tracking-normal"></h2>
                         <div class="mt-3 pt-3 border-t border-white/20">
-                             <!-- AJUSTE: Tamanho do texto reduzido de text-sm para text-xs -->
-                             <span id="headerDateTime" class="text-xs font-medium text-emerald-50 block opacity-90 tracking-wide">
-                                <!-- Injetado via JS -->
-                            </span>
+                             <span id="headerDateTime" class="text-xs font-medium text-emerald-50 block opacity-90 tracking-wide"></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Conteúdo (FLEX-1 para empurrar rodapé) -->
+                <!-- Conteúdo -->
                 <div id="reportContent" class="divide-y divide-slate-50 flex-1 overflow-y-auto">
                     <div class="p-8 text-center text-slate-400 text-xs italic leading-relaxed h-full flex items-center justify-center">Adicione blocos no formulário ao lado.</div>
                 </div>
 
-                <!-- Operacional Footer: MUDANÇA DE bg-slate-50 PARA bg-white, shrink-0 para não amassar -->
-                <div id="operationalFooter" class="bg-white border-t border-slate-200 p-4 shrink-0">
-                     <!-- Conteúdo injetado via JS -->
-                </div>
+                <!-- Footer Operacional -->
+                <div id="operationalFooter" class="bg-white border-t border-slate-200 p-4 shrink-0"></div>
 
-                <!-- Rodapé da Marca, shrink-0 -->
+                <!-- Rodapé Marca -->
                 <div class="bg-slate-100 p-3 text-center border-t border-slate-200 shrink-0">
                     <div class="flex justify-center items-center gap-2 text-[10px] text-slate-400 font-medium uppercase tracking-widest leading-relaxed">
-                        <!-- Logo (agora apenas texto para manter limpo, já que está no header) -->
                         SPG Oásis • Dados Oficiais
                     </div>
                 </div>
@@ -287,32 +274,25 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
+    <!-- JAVASCRIPT -->
     <script>
-        console.log("Aplicação 'Resumo de Colheita SPG Oásis' carregada com sucesso.");
+        console.log("Aplicação 'Resumo de Colheita SPG Oásis' reiniciada.");
 
-        // 1. CARREGAR DADOS SALVOS (LISTA) - Alterado para carregar do localStorage
         let harvestData = JSON.parse(localStorage.getItem('spg_harvestData')) || [];
         let editingIndex = -1;
 
         lucide.createIcons();
         updateDynamicTitle(); 
-        
-        // 2. CARREGAR INPUTS SALVOS - Nova função chamada ao iniciar
         loadInputs();
-
-        // Renderiza tudo
         renderList(); 
         renderReport(); 
 
         // --- FUNÇÕES DE DATA E HORA ---
-
         function getWeekNumber(d) {
             d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
             d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
             var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-            return weekNo;
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
         }
 
         function updateDynamicTitle() {
@@ -323,65 +303,30 @@
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const year = now.getFullYear();
             const weekNumber = getWeekNumber(now);
-            
             const daysOfWeek = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
             const dayOfWeek = daysOfWeek[now.getDay()];
 
-            // Lógica de Saudação
-            let greeting = "Bom dia, Pessoal!";
-            if (hours >= 12 && hours < 18) greeting = "Boa tarde, Pessoal!";
-            else if (hours >= 18) greeting = "Boa noite, Pessoal!";
-
-            // Lógica AM/PM para formato solicitado (ex: 20:00PM)
+            let greeting = hours < 12 ? "Bom dia, Pessoal!" : (hours < 18 ? "Boa tarde, Pessoal!" : "Boa noite, Pessoal!");
             const ampm = hours >= 12 ? 'PM' : 'AM';
             const timeString = `${String(hours).padStart(2, '0')}:${minutes}${ampm}`; 
 
-            // Construção do HTML
-            
-            // Linhas 1 e 2: Saudação e "Resumo da Colheita de [Dia]"
-            const titleElement = document.getElementById('reportTitle');
-            // GARANTE ESPAÇOS:
-            titleElement.innerHTML = `${greeting}<br>Resumo da Colheita de ${dayOfWeek}`;
-
-            // Linha 3: Data Completa
-            // Formato: Data: 24/12/2025 - 20:00PM - Semana 52
-            const dateElement = document.getElementById('headerDateTime');
-            dateElement.innerText = `Data: ${day}/${month}/${year} - ${timeString} - Semana ${weekNumber}`;
+            document.getElementById('reportTitle').innerHTML = `${greeting}<br>Resumo da Colheita de ${dayOfWeek}`;
+            document.getElementById('headerDateTime').innerText = `Data: ${day}/${month}/${year} - ${timeString} - Semana ${weekNumber}`;
         }
 
-        // --- FUNÇÕES DE FORMATAÇÃO E CÁLCULO ---
-
+        // --- FORMATAÇÃO E CÁLCULOS ---
         function formatNumberInput(input) {
-            // Remove tudo que não for dígito
             let value = input.value.replace(/\D/g, '');
-            
-            // Se tiver valor, formata com pontos de milhar
-            if (value) {
-                // Regex para adicionar ponto a cada 3 dígitos (formato PT-BR padrão para milhares)
-                input.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-            } else {
-                input.value = "";
-            }
+            input.value = value ? value.replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "";
         }
 
         function calculateTimeDifference(start, end, interval) {
             if (!start || !end || start === "--:--" || end === "--:--") return "--:--";
-
             const [startH, startM] = start.split(':').map(Number);
             const [endH, endM] = end.split(':').map(Number);
-            
-            let startMin = startH * 60 + startM;
-            let endMin = endH * 60 + endM;
-            let intervalMin = parseInt(interval) || 0;
-
-            let diff = endMin - startMin - intervalMin;
-            
+            let diff = (endH * 60 + endM) - (startH * 60 + startM) - (parseInt(interval) || 0);
             if (diff < 0) return "Erro";
-
-            const hours = Math.floor(diff / 60);
-            const minutes = diff % 60;
-
-            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+            return `${String(Math.floor(diff / 60)).padStart(2, '0')}:${String(diff % 60).padStart(2, '0')}`;
         }
 
         function calculateDaysFromStart(isoDateStr) {
@@ -389,18 +334,13 @@
             const [year, month, day] = isoDateStr.split('-').map(Number);
             const start = new Date(year, month - 1, day);
             const now = new Date();
-            start.setHours(0,0,0,0);
-            now.setHours(0,0,0,0);
-            const diffTime = now - start; 
-            if(diffTime < 0) return 0;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-            return diffDays; 
+            start.setHours(0,0,0,0); now.setHours(0,0,0,0);
+            return Math.max(0, Math.ceil((now - start) / (1000 * 60 * 60 * 24)));
         }
 
         function parsePTBRNumber(val) {
             if (!val) return 0;
-            const cleanStr = val.toString().replace(/\./g, '').replace(',', '.');
-            return parseFloat(cleanStr) || 0;
+            return parseFloat(val.toString().replace(/\./g, '').replace(',', '.')) || 0;
         }
 
         function formatDateBR(isoStr) {
@@ -409,14 +349,8 @@
             return `${day}/${month}/${year}`;
         }
 
-        // --- NOVO SISTEMA DE PERSISTÊNCIA (STORAGE) ---
-
-        // Salva a lista de itens gerados
-        function saveData() {
-            localStorage.setItem('spg_harvestData', JSON.stringify(harvestData));
-        }
-
-        // Salva os campos operacionais (estimativa, hora, equipe...)
+        // --- STORAGE ---
+        function saveData() { localStorage.setItem('spg_harvestData', JSON.stringify(harvestData)); }
         function saveInputs() {
             const inputs = {
                 estimatedBoxes: document.getElementById('estimatedBoxes').value,
@@ -428,182 +362,175 @@
             };
             localStorage.setItem('spg_inputs', JSON.stringify(inputs));
         }
-
-        // Carrega os campos operacionais ao abrir
         function loadInputs() {
             const saved = localStorage.getItem('spg_inputs');
             if (saved) {
                 try {
                     const inputs = JSON.parse(saved);
-                    if(inputs.estimatedBoxes) document.getElementById('estimatedBoxes').value = inputs.estimatedBoxes;
-                    if(inputs.crewCount) document.getElementById('crewCount').value = inputs.crewCount;
-                    if(inputs.estimateDay) document.getElementById('estimateDay').value = inputs.estimateDay;
-                    if(inputs.startTime) document.getElementById('startTime').value = inputs.startTime;
-                    if(inputs.endTime) document.getElementById('endTime').value = inputs.endTime;
-                    if(inputs.intervalDuration) document.getElementById('intervalDuration').value = inputs.intervalDuration;
-                } catch (e) {
-                    console.error("Erro ao carregar inputs salvos", e);
-                }
+                    ['estimatedBoxes', 'crewCount', 'estimateDay', 'startTime', 'endTime', 'intervalDuration'].forEach(id => {
+                        if(inputs[id]) document.getElementById(id).value = inputs[id];
+                    });
+                } catch (e) { console.error("Erro ao carregar inputs", e); }
             }
         }
 
-        // --- FUNÇÕES DE OPERAÇÃO DA LISTA E FORMULÁRIO ---
-
-        function updateCommercialInput() {
-            const variety = document.getElementById('variety').value;
-            const wrapper = document.getElementById('commercialVarietyWrapper');
-            
-            if (variety === 'Brócolis') {
-                wrapper.innerHTML = `
-                    <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Var. Comercial</label>
-                    <select id="commercialVariety" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white">
-                        <option value="">Selecione...</option>
-                        <option value="BRO 68 Syngenta">BRO 68 Syngenta</option>
-                        <option value="Master TSV">Master TSV</option>
-                        <option value="Sakata Jiraya F1">Sakata Jiraya F1</option>
-                        <option value="PHAR LAP">PHAR LAP</option>
-                    </select>
-                `;
-            } else if (variety === 'Couve-Flor') {
-                wrapper.innerHTML = `
-                    <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Var. Comercial</label>
-                    <select id="commercialVariety" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white">
-                        <option value="">Selecione...</option>
-                        <option value="Vereda">Vereda</option>
-                        <option value="Copacabana">Copacabana</option>
-                        <option value="Tirsuli">Tirsuli</option>
-                        <option value="SF-1758 F1">SF-1758 F1</option>
-                        <option value="Champagne Snow">Champagne Snow</option>
-                        <option value="Serena">Serena</option>
-                        <option value="Supremo">Supremo</option>
-                    </select>
-                `;
+        // --- LÓGICA DE ETAPAS ---
+        function toggleDetailsField() {
+            const checkbox = document.getElementById('hasStages');
+            const container = document.getElementById('detailsContainer');
+            if (checkbox.checked) {
+                container.classList.remove('hidden');
+                if (document.getElementById('stagesList').children.length === 0) addStageRow();
             } else {
-                wrapper.innerHTML = `
-                    <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Var. Comercial</label>
-                    <input type="text" id="commercialVariety" placeholder="Ex: Avenger" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
-                `;
+                container.classList.add('hidden');
             }
         }
 
-        function clearBlockForm() {
-            document.getElementById('talhao').value = '';
-            document.getElementById('startDate').value = '';
-            document.getElementById('date').value = '';
-            document.getElementById('plants').value = '';
-            document.getElementById('totalUnits').value = '';
-            document.getElementById('boxes').value = '';
-            document.getElementById('dailyUnits').value = '';
+        function addStageRow(label = '', value = '') {
+            const container = document.getElementById('stagesList');
+            const rowId = 'stage-' + Date.now();
             
-            const varietySelect = document.getElementById('variety');
-            varietySelect.selectedIndex = 0;
-            updateCommercialInput(); 
+            if (!label) {
+                const startDateVal = document.getElementById('startDate').value;
+                let weekNum = 1;
+                if (startDateVal) weekNum = getWeekNumber(new Date(startDateVal));
+                
+                const existingLabels = Array.from(container.querySelectorAll('.stage-label')).map(i => i.value.trim());
+                while (existingLabels.includes(`Semana ${weekNum}`)) weekNum++;
+                label = `Semana ${weekNum}`;
+            }
 
-            editingIndex = -1;
-            const submitBtn = document.getElementById('submitBtn');
-            const formTitle = document.getElementById('formTitle');
-            const formContainer = document.getElementById('formContainer');
-
-            submitBtn.innerHTML = '<i data-lucide="plus-circle" class="w-4 h-4"></i> <span>Adicionar ao Relatório</span>';
-            submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-            submitBtn.classList.add('bg-slate-800', 'hover:bg-slate-900');
-            
-            formTitle.innerHTML = '<i data-lucide="file-plus" class="text-emerald-600"></i> Adicionar Bloco';
-            formContainer.classList.remove('border-blue-300', 'ring-2', 'ring-blue-100');
-            
+            const div = document.createElement('div');
+            div.className = "flex gap-2 items-center";
+            div.id = rowId;
+            div.innerHTML = `
+                <div class="flex-1"><input type="text" value="${label}" class="stage-label w-full p-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Semana X"></div>
+                <div class="w-1/3"><input type="text" value="${value}" oninput="formatNumberInput(this)" class="stage-value w-full p-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Qtd"></div>
+                <button type="button" onclick="document.getElementById('${rowId}').remove()" class="text-red-400 hover:text-red-600 p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
+            `;
+            container.appendChild(div);
             lucide.createIcons();
         }
 
-        function editItem(index) {
-            const item = harvestData[index];
-            editingIndex = index; 
+        function updateDetailsFromRows() {
+            const rows = document.querySelectorAll('#stagesList div[id^="stage-"]');
+            let text = "";
+            rows.forEach(row => {
+                const label = row.querySelector('.stage-label').value;
+                const val = row.querySelector('.stage-value').value;
+                if (label || val) text += `${label}: ${val}\n`;
+            });
+            document.getElementById('details').value = text.trim();
+        }
 
-            document.getElementById('talhao').value = item.talhao;
-            document.getElementById('variety').value = item.variety;
-            updateCommercialInput(); 
-            document.getElementById('commercialVariety').value = item.commercialVariety;
-
-            if (item.date) document.getElementById('date').value = item.date.split('/').reverse().join('-');
-            if (item.startDate) document.getElementById('startDate').value = item.startDate.split('/').reverse().join('-');
-
-            document.getElementById('plants').value = item.plants;
-            document.getElementById('totalUnits').value = item.totalUnits;
-            document.getElementById('boxes').value = item.boxes;
-            document.getElementById('dailyUnits').value = item.dailyUnits;
-
-            const submitBtn = document.getElementById('submitBtn');
-            const formTitle = document.getElementById('formTitle');
-            const formContainer = document.getElementById('formContainer');
-
-            submitBtn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Alterações</span>';
-            submitBtn.classList.remove('bg-slate-800', 'hover:bg-slate-900');
-            submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-
-            formTitle.innerHTML = '<i data-lucide="pencil" class="text-blue-600"></i> Editando Bloco';
-            formContainer.classList.add('border-blue-300', 'ring-2', 'ring-blue-100');
-
-            formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // --- FORMULÁRIO ---
+        function updateCommercialInput() {
+            const variety = document.getElementById('variety').value;
+            const wrapper = document.getElementById('commercialVarietyWrapper');
+            let html = `<label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Var. Comercial</label>`;
             
-            renderList();
+            if (variety === 'Brócolis') {
+                html += `<select id="commercialVariety" class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white"><option value="">Selecione...</option><option value="BRO 68 Syngenta">BRO 68 Syngenta</option><option value="Master TSV">Master TSV</option><option value="Sakata Jiraya F1">Sakata Jiraya F1</option><option value="PHAR LAP">PHAR LAP</option></select>`;
+            } else if (variety === 'Couve-Flor') {
+                html += `<select id="commercialVariety" class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white"><option value="">Selecione...</option><option value="Vereda">Vereda</option><option value="Copacabana">Copacabana</option><option value="Tirsuli">Tirsuli</option><option value="SF-1758 F1">SF-1758 F1</option><option value="Champagne Snow">Champagne Snow</option><option value="Serena">Serena</option><option value="Supremo">Supremo</option></select>`;
+            } else {
+                html += `<input type="text" id="commercialVariety" placeholder="Ex: Avenger" class="w-full p-2 border border-slate-300 rounded-lg text-sm">`;
+            }
+            wrapper.innerHTML = html;
+        }
+
+        function clearBlockForm() {
+            ['talhao','startDate','date','plants','totalUnits','boxes','dailyUnits','details'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('stagesList').innerHTML = '';
+            document.getElementById('hasStages').checked = false;
+            toggleDetailsField();
+            document.getElementById('variety').selectedIndex = 0;
+            updateCommercialInput();
+            editingIndex = -1;
+            
+            const btn = document.getElementById('submitBtn');
+            btn.innerHTML = '<i data-lucide="plus-circle" class="w-4 h-4"></i> <span>Adicionar ao Relatório</span>';
+            btn.classList.replace('bg-blue-600', 'bg-slate-800');
+            btn.classList.replace('hover:bg-blue-700', 'hover:bg-slate-900');
+            document.getElementById('formTitle').innerHTML = '<i data-lucide="file-plus" class="text-emerald-600"></i> Adicionar Bloco';
+            document.getElementById('formContainer').classList.remove('border-blue-300', 'ring-2', 'ring-blue-100');
             lucide.createIcons();
         }
 
         function addItem(e) {
             e.preventDefault();
-
+            updateDetailsFromRows();
             const plantsRaw = document.getElementById('plants').value;
             const totalUnitsRaw = document.getElementById('totalUnits').value;
-            const startDateVal = document.getElementById('startDate').value;
-            const dateVal = document.getElementById('date').value; 
-
-            const plantsVal = parsePTBRNumber(plantsRaw);
-            const totalUnitsVal = parsePTBRNumber(totalUnitsRaw);
-            let calculatedPercentage = 0;
-            if (plantsVal > 0) {
-                calculatedPercentage = Math.round((totalUnitsVal / plantsVal) * 100);
-            }
-
-            const calculatedDays = calculateDaysFromStart(startDateVal);
-            const formattedStartDate = formatDateBR(startDateVal);
-            const formattedDate = formatDateBR(dateVal);
-
-            const newItem = {
+            
+            const item = {
                 talhao: document.getElementById('talhao').value,
                 variety: document.getElementById('variety').value,
                 commercialVariety: document.getElementById('commercialVariety').value,
-                percentage: calculatedPercentage, 
-                startDate: formattedStartDate,    
-                date: formattedDate, 
-                plants: plantsRaw, 
+                percentage: parsePTBRNumber(plantsRaw) > 0 ? Math.round((parsePTBRNumber(totalUnitsRaw) / parsePTBRNumber(plantsRaw)) * 100) : 0,
+                startDate: formatDateBR(document.getElementById('startDate').value),
+                date: formatDateBR(document.getElementById('date').value),
+                plants: plantsRaw,
                 dailyUnits: document.getElementById('dailyUnits').value,
                 boxes: document.getElementById('boxes').value,
-                totalUnits: totalUnitsRaw, 
-                days: calculatedDays, 
+                totalUnits: totalUnitsRaw,
+                days: calculateDaysFromStart(document.getElementById('startDate').value),
+                details: document.getElementById('details').value
             };
 
-            if (editingIndex >= 0) {
-                harvestData[editingIndex] = newItem;
-                clearBlockForm(); 
-            } else {
-                harvestData.push(newItem);
-                clearBlockForm(); 
-            }
+            if (editingIndex >= 0) harvestData[editingIndex] = item;
+            else harvestData.push(item);
             
-            saveData(); // AJUSTE: Salvar após adicionar/editar
+            saveData();
+            clearBlockForm();
             renderReport();
             renderList();
         }
 
-        function removeItem(index) {
-            if (editingIndex === index) {
-                clearBlockForm();
+        function editItem(index) {
+            const item = harvestData[index];
+            editingIndex = index;
+            document.getElementById('talhao').value = item.talhao;
+            document.getElementById('variety').value = item.variety;
+            updateCommercialInput();
+            document.getElementById('commercialVariety').value = item.commercialVariety;
+            
+            if(item.date) document.getElementById('date').value = item.date.split('/').reverse().join('-');
+            if(item.startDate) document.getElementById('startDate').value = item.startDate.split('/').reverse().join('-');
+            
+            ['plants','totalUnits','boxes','dailyUnits'].forEach(k => document.getElementById(k).value = item[k]);
+            
+            document.getElementById('details').value = item.details || '';
+            const stagesList = document.getElementById('stagesList');
+            stagesList.innerHTML = '';
+            if (item.details && item.details.trim()) {
+                document.getElementById('hasStages').checked = true;
+                item.details.split('\n').forEach(line => {
+                    const [l, v] = line.split(':');
+                    addStageRow(l?.trim(), v?.trim());
+                });
+            } else {
+                document.getElementById('hasStages').checked = false;
             }
-            else if (editingIndex > index) {
-                editingIndex--;
-            }
+            toggleDetailsField();
 
+            const btn = document.getElementById('submitBtn');
+            btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Alterações</span>';
+            btn.classList.replace('bg-slate-800', 'bg-blue-600');
+            btn.classList.replace('hover:bg-slate-900', 'hover:bg-blue-700');
+            document.getElementById('formTitle').innerHTML = '<i data-lucide="pencil" class="text-blue-600"></i> Editando Bloco';
+            document.getElementById('formContainer').classList.add('border-blue-300', 'ring-2', 'ring-blue-100');
+            document.getElementById('formContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            renderList();
+            lucide.createIcons();
+        }
+
+        function removeItem(index) {
+            if (editingIndex === index) clearBlockForm();
+            else if (editingIndex > index) editingIndex--;
             harvestData.splice(index, 1);
-            saveData(); // AJUSTE: Salvar após remover
+            saveData();
             renderReport();
             renderList();
         }
@@ -611,222 +538,188 @@
         function clearAll() {
             if(confirm('Tem certeza?')) {
                 harvestData = [];
-                saveData(); // AJUSTE: Salvar após limpar
-                clearBlockForm(); 
+                saveData();
+                clearBlockForm();
                 renderReport();
                 renderList();
             }
         }
 
-        // --- FUNÇÕES DE RENDERIZAÇÃO ---
-
         function renderList() {
             const list = document.getElementById('itemsList');
-            list.innerHTML = '';
-
-            if (harvestData.length === 0) {
-                const emptyLi = document.createElement('li');
-                emptyLi.className = "text-center text-slate-400 italic py-2";
-                emptyLi.innerText = "Nenhum bloco adicionado.";
-                list.appendChild(emptyLi);
-                return;
-            }
-
+            list.innerHTML = harvestData.length ? '' : '<li class="text-center text-slate-400 italic py-2">Nenhum bloco adicionado.</li>';
             harvestData.forEach((item, index) => {
-                const li = document.createElement('li');
-                const activeClass = (index === editingIndex) ? 'border-blue-400 bg-blue-50 ring-1 ring-blue-200' : 'border-slate-100 bg-slate-50';
-                const shortDate = item.date ? item.date.substring(0, 5) : '';
-
-                li.className = `flex justify-between items-center p-2 rounded border ${activeClass} transition-all`;
-                li.innerHTML = `
-                    <span><b>#${item.talhao}</b> - ${item.variety} <span class="text-slate-500 font-medium">(${shortDate})</span> ${index === editingIndex ? '<span class="text-[10px] text-blue-600 font-bold ml-2">(Editando)</span>' : ''}</span>
-                    <div class="flex items-center">
-                        <button onclick="editItem(${index})" class="text-blue-500 hover:bg-blue-100 p-1.5 rounded-md mr-1 transition-colors" title="Editar">
-                            <i data-lucide="pencil" width="14"></i>
-                        </button>
-                        <button onclick="removeItem(${index})" class="text-red-500 hover:bg-red-100 p-1.5 rounded-md transition-colors" title="Excluir">
-                            <i data-lucide="trash-2" width="14"></i>
-                        </button>
-                    </div>
-                `;
-                list.appendChild(li);
+                const active = index === editingIndex ? 'border-blue-400 bg-blue-50 ring-1' : 'border-slate-100 bg-slate-50';
+                list.innerHTML += `
+                    <li class="flex justify-between items-center p-2 rounded border ${active} transition-all">
+                        <span><b>#${item.talhao}</b> - ${item.variety} <span class="text-slate-500 text-xs">(${item.date.substring(0,5)})</span> ${index === editingIndex ? '<span class="text-[10px] text-blue-600 font-bold ml-2">(Editando)</span>' : ''}</span>
+                        <div class="flex items-center">
+                            <button onclick="editItem(${index})" class="text-blue-500 hover:bg-blue-100 p-1.5 rounded-md mr-1"><i data-lucide="pencil" width="14"></i></button>
+                            <button onclick="removeItem(${index})" class="text-red-500 hover:bg-red-100 p-1.5 rounded-md"><i data-lucide="trash-2" width="14"></i></button>
+                        </div>
+                    </li>`;
             });
             lucide.createIcons();
         }
 
         function renderReport() {
-            // AJUSTE: Salvar inputs sempre que renderizar (significa que algo mudou nos inputs ou lista)
             saveInputs();
-
             const container = document.getElementById('reportContent');
-            const footerContainer = document.getElementById('operationalFooter');
+            const footer = document.getElementById('operationalFooter');
+            let sumBoxes = 0, sumDailyUnits = 0;
 
-            container.innerHTML = '';
-            let sumBoxes = 0;
-            let sumDailyUnits = 0;
-
-            if (harvestData.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs italic leading-relaxed h-full flex items-center justify-center">Adicione dados no formulário ao lado para visualizar.</div>`;
+            if (!harvestData.length) {
+                container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs italic">Adicione dados no formulário ao lado.</div>`;
             } else {
+                container.innerHTML = '';
                 harvestData.forEach(item => {
-                    let progressColor = 'bg-yellow-500';
-                    let textColor = 'text-slate-600';
-                    if (item.percentage >= 90) { progressColor = 'bg-emerald-500'; textColor = 'text-emerald-600'; }
-                    else if (item.percentage >= 70) { progressColor = 'bg-blue-500'; }
-
-                    const displayVariety = item.commercialVariety ? `${item.variety} - ${item.commercialVariety}` : item.variety;
-                    const remainingPercentage = Math.max(0, 100 - item.percentage);
-                    
+                    let progressColor = item.percentage >= 90 ? 'bg-emerald-500' : (item.percentage >= 70 ? 'bg-blue-500' : 'bg-yellow-500');
+                    let textColor = item.percentage >= 90 ? 'text-emerald-600' : 'text-slate-600';
                     sumBoxes += parsePTBRNumber(item.boxes);
                     sumDailyUnits += parsePTBRNumber(item.dailyUnits);
 
-                    const html = `
-                    <div class="p-5 hover:bg-slate-50 transition-colors group">
-                        
-                        <div class="flex items-center gap-3 mb-3">
-                            <span class="text-base font-bold text-slate-800 leading-normal">
-                                Bloco ${item.talhao}
-                            </span>
-                            <div class="flex items-center gap-1">
-                                <span class="text-[10px] font-bold text-slate-600 uppercase leading-normal tracking-wide">${displayVariety}</span>
+                    // --- LAYOUT LADO A LADO PARA DETALHES ---
+                    let plantedBlockHtml = '';
+                    if (item.details && item.details.trim()) {
+                        const lines = item.details.split('\n');
+                        const detailsListHtml = lines.map(line => {
+                            const [l, v] = line.split(':');
+                            return `
+                            <div class="relative pl-3">
+                                <!-- Linha Ramo: espessura aumentada para 2px para evitar sumir no PDF -->
+                                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-[2px] bg-slate-300"></div>
+                                <!-- AJUSTE: Alterado de justify-between para justify-start gap-3 -->
+                                <!-- Isso aproxima o Nome do Valor -->
+                                <div class="w-full py-1 px-2 text-[10px] text-slate-600 flex justify-start gap-3 items-center">
+                                    <span class="font-medium text-slate-500 whitespace-nowrap">${l}</span>
+                                    ${v ? `<span class="font-bold text-slate-800">${v}</span>` : ''}
+                                </div>
+                            </div>`;
+                        }).join('');
+
+                        plantedBlockHtml = `
+                        <div class="grid grid-cols-1 gap-2">
+                            <div class="flex flex-row items-stretch bg-slate-50 rounded-xl overflow-hidden border border-slate-100 min-h-[80px]">
+                                <!-- ESQUERDA: FONTE -->
+                                <div class="relative flex flex-col items-center justify-center p-2 w-1/3 bg-slate-50 shrink-0 z-10 border-r border-slate-100">
+                                     <div class="mb-1 text-slate-400"><i data-lucide="leaf" width="14"></i></div>
+                                     <span class="text-xs font-bold text-slate-700">${item.plants}</span>
+                                     <span class="text-[8px] uppercase tracking-wider font-semibold text-slate-400 mt-1 text-center leading-tight">QTD. PLANTADA</span>
+                                     
+                                     <!-- Ponto de Conexão (Bolinha Maior) -->
+                                     <div class="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-300 rounded-full translate-x-[50%] z-20"></div>
+                                </div>
+                                
+                                <!-- DIREITA: ALVOS -->
+                                <div class="flex-1 py-2 pr-2 pl-10 flex flex-col justify-center relative bg-white/50">
+                                     <!-- Linha Horizontal Longa (2px) -->
+                                     <div class="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-[2px] bg-slate-300"></div>
+                                     
+                                     <!-- Espinha Dorsal Vertical (2px) -->
+                                     <div class="absolute left-10 top-3 bottom-3 w-[2px] bg-slate-300"></div>
+                                     
+                                     <!-- Lista com gap para os itens -->
+                                     <div class="flex flex-col gap-1">
+                                        ${detailsListHtml}
+                                     </div>
+                                </div>
                             </div>
+                        </div>`;
+                    } else {
+                        // Layout Padrão
+                        plantedBlockHtml = `
+                        <div class="grid grid-cols-1 gap-2">
+                            <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50">
+                                <div class="mb-1 text-slate-400"><i data-lucide="leaf" width="14"></i></div>
+                                <span class="text-xs font-bold text-slate-700">${item.plants}</span>
+                                <span class="text-[9px] uppercase tracking-wider font-semibold text-slate-400 mt-1 text-center leading-tight">QTD. PLANTADA</span>
+                            </div>
+                        </div>`;
+                    }
+
+                    container.innerHTML += `
+                    <div class="p-5 hover:bg-slate-50 transition-colors group">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-base font-bold text-slate-800">Bloco ${item.talhao}</span>
+                            <span class="text-[10px] font-bold text-slate-600 uppercase tracking-wide">${item.commercialVariety ? `${item.variety} - ${item.commercialVariety}` : item.variety}</span>
                         </div>
 
                         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 mb-4">
                             <div class="flex justify-between items-end mb-1">
                                 <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Colhido</div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-xs font-medium text-slate-500">
-                                        Total: <span class="font-bold text-slate-700">${item.totalUnits} un.</span>
-                                    </span>
+                                    <span class="text-xs font-medium text-slate-500">Total Acumulado: <span class="font-bold text-slate-700">${item.totalUnits} un.</span></span>
                                     <span class="text-slate-300 text-xs">|</span>
-                                    <span class="text-xs font-bold text-slate-400">
-                                        Falta: <span class="text-red-400">${remainingPercentage}%</span>
-                                    </span>
+                                    <span class="text-xs font-bold text-slate-400">Falta: <span class="text-red-400">${Math.max(0, 100 - item.percentage)}%</span></span>
                                 </div>
                             </div>
-                            
                             <div class="flex items-center gap-3">
-                                <div class="flex-1 h-2.5 bg-slate-200 rounded-full overflow-hidden">
-                                    <div class="h-full rounded-full ${progressColor}" style="width: ${item.percentage}%"></div>
-                                </div>
+                                <div class="flex-1 h-2.5 bg-slate-200 rounded-full overflow-hidden"><div class="h-full rounded-full ${progressColor}" style="width: ${item.percentage}%"></div></div>
                                 <span class="text-sm font-extrabold ${textColor}">${item.percentage}%</span>
                             </div>
+                            <div class="text-[11px] font-bold text-blue-600 mt-2">Dias de Produção: ${item.days} dias</div>
                         </div>
 
                         <div class="flex flex-col gap-3"> 
-                            <div class="grid grid-cols-1 gap-2">
-                                ${createStatItem('leaf', item.plants, 'Transplantio')}
-                            </div>
-                            
+                            ${plantedBlockHtml}
                             <div class="grid grid-cols-2 gap-2">
-                                 <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50">
-                                    <div class="mb-1 text-slate-400"><i data-lucide="calendar" width="14"></i></div>
-                                    <span class="text-xs font-bold text-slate-700">${item.date}</span>
-                                    <span class="text-[9px] uppercase tracking-wider font-semibold text-slate-400 mt-1">DAT</span>
-                                </div>
-                                <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50">
-                                    <div class="mb-1 text-slate-400"><i data-lucide="calendar-days" width="14"></i></div>
-                                    <span class="text-xs font-bold text-slate-700">${item.startDate}</span>
-                                    <span class="text-[9px] uppercase tracking-wider font-semibold text-slate-400 mt-1">Início</span>
-                                </div>
+                                ${createStatItem('calendar', item.date, 'DATA PLANTIO')}
+                                ${createStatItem('calendar-days', item.startDate, 'DATA DE INÍCIO COLHEITA')}
                             </div>
-
                             <div class="grid grid-cols-2 gap-2">
-                                ${createStatItem('box', item.boxes, 'Caixas', true)}
-                                ${createStatItem('package', item.dailyUnits, 'Unidades')}
+                                ${createStatItem('box', item.boxes, 'CAIXAS (HOJE)')}
+                                ${createStatItem('package', item.dailyUnits, 'UNIDADES (HOJE)')}
                             </div>
                         </div>
-
-                        <div class="mt-4 flex items-center justify-between text-[10px] text-slate-400 font-medium bg-slate-50/50 px-2 py-2 rounded-lg">
-                            <span class="flex items-center gap-1">
-                                Dias de Produção: ${item.days} dias
-                            </span>
-                        </div>
-                    </div>
-                    `;
-                    container.innerHTML += html;
+                    </div>`;
                 });
             }
 
-            const crewInput = document.getElementById('crewCount').value;
-            const crew = crewInput ? (parseInt(crewInput) === 1 ? `${crewInput} Colaborador` : `${crewInput} Colaboradores`) : '-';
-            const est = document.getElementById('estimatedBoxes').value || '-';
-            const estDay = document.getElementById('estimateDay').value || ''; 
-            const start = document.getElementById('startTime').value || '--:--';
-            const end = document.getElementById('endTime').value || '--:--';
-            const interval = document.getElementById('intervalDuration').value || '0';
+            const crew = document.getElementById('crewCount').value ? (parseInt(document.getElementById('crewCount').value) === 1 ? `${document.getElementById('crewCount').value} Colaborador` : `${document.getElementById('crewCount').value} Colaboradores`) : '-';
+            const estDay = document.getElementById('estimateDay').value || '';
             
-            const totalHours = calculateTimeDifference(start, end, interval);
-            const sumBoxesStr = sumBoxes.toLocaleString('pt-BR');
-            const sumDailyUnitsStr = sumDailyUnits.toLocaleString('pt-BR');
-
-            const estimateLabel = estDay ? `Estimativas de Caixas (${estDay}):` : 'Estimativas de Caixas:';
-
-            footerContainer.innerHTML = `
-                <!-- NOVO PAINEL DE TOTAIS -->
+            footer.innerHTML = `
                 <div class="bg-emerald-50 rounded-lg p-4 mb-4 flex justify-around items-center">
                     <div class="text-center">
-                        <!-- Revertido para o original (verde esmeralda) -->
-                        <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">Total Caixas</div>
-                        <div class="text-xl font-extrabold text-emerald-800">${sumBoxesStr}</div>
+                        <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">TOTAL DE CAIXAS (HOJE)</div>
+                        <div class="text-xl font-extrabold text-emerald-800">${sumBoxes.toLocaleString('pt-BR')}</div>
                     </div>
                     <div class="w-px h-10 bg-emerald-200"></div>
                     <div class="text-center">
-                        <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">Total Unidades</div>
-                        <div class="text-xl font-extrabold text-emerald-800">${sumDailyUnitsStr}</div>
+                        <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">TOTAL DE UNIDADES (HOJE)</div>
+                        <div class="text-xl font-extrabold text-emerald-800">${sumDailyUnits.toLocaleString('pt-BR')}</div>
                     </div>
                 </div>
-
-                <!-- LINHA EQUIPE - Centralizada agora que está sozinha -->
                 <div class="flex justify-center items-center mb-4 pb-4 border-b border-slate-200 border-dashed">
-                     <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-slate-600">Equipe: <span class="text-slate-800 text-sm font-extrabold">${crew}</span></span>
-                    </div>
+                     <span class="text-xs font-bold text-slate-600">Equipe de Colheita: <span class="text-slate-800 text-sm font-extrabold">${crew}</span></span>
                 </div>
                 
-                <!-- GRID DE TEMPOS -->
-                <div class="grid grid-cols-4 gap-2 text-[10px] text-slate-500 font-medium mb-4 mt-2">
-                    <div class="flex flex-col items-center">
-                        <span class="text-green-600 font-bold mb-0.5 uppercase tracking-wide">Início</span>
-                        <span class="text-slate-700 font-bold text-xs">${start}</span>
-                    </div>
-                    <div class="flex flex-col items-center border-l border-slate-200">
-                        <span class="text-red-600 font-bold mb-0.5 uppercase tracking-wide">Final</span>
-                        <span class="text-slate-700 font-bold text-xs">${end}</span>
-                    </div>
-                    <div class="flex flex-col items-center border-l border-slate-200">
-                        <span class="text-amber-600 font-bold mb-0.5 uppercase tracking-wide">Interv.</span>
-                        <span class="text-slate-700 font-bold text-xs">${interval} min</span>
-                    </div>
-                    <div class="flex flex-col items-center border-l border-slate-200">
-                        <span class="text-emerald-700 font-bold mb-0.5 uppercase tracking-wide">Total</span>
-                        <span class="text-slate-900 font-extrabold text-xs">${totalHours} h</span>
-                    </div>
+                <!-- AJUSTE: Título adicionado para identificar a seção -->
+                <div class="text-center mb-2">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Horas de Colheita</span>
                 </div>
 
-                <!-- COR ALTERADA: Frase completa com #00838f -->
-                <div class="flex justify-center items-center pt-4 border-t border-slate-100">
-                    <span class="text-xl font-bold text-[#00838f]">${estimateLabel} <span class="text-[#00838f] text-2xl font-extrabold">${est}</span></span>
+                <div class="grid grid-cols-4 gap-2 text-[10px] text-slate-500 font-medium mb-1">
+                    <div class="flex flex-col items-center"><span class="text-green-600 font-bold mb-0.5 uppercase">Início</span><span class="text-slate-700 font-bold text-xs">${document.getElementById('startTime').value || '--:--'}</span></div>
+                    <div class="flex flex-col items-center border-l border-slate-200"><span class="text-red-600 font-bold mb-0.5 uppercase">Final</span><span class="text-slate-700 font-bold text-xs">${document.getElementById('endTime').value || '--:--'}</span></div>
+                    <!-- AJUSTE: Alterado de "Interv." para "INTERVALO" -->
+                    <div class="flex flex-col items-center border-l border-slate-200"><span class="text-amber-600 font-bold mb-0.5 uppercase">INTERVALO</span><span class="text-slate-700 font-bold text-xs">${document.getElementById('intervalDuration').value || '0'} min</span></div>
+                    <div class="flex flex-col items-center border-l border-slate-200"><span class="text-emerald-700 font-bold mb-0.5 uppercase">Total</span><span class="text-slate-900 font-extrabold text-xs">${calculateTimeDifference(document.getElementById('startTime').value, document.getElementById('endTime').value, document.getElementById('intervalDuration').value)} h</span></div>
                 </div>
-            `;
-
+                
+                <div class="flex justify-center items-center pt-4 border-t border-slate-100 mt-2">
+                    <span class="text-lg font-bold text-[#00838f]">${estDay ? `Estimativas de Caixas para ${estDay}:` : 'Estimativas de Caixas:'} <span class="text-[#00838f] text-2xl font-extrabold">${document.getElementById('estimatedBoxes').value || '-'}</span></span>
+                </div>`;
             lucide.createIcons();
         }
 
-        function createStatItem(iconName, value, label, highlight = false) {
-            const textColor = highlight ? 'text-emerald-800' : 'text-slate-700';
-            const labelColor = highlight ? 'text-emerald-600/70' : 'text-slate-400';
-            const iconColor = highlight ? 'text-emerald-600' : 'text-slate-400';
-            const bgColor = highlight ? 'bg-emerald-50/50' : 'bg-slate-50';
-
+        function createStatItem(iconName, value, label) {
             return `
-            <div class="flex flex-col items-center justify-center p-3 rounded-xl ${bgColor}">
-                <div class="mb-1 ${iconColor} icon-fix"><i data-lucide="${iconName}" width="14"></i></div>
-                <span class="text-xs font-bold ${textColor}">${value}</span>
-                <span class="text-[9px] uppercase tracking-wider font-semibold ${labelColor} mt-1 text-center leading-tight">${label}</span>
-            </div>
-            `;
+            <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50">
+                <div class="mb-1 text-slate-400 icon-fix"><i data-lucide="${iconName}" width="14"></i></div>
+                <span class="text-xs font-bold text-slate-700">${value}</span>
+                <span class="text-[9px] uppercase tracking-wider font-semibold text-slate-400 mt-1 text-center leading-tight">${label}</span>
+            </div>`;
         }
 
         async function downloadPDF() {
@@ -834,56 +727,17 @@
             const element = document.getElementById('report-card');
             const originalText = document.querySelector('button[onclick="downloadPDF()"] span').innerText;
             document.querySelector('button[onclick="downloadPDF()"] span').innerText = "Gerando PDF...";
-
             try {
-                const canvas = await html2canvas(element, {
-                    scale: 2, 
-                    useCORS: true, 
-                    allowTaint: true,
-                    scrollY: -window.scrollY,
-                    windowWidth: 480, 
-                    onclone: (clonedDoc) => {
-                        const clonedElement = clonedDoc.getElementById('report-card');
-                        const clonedContent = clonedDoc.getElementById('reportContent');
-
-                        const style = clonedDoc.createElement('style');
-                        style.innerHTML = `
-                            * { 
-                                -webkit-font-smoothing: antialiased !important; 
-                                -moz-osx-font-smoothing: grayscale !important; 
-                            }
-                        `;
-                        clonedDoc.head.appendChild(style);
-
-                        if (clonedElement) {
-                            clonedElement.style.width = '450px';
-                            clonedElement.style.maxWidth = 'none';
-                            clonedElement.style.height = 'auto'; 
-                            clonedElement.style.margin = '0';
-                            clonedElement.style.borderRadius = '0'; 
-                            clonedElement.style.border = 'none'; 
-                            clonedElement.style.boxShadow = 'none';
-                            clonedElement.style.overflow = 'visible';
-                        }
-
-                        if (clonedContent) {
-                            clonedContent.style.height = 'auto';
-                            clonedContent.style.overflow = 'visible';
-                            clonedContent.style.flex = 'none';
-                        }
-                    }
-                });
-
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = canvas.width;
-                const imgHeight = canvas.height;
-
-                const pdf = new jsPDF({
-                    orientation: 'p',
-                    unit: 'px',
-                    format: [imgWidth, imgHeight]
-                });
-
+                const canvas = await html2canvas(element, { scale: 2, useCORS: true, allowTaint: true, scrollY: -window.scrollY, windowWidth: 480, onclone: (doc) => {
+                    const el = doc.getElementById('report-card');
+                    const content = doc.getElementById('reportContent');
+                    if (el) { el.style.width = '450px'; el.style.margin = '0'; el.style.boxShadow = 'none'; }
+                    if (content) { content.style.height = 'auto'; content.style.overflow = 'visible'; }
+                }});
+                const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height] });
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height);
+                
+                // --- CORREÇÃO DO NOME DO ARQUIVO ---
                 const now = new Date();
                 const daysOfWeek = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
                 const dayOfWeek = daysOfWeek[now.getDay()];
@@ -891,19 +745,15 @@
                 const day = String(now.getDate()).padStart(2, '0');
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const year = now.getFullYear();
-                const weekNumber = getWeekNumber(now); 
+                const weekNumber = getWeekNumber(now); // Reutiliza a função existente
 
+                // Nome completo restaurado
                 const filename = `Resumo Colheita - ${dayOfWeek} ${day}-${month}-${year} Semana ${weekNumber} - SPG Oásis.pdf`;
-
-                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                
                 pdf.save(filename);
 
-            } catch (err) {
-                alert("Erro ao gerar PDF: " + err);
-                console.error(err);
-            } finally {
-                document.querySelector('button[onclick="downloadPDF()"] span').innerText = originalText;
-            }
+            } catch (err) { alert("Erro ao gerar PDF: " + err); } 
+            finally { document.querySelector('button[onclick="downloadPDF()"] span').innerText = originalText; }
         }
     </script>
 </body>
