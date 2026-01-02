@@ -231,7 +231,7 @@
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-sm font-bold text-slate-700">Itens Gerados</h3>
-                    <button onclick="clearAll()" class="text-xs text-red-500 hover:text-red-700 font-bold underline">Limpar Tudo</button>
+                    <button id="clearAllBtn" onclick="clearAll()" class="text-xs text-red-500 hover:text-red-700 font-bold underline transition-all">Limpar Tudo</button>
                 </div>
                 <ul id="itemsList" class="space-y-2 text-sm text-slate-600">
                     <!-- JS -->
@@ -279,6 +279,7 @@
 
         let harvestData = JSON.parse(localStorage.getItem('spg_harvestData')) || [];
         let editingIndex = -1;
+        let clearConfirmTimer;
 
         lucide.createIcons();
         updateDynamicTitle(); 
@@ -550,12 +551,30 @@
         }
 
         function clearAll() {
-            if(confirm('Tem certeza?')) {
+            const btn = document.getElementById('clearAllBtn');
+            
+            if (btn.innerText === "Confirmar?") {
                 harvestData = [];
                 saveData();
                 clearBlockForm();
                 renderReport();
                 renderList();
+                
+                // Reset button state
+                btn.innerText = "Limpar Tudo";
+                btn.classList.remove("text-red-700", "underline");
+                btn.classList.add("text-red-500");
+                clearTimeout(clearConfirmTimer);
+            } else {
+                btn.innerText = "Confirmar?";
+                btn.classList.remove("text-red-500");
+                btn.classList.add("text-red-700", "underline");
+                
+                clearConfirmTimer = setTimeout(() => {
+                    btn.innerText = "Limpar Tudo";
+                    btn.classList.remove("text-red-700", "underline");
+                    btn.classList.add("text-red-500");
+                }, 3000);
             }
         }
 
@@ -765,7 +784,9 @@
                 const filename = `Resumo Colheita - ${dayOfWeek} ${day}-${month}-${year} Semana ${weekNumber} - SPG Oásis.pdf`;
                 pdf.save(filename);
 
-            } catch (err) { alert("Erro ao gerar PDF: " + err); } 
+            } catch (err) { 
+                console.error("Erro ao gerar PDF:", err);
+            } 
             finally { document.querySelector('button[onclick="downloadPDF()"] span').innerText = originalText; }
         }
     </script>
