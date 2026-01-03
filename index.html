@@ -132,11 +132,12 @@
                             <option value="9">9</option>
                             <option value="10">10</option>
                             <option value="11">11</option>
-                            <option value="1 - B">1 - B</option>
-                            <option value="2 - B">2 - B</option>
-                            <option value="3 - B">3 - B</option>
-                            <option value="4 - B">4 - B</option>
-                            <option value="5 - B">5 - B</option>
+                            <!-- AJUSTE: Alterado de "1 - B"..."5 - B" para letras A, B, C, D, E -->
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                            <option value="E">E</option>
                         </select>
                     </div>
 
@@ -231,7 +232,7 @@
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-sm font-bold text-slate-700">Itens Gerados</h3>
-                    <button id="clearAllBtn" onclick="clearAll()" class="text-xs text-red-500 hover:text-red-700 font-bold underline transition-all">Limpar Tudo</button>
+                    <button onclick="clearAll()" class="text-xs text-red-500 hover:text-red-700 font-bold underline">Limpar Tudo</button>
                 </div>
                 <ul id="itemsList" class="space-y-2 text-sm text-slate-600">
                     <!-- JS -->
@@ -279,7 +280,6 @@
 
         let harvestData = JSON.parse(localStorage.getItem('spg_harvestData')) || [];
         let editingIndex = -1;
-        let clearConfirmTimer;
 
         lucide.createIcons();
         updateDynamicTitle(); 
@@ -551,30 +551,12 @@
         }
 
         function clearAll() {
-            const btn = document.getElementById('clearAllBtn');
-            
-            if (btn.innerText === "Confirmar?") {
+            if(confirm('Tem certeza?')) {
                 harvestData = [];
                 saveData();
                 clearBlockForm();
                 renderReport();
                 renderList();
-                
-                // Reset button state
-                btn.innerText = "Limpar Tudo";
-                btn.classList.remove("text-red-700", "underline");
-                btn.classList.add("text-red-500");
-                clearTimeout(clearConfirmTimer);
-            } else {
-                btn.innerText = "Confirmar?";
-                btn.classList.remove("text-red-500");
-                btn.classList.add("text-red-700", "underline");
-                
-                clearConfirmTimer = setTimeout(() => {
-                    btn.innerText = "Limpar Tudo";
-                    btn.classList.remove("text-red-700", "underline");
-                    btn.classList.add("text-red-500");
-                }, 3000);
             }
         }
 
@@ -784,9 +766,7 @@
                 const filename = `Resumo Colheita - ${dayOfWeek} ${day}-${month}-${year} Semana ${weekNumber} - SPG Oásis.pdf`;
                 pdf.save(filename);
 
-            } catch (err) { 
-                console.error("Erro ao gerar PDF:", err);
-            } 
+            } catch (err) { alert("Erro ao gerar PDF: " + err); } 
             finally { document.querySelector('button[onclick="downloadPDF()"] span').innerText = originalText; }
         }
     </script>
