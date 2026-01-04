@@ -132,7 +132,6 @@
                             <option value="9">9</option>
                             <option value="10">10</option>
                             <option value="11">11</option>
-                            <!-- AJUSTE: Alterado de "1 - B"..."5 - B" para letras A, B, C, D, E -->
                             <option value="A">A</option>
                             <option value="B">B</option>
                             <option value="C">C</option>
@@ -242,10 +241,11 @@
 
         <!-- PREVIEW -->
         <div class="w-full lg:w-2/3 flex flex-col bg-slate-200/50 p-4 rounded-3xl border border-slate-300/50 min-h-[calc(100vh-6rem)]">
+            <!-- AJUSTE: Cantos retos no report-card -->
             <div id="report-card" class="w-full flex-1 flex flex-col bg-white rounded-none shadow-2xl overflow-hidden border border-slate-100 relative">
                 
-                <!-- Cabeçalho -->
-                <div class="bg-gradient-to-br from-emerald-600 to-emerald-800 p-6 text-white relative overflow-hidden flex flex-col justify-start shrink-0 gap-3">
+                <!-- Cabeçalho (COM ANTIALISED FORÇADO) -->
+                <div class="bg-gradient-to-br from-emerald-600 to-emerald-800 p-6 text-white relative overflow-hidden flex flex-col justify-start shrink-0 gap-3 antialiased">
                     <img src="https://i.imgur.com/wEozr34.png" alt="Logo SPG" class="absolute top-4 right-4 w-20 h-20 z-0">
                     <div class="relative z-10 w-full pr-24"> 
                         <h2 id="reportTitle" class="text-base font-bold leading-snug tracking-normal"></h2>
@@ -601,8 +601,9 @@
                             const [l, v] = line.split(':');
                             return `
                             <div class="relative pl-3">
-                                <!-- Linha Ramo: espessura aumentada para 2px -->
+                                <!-- Linha Ramo: espessura aumentada para 2px para evitar sumir no PDF -->
                                 <div class="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-[2px] bg-slate-300"></div>
+                                <!-- AJUSTE: Sem borda/sombra para evitar glitch no PDF -->
                                 <div class="w-full py-1 px-2 text-[10px] text-slate-600 flex justify-start gap-3 items-center">
                                     <span class="font-medium text-slate-500 whitespace-nowrap">${l}</span>
                                     ${v ? `<span class="font-bold text-slate-800">${v}</span>` : ''}
@@ -709,6 +710,7 @@
                      <span class="text-xs font-bold text-slate-600">Equipe de Colheita: <span class="text-slate-800 text-sm font-extrabold">${crew}</span></span>
                 </div>
                 
+                <!-- AJUSTE: Título adicionado para identificar a seção -->
                 <div class="text-center mb-2">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Horas de Colheita</span>
                 </div>
@@ -716,6 +718,7 @@
                 <div class="grid grid-cols-4 gap-2 text-[10px] text-slate-500 font-medium mb-1">
                     <div class="flex flex-col items-center"><span class="text-green-600 font-bold mb-0.5 uppercase">Início</span><span class="text-slate-700 font-bold text-xs">${document.getElementById('startTime').value || '--:--'}</span></div>
                     <div class="flex flex-col items-center border-l border-slate-200"><span class="text-red-600 font-bold mb-0.5 uppercase">Final</span><span class="text-slate-700 font-bold text-xs">${document.getElementById('endTime').value || '--:--'}</span></div>
+                    <!-- AJUSTE: Alterado de "Interv." para "INTERVALO" -->
                     <div class="flex flex-col items-center border-l border-slate-200"><span class="text-amber-600 font-bold mb-0.5 uppercase">INTERVALO</span><span class="text-slate-700 font-bold text-xs">${document.getElementById('intervalDuration').value || '0'} min</span></div>
                     <div class="flex flex-col items-center border-l border-slate-200"><span class="text-emerald-700 font-bold mb-0.5 uppercase">Total</span><span class="text-slate-900 font-extrabold text-xs">${calculateTimeDifference(document.getElementById('startTime').value, document.getElementById('endTime').value, document.getElementById('intervalDuration').value)} h</span></div>
                 </div>
@@ -726,6 +729,7 @@
             lucide.createIcons();
         }
 
+        // --- FUNÇÃO ATUALIZADA: createStatItem com highlight ---
         function createStatItem(iconName, value, label, highlight = false) {
             const bgClass = highlight ? 'bg-emerald-50' : 'bg-slate-50';
             const iconClass = highlight ? 'text-emerald-600' : 'text-slate-400';
@@ -745,19 +749,60 @@
             const element = document.getElementById('report-card');
             const originalText = document.querySelector('button[onclick="downloadPDF()"] span').innerText;
             document.querySelector('button[onclick="downloadPDF()"] span').innerText = "Gerando PDF...";
+            
             try {
-                const canvas = await html2canvas(element, { scale: 2, useCORS: true, allowTaint: true, scrollY: -window.scrollY, windowWidth: 480, onclone: (doc) => {
-                    const el = doc.getElementById('report-card');
-                    const content = doc.getElementById('reportContent');
-                    if (el) { el.style.width = '450px'; el.style.margin = '0'; el.style.boxShadow = 'none'; }
-                    if (content) { content.style.height = 'auto'; content.style.overflow = 'visible'; }
-                }});
-                const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height] });
-                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height);
+                // 1. Configurar opções para captura de ALTA FIDELIDADE
+                const options = {
+                    scale: 3, // 3x a resolução original (Retina Quality)
+                    useCORS: true,
+                    allowTaint: true,
+                    scrollY: -window.scrollY,
+                    backgroundColor: '#ffffff', // Garante fundo branco
+                    onclone: (doc) => {
+                        const el = doc.getElementById('report-card');
+                        const content = doc.getElementById('reportContent');
+                        
+                        // Força estilos para renderização perfeita
+                        if (el) { 
+                            el.style.width = '450px'; // Largura fixa ideal para mobile
+                            el.style.maxWidth = '450px';
+                            el.style.margin = '0'; 
+                            el.style.boxShadow = 'none';
+                            el.style.borderRadius = '0';
+                            el.style.border = 'none';
+                        }
+                        if (content) { 
+                            content.style.height = 'auto'; 
+                            content.style.overflow = 'visible'; 
+                            content.style.maxHeight = 'none';
+                        }
+                    }
+                };
+
+                const canvas = await html2canvas(element, options);
                 
+                // 2. Dimensões do PDF
+                // O truque da nitidez: O PDF tem o tamanho VISUAL do elemento (ex: 450px)
+                // Mas a imagem inserida nele tem 3x essa resolução (do scale: 3)
+                const imgWidth = 450; // Largura fixa em "pontos" do PDF
+                const pageHeight = (canvas.height * imgWidth) / canvas.width; // Altura proporcional
+
+                const pdf = new jsPDF({
+                    orientation: 'p',
+                    unit: 'px',
+                    format: [imgWidth, pageHeight], // Tamanho da folha igual ao tamanho visual
+                    hotfixes: ['px_scaling']
+                });
+
+                // 3. Inserir imagem de alta resolução compactada no tamanho visual
+                const imgData = canvas.toDataURL('image/png'); // PNG para texto nítido (sem artefatos de JPG)
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, pageHeight);
+                
+                // --- NOME DO ARQUIVO ---
                 const now = new Date();
                 const daysOfWeek = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
                 const dayOfWeek = daysOfWeek[now.getDay()];
+                
                 const day = String(now.getDate()).padStart(2, '0');
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const year = now.getFullYear();
@@ -766,8 +811,13 @@
                 const filename = `Resumo Colheita - ${dayOfWeek} ${day}-${month}-${year} Semana ${weekNumber} - SPG Oásis.pdf`;
                 pdf.save(filename);
 
-            } catch (err) { alert("Erro ao gerar PDF: " + err); } 
-            finally { document.querySelector('button[onclick="downloadPDF()"] span').innerText = originalText; }
+            } catch (err) { 
+                console.error("Erro ao gerar PDF:", err);
+                alert("Erro ao gerar PDF (Tente novamente): " + err.message); 
+            } 
+            finally { 
+                document.querySelector('button[onclick="downloadPDF()"] span').innerText = originalText; 
+            }
         }
     </script>
 </body>
