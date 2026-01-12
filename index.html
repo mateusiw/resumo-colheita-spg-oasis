@@ -160,14 +160,20 @@
                     <div class="border-t border-slate-100 my-2 pt-2">
                         <label class="text-xs font-bold text-slate-400 block mb-3">Informações Adicionais</label>
                         
-                        <div class="grid grid-cols-2 gap-3 mb-3">
+                        <!-- Alterado para 3 colunas para acomodar o novo campo manual -->
+                        <div class="grid grid-cols-3 gap-2 mb-3">
                             <div>
                                 <label class="text-[10px] font-bold text-slate-500 mb-1 block">DAT</label>
                                 <input type="date" id="date" required class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
                             </div>
                             <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block">Início de Colheita</label>
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block">Início Colheita</label>
                                 <input type="date" id="startDate" required class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                            </div>
+                            <!-- NOVO CAMPO MANUAL -->
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block">Dias Prod.</label>
+                                <input type="number" id="productionDays" placeholder="Ex: 5" class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
                             </div>
                         </div>
 
@@ -217,7 +223,6 @@
 
                         <div class="text-[10px] text-slate-400 mt-3 italic flex flex-col gap-1 leading-relaxed">
                             <span>* Percentual: Automático</span>
-                            <span>* Dias Produção: Automático</span>
                         </div>
                     </div>
 
@@ -314,86 +319,6 @@
 
             document.getElementById('reportTitle').innerHTML = `${greeting}<br>Resumo da Colheita de ${dayOfWeek}`;
             document.getElementById('headerDateTime').innerText = `Data: ${day}/${month}/${year} - ${timeString} - Semana ${weekNumber}`;
-        }
-
-        // --- CÁLCULO DE DIAS ÚTEIS (GUARACIABA DO NORTE - CE) ---
-        function getEaster(year) {
-            const f = Math.floor;
-            const G = year % 19;
-            const C = f(year / 100);
-            const H = (C - f(C / 4) - f((8 * C + 13) / 25) + 19 * G + 15) % 30;
-            const I = H - f(H / 28) * (1 - f(29 / (H + 1)) * f((21 - G) / 11));
-            const J = (year + f(year / 4) + I + 2 - C + f(C / 4)) % 7;
-            const L = I - J;
-            const month = 3 + f((L + 40) / 44);
-            const day = L + 28 - 31 * f(month / 4);
-            return new Date(year, month - 1, day);
-        }
-
-        function isHolidayGuaraciaba(date) {
-            const d = date.getDate();
-            const m = date.getMonth() + 1;
-            const y = date.getFullYear();
-            const dateStr = `${d}/${m}`;
-
-            // Feriados Fixos (Nacionais + Ceará + Guaraciaba do Norte)
-            const fixed = [
-                "1/1",   // Confraternização Universal
-                "19/3",  // Dia de São José (CE)
-                "25/3",  // Data Magna do Ceará (CE)
-                "21/4",  // Tiradentes
-                "1/5",   // Dia do Trabalhador
-                "12/5",  // Emancipação Política de Guaraciaba do Norte (Municipal)
-                "7/9",   // Independência do Brasil
-                "15/8",  // N. Sra. dos Prazeres - Padroeira (Municipal)
-                "12/10", // N. Sra. Aparecida
-                "2/11",  // Finados
-                "15/11", // Proclamação da República
-                "25/12"  // Natal
-            ];
-            
-            if (fixed.includes(dateStr)) return true;
-
-            // Feriados Móveis baseados na Páscoa
-            const easter = getEaster(y);
-            // Função auxiliar para comparar datas
-            const isSameDay = (d1, d2) => d1.getDate() === d2.getDate() && d1.getMonth() === d2.getMonth();
-
-            const sextaSanta = new Date(easter); sextaSanta.setDate(easter.getDate() - 2);
-            const corpusChristi = new Date(easter); corpusChristi.setDate(easter.getDate() + 60);
-            const carnaval = new Date(easter); carnaval.setDate(easter.getDate() - 47);
-
-            if (isSameDay(date, sextaSanta)) return true;
-            if (isSameDay(date, corpusChristi)) return true;
-            if (isSameDay(date, carnaval)) return true;
-
-            return false;
-        }
-
-        function calculateDaysFromStart(isoDateStr) {
-            if (!isoDateStr) return 0;
-            const [year, month, day] = isoDateStr.split('-').map(Number);
-            const start = new Date(year, month - 1, day);
-            const now = new Date();
-            
-            // Zerar horas para comparação justa
-            start.setHours(0,0,0,0);
-            now.setHours(0,0,0,0);
-            
-            if (start > now) return 0;
-
-            let count = 0;
-            let current = new Date(start);
-
-            // Loop dia a dia, excluindo Domingos (0) e Feriados
-            while (current <= now) {
-                if (current.getDay() !== 0 && !isHolidayGuaraciaba(current)) {
-                    count++;
-                }
-                current.setDate(current.getDate() + 1);
-            }
-            
-            return count;
         }
 
         // --- FORMATAÇÃO E CÁLCULOS ---
@@ -523,7 +448,10 @@
         }
 
         function clearBlockForm() {
-            ['talhao','startDate','date','plants','totalUnits','boxes','dailyUnits','details'].forEach(id => document.getElementById(id).value = '');
+            ['talhao','startDate','date','plants','totalUnits','boxes','dailyUnits','details', 'productionDays'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.value = '';
+            });
             document.getElementById('stagesList').innerHTML = '';
             document.getElementById('hasStages').checked = false;
             toggleDetailsField();
@@ -557,7 +485,7 @@
                 dailyUnits: document.getElementById('dailyUnits').value,
                 boxes: document.getElementById('boxes').value,
                 totalUnits: totalUnitsRaw,
-                days: calculateDaysFromStart(document.getElementById('startDate').value),
+                days: document.getElementById('productionDays').value, // CAMPO MANUAL
                 details: document.getElementById('details').value
             };
 
@@ -585,6 +513,9 @@
             
             ['plants','totalUnits','boxes','dailyUnits'].forEach(k => document.getElementById(k).value = item[k]);
             
+            // Set Production Days
+            document.getElementById('productionDays').value = item.days || '';
+
             document.getElementById('details').value = item.details || '';
             const stagesList = document.getElementById('stagesList');
             stagesList.innerHTML = '';
