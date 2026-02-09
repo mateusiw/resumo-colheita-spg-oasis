@@ -175,19 +175,25 @@
                             </div>
                         </div>
 
-                        <!-- LINHA: DIAS E STATUS -->
+                        <!-- LINHA: DIAS E PREVISÃO -->
                         <div class="grid grid-cols-2 gap-3 mb-3">
                              <div>
                                 <label class="text-[10px] font-bold text-slate-500 mb-1 block">Dias Prod.</label>
                                 <input type="number" id="productionDays" placeholder="Ex: 5" class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
                             </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block">Status da Colheita</label>
-                                <select id="status" class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
-                                    <option value="Em Andamento">Em Andamento</option>
-                                    <option value="Finalizado">Finalizado</option>
-                                </select>
+                             <div>
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block">Previsão Término</label>
+                                <input type="date" id="forecastDate" class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
                             </div>
+                        </div>
+
+                         <!-- LINHA: STATUS -->
+                        <div class="mb-3">
+                            <label class="text-[10px] font-bold text-slate-500 mb-1 block">Status da Colheita</label>
+                            <select id="status" class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                                <option value="Em Andamento">Em Andamento</option>
+                                <option value="Finalizado">Finalizado</option>
+                            </select>
                         </div>
 
                         <!-- QTD PLANTADA COM TOGGLE DE ETAPAS -->
@@ -461,7 +467,7 @@
         }
 
         function clearBlockForm() {
-            ['talhao','startDate','date','plants','totalUnits','boxes','dailyUnits','details', 'productionDays', 'status'].forEach(id => {
+            ['talhao','startDate','date','plants','totalUnits','boxes','dailyUnits','details', 'productionDays', 'status', 'forecastDate'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el) el.value = (id === 'status' ? 'Em Andamento' : '');
             });
@@ -494,6 +500,7 @@
                 percentage: parsePTBRNumber(plantsRaw) > 0 ? Math.round((parsePTBRNumber(totalUnitsRaw) / parsePTBRNumber(plantsRaw)) * 100) : 0,
                 startDate: formatDateBR(document.getElementById('startDate').value),
                 date: formatDateBR(document.getElementById('date').value),
+                forecastDate: formatDateBR(document.getElementById('forecastDate').value),
                 plants: plantsRaw,
                 dailyUnits: document.getElementById('dailyUnits').value,
                 boxes: document.getElementById('boxes').value,
@@ -523,6 +530,7 @@
             
             if(item.date) document.getElementById('date').value = item.date.split('/').reverse().join('-');
             if(item.startDate) document.getElementById('startDate').value = item.startDate.split('/').reverse().join('-');
+            if(item.forecastDate) document.getElementById('forecastDate').value = item.forecastDate.split('/').reverse().join('-');
             
             ['plants','totalUnits','boxes','dailyUnits', 'status'].forEach(k => {
                 const el = document.getElementById(k);
@@ -682,7 +690,11 @@
                                 <div class="flex-1 h-2.5 bg-slate-200 rounded-full overflow-hidden"><div class="h-full rounded-full ${progressColor}" style="width: ${item.percentage}%"></div></div>
                                 <span class="text-sm font-extrabold ${textColor}">${item.percentage}%</span>
                             </div>
-                            <div class="text-[11px] font-bold text-blue-600 mt-2">Dias de Produção: ${item.days} dias</div>
+                            
+                            <div class="flex justify-between items-center mt-2 gap-2">
+                                <div class="text-[11px] font-bold text-blue-600">Dias de Produção: ${item.days} dias</div>
+                                ${item.forecastDate ? `<div class="text-[10px] font-bold text-orange-600">Data Final (Est.): ${item.forecastDate}</div>` : ''}
+                            </div>
                         </div>
 
                         <div class="flex flex-col gap-3"> 
