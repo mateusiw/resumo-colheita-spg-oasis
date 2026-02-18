@@ -58,27 +58,26 @@
         <!-- COLUNA DA ESQUERDA: CONTROLES -->
         <div class="w-full lg:w-1/3 space-y-4">
             
-            <!-- 1. DADOS GERAIS -->
-            <div class="bg-blue-50 p-6 rounded-2xl shadow-sm border border-blue-100">
-                <h2 class="text-sm font-bold text-blue-800 mb-3 flex items-center gap-2">
-                    <i data-lucide="clock" class="text-blue-600"></i> Dados Gerais do Dia
+            <!-- 1. PARÂMETROS DO TURNO -->
+            <div class="bg-white p-6 rounded shadow-sm border border-slate-200">
+                <h2 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
+                    <i data-lucide="settings" class="w-4 h-4 text-slate-500"></i> PARÂMETROS DO TURNO
                 </h2>
-                <div class="text-[10px] text-blue-600/70 mb-3 leading-relaxed">* Estes dados aparecem uma vez no final do relatório.</div>
                 
-                <div class="mb-2">
-                    <label class="text-[10px] font-bold text-slate-500 mb-1 block">Estimativas de Caixas (Qtd)</label>
-                    <input type="text" id="estimatedBoxes" oninput="formatNumberInput(this); renderReport()" placeholder="Ex: 200" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                <div class="mb-3">
+                    <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">META / ESTIMATIVA (CAIXAS)</label>
+                    <input type="text" id="estimatedBoxes" oninput="formatNumberInput(this); renderReport()" placeholder="0" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 mb-2">
+                <div class="grid grid-cols-2 gap-3 mb-3">
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 mb-1 block">Qtd Pessoas</label>
-                        <input type="text" id="crewCount" oninput="formatNumberInput(this); renderReport()" placeholder="Ex: 5" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">EFETIVO (PESSOAS)</label>
+                        <input type="text" id="crewCount" oninput="formatNumberInput(this); renderReport()" placeholder="0" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 mb-1 block">Estimativa Para</label>
-                        <select id="estimateDay" oninput="renderReport()" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="">(Vazio)</option>
+                        <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">REF. ESTIMATIVA</label>
+                        <select id="estimateDay" oninput="renderReport()" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
+                            <option value="">(Nenhum)</option>
                             <option value="Segunda-feira">Segunda-feira</option>
                             <option value="Terça-feira">Terça-feira</option>
                             <option value="Quarta-feira">Quarta-feira</option>
@@ -91,39 +90,44 @@
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-3 gap-3">
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 mb-1 block">Início</label>
-                        <input type="time" id="startTime" oninput="renderReport()" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">INÍCIO</label>
+                        <div class="relative">
+                            <input type="time" id="startTime" oninput="renderReport()" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
+                        </div>
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 mb-1 block">Final</label>
-                        <input type="time" id="endTime" oninput="renderReport()" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">TÉRMINO</label>
+                        <div class="relative">
+                             <input type="time" id="endTime" oninput="renderReport()" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
+                        </div>
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 mb-1 block">Intervalo (Min)</label>
-                        <input type="number" id="intervalDuration" oninput="renderReport()" placeholder="60" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">INTERVALO</label>
+                        <input type="number" id="intervalDuration" oninput="renderReport()" placeholder="Min" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
                     </div>
                 </div>
             </div>
 
-            <!-- 2. ADICIONAR BLOCOS -->
-            <div id="formContainer" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 transition-colors duration-300">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 id="formTitle" class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <i data-lucide="file-plus" class="text-emerald-600"></i> Adicionar Bloco
+            <!-- 2. DADOS DO BLOCO -->
+            <div id="formContainer" class="bg-white p-6 rounded shadow-sm border border-slate-200 transition-colors duration-300">
+                <!-- Header -->
+                <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
+                    <h2 id="formTitle" class="text-sm font-bold text-slate-700 flex items-center gap-2 uppercase">
+                        <i data-lucide="clipboard-list" class="w-4 h-4 text-slate-500"></i> DADOS DO BLOCO
                     </h2>
-                    <button type="button" onclick="clearBlockForm()" class="text-xs font-semibold text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1">
-                        <i data-lucide="eraser" class="w-3 h-3"></i> Limpar/Cancelar
+                    <button type="button" onclick="clearBlockForm()" class="text-[10px] font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1 uppercase">
+                        <i data-lucide="x-circle" class="w-3 h-3"></i> LIMPAR
                     </button>
                 </div>
                 
                 <form id="harvestForm" onsubmit="addItem(event)" class="space-y-4">
                     
-                    <!-- CAMPO BLOCO -->
+                    <!-- IDENTIFICAÇÃO (BLOCO) -->
                     <div>
-                        <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Nº Bloco</label>
-                        <select id="talhao" required class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">IDENTIFICAÇÃO (BLOCO)</label>
+                        <select id="talhao" required class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
                             <option value="">Selecione...</option>
                             <option value="1">1</option>
                             <option value="2">2</option>
@@ -144,84 +148,85 @@
                         </select>
                     </div>
 
-                    <!-- LINHA DE VARIEDADE E COMERCIAL -->
+                    <!-- CULTURA & VARIEDADE -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Cultura</label>
-                            <select id="variety" onchange="updateCommercialInput()" required class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">CULTURA</label>
+                            <select id="variety" onchange="updateCommercialInput()" required class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
                                 <option value="">Selecione...</option>
                                 <option value="Brócolis">Brócolis</option>
                                 <option value="Couve-Flor">Couve-Flor</option>
                             </select>
                         </div>
                         <div id="commercialVarietyWrapper">
-                            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Var. Comercial</label>
-                            <input type="text" id="commercialVariety" placeholder="Ex: Avenger" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">VARIEDADE</label>
+                            <input type="text" id="commercialVariety" placeholder="Nome da variedade" class="w-full p-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
                         </div>
                     </div>
 
-                    <!-- INFORMAÇÕES ADICIONAIS -->
-                    <div class="border-t border-slate-100 my-2 pt-2">
-                        <label class="text-xs font-bold text-slate-400 block mb-3">Informações Adicionais</label>
+                    <!-- BOX: CRONOGRAMA -->
+                    <div class="border border-slate-200 rounded p-3 bg-slate-50/30">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-wider border-b border-slate-100 pb-1">CRONOGRAMA</div>
                         
                         <div class="grid grid-cols-2 gap-3 mb-3">
                             <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block">DAT</label>
-                                <input type="date" id="date" required class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">DATA PLANTIO</label>
+                                <input type="date" id="date" required class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 uppercase">
                             </div>
                             <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block">Início Colheita</label>
-                                <input type="date" id="startDate" required class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">INÍCIO COLHEITA</label>
+                                <input type="date" id="startDate" required class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 uppercase">
                             </div>
                         </div>
 
-                        <!-- LINHA: DIAS E PREVISÃO -->
                         <div class="grid grid-cols-2 gap-3 mb-3">
                              <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block">Dias Prod.</label>
-                                <input type="number" id="productionDays" placeholder="Ex: 5" class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">DIAS PROD.</label>
+                                <input type="number" id="productionDays" placeholder="0" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
                             </div>
                              <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block">Previsão Término</label>
-                                <input type="date" id="forecastDate" class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">PREVISÃO TÉRMINO</label>
+                                <input type="date" id="forecastDate" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 uppercase">
                             </div>
                         </div>
 
-                         <!-- LINHA: STATUS -->
-                        <div class="mb-3">
-                            <label class="text-[10px] font-bold text-slate-500 mb-1 block">Status da Colheita</label>
-                            <select id="status" class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
-                                <option value="Em Andamento">Em Andamento</option>
-                                <option value="Finalizado">Finalizado</option>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">STATUS OPERACIONAL</label>
+                            <select id="status" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
+                                <option value="EM ANDAMENTO">EM ANDAMENTO</option>
+                                <option value="FINALIZADO">FINALIZADO</option>
                             </select>
                         </div>
+                    </div>
 
-                        <!-- QTD PLANTADA COM TOGGLE DE ETAPAS -->
+                    <!-- BOX: PRODUÇÃO -->
+                    <div class="border border-slate-200 rounded p-3 bg-slate-50/30">
+                        <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-1">
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">PRODUÇÃO</div>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <span class="mr-2 text-[10px] font-bold text-slate-400 uppercase">ETAPAS</span>
+                                <input type="checkbox" id="hasStages" onchange="toggleDetailsField()" class="sr-only peer">
+                                <div class="relative w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-slate-700"></div>
+                            </label>
+                        </div>
+
                         <div class="grid grid-cols-2 gap-3 mb-3">
                             <div>
-                                <div class="flex justify-between items-center mb-1">
-                                    <label class="text-[10px] font-bold text-slate-500 block">Qtd. Plantada</label>
-                                    <label class="inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="hasStages" onchange="toggleDetailsField()" class="sr-only peer">
-                                        <div class="relative w-7 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
-                                        <span class="ms-1 text-[9px] font-medium text-slate-500">Etapas?</span>
-                                    </label>
-                                </div>
-                                <input type="text" id="plants" oninput="formatNumberInput(this)" placeholder="Ex: 10.000" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
+                                <label class="text-[10px] font-bold text-slate-500 block uppercase mb-1">QTD. PLANTADA</label>
+                                <input type="text" id="plants" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 text-right" placeholder="0">
                             </div>
                             <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block">Total de Unidades</label>
-                                <input type="text" id="totalUnits" oninput="formatNumberInput(this)" placeholder="Ex: 5.000" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">COLHIDO (TOTAL)</label>
+                                <input type="text" id="totalUnits" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 text-right" placeholder="0">
                             </div>
                         </div>
 
-                        <!-- CAMPO: DETALHAMENTO DAS ETAPAS (DINÂMICO) -->
-                        <div id="detailsContainer" class="hidden mt-2 mb-3 bg-blue-50 p-3 rounded-lg border border-blue-100 animate-fade-in-down">
+                        <div id="detailsContainer" class="hidden mb-3 bg-white p-2 rounded border border-slate-200">
                             <div class="flex justify-between items-center mb-2">
-                                <label class="text-[10px] font-bold text-blue-700 flex items-center gap-1">
-                                    <i data-lucide="list-tree" class="w-3 h-3"></i> Detalhamento das Etapas
+                                <label class="text-[10px] font-bold text-slate-500 flex items-center gap-1 uppercase">
+                                    <i data-lucide="list" class="w-3 h-3"></i> Detalhes
                                 </label>
-                                <button type="button" onclick="addStageRow()" class="text-[10px] bg-blue-100 text-blue-600 hover:bg-blue-200 px-2 py-1 rounded font-bold transition-colors">
+                                <button type="button" onclick="addStageRow()" class="text-[10px] bg-slate-100 text-slate-600 hover:bg-slate-200 px-2 py-1 rounded font-bold transition-colors uppercase">
                                     + Adicionar
                                 </button>
                             </div>
@@ -229,33 +234,29 @@
                             <textarea id="details" class="hidden" style="display:none;"></textarea>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2 mb-2">
+                        <div class="grid grid-cols-2 gap-3">
                              <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block">Caixas</label>
-                                <input type="text" id="boxes" oninput="formatNumberInput(this)" placeholder="Ex: 50" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">CAIXAS (DIA)</label>
+                                <input type="text" id="boxes" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 text-right" placeholder="0">
                             </div>
                              <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block">Unidades (hoje)</label>
-                                <input type="text" id="dailyUnits" oninput="formatNumberInput(this)" placeholder="Ex: 5.000" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">UNIDADES (DIA)</label>
+                                <input type="text" id="dailyUnits" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 text-right" placeholder="0">
                             </div>
-                        </div>
-
-                        <div class="text-[10px] text-slate-400 mt-3 italic flex flex-col gap-1 leading-relaxed">
-                            <span>* Percentual: Automático</span>
                         </div>
                     </div>
 
-                    <button type="submit" id="submitBtn" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition-all flex justify-center items-center gap-2 mt-4 active:scale-95">
-                        <i data-lucide="plus-circle" class="w-4 h-4"></i> <span>Adicionar ao Relatório</span>
+                    <button type="submit" id="submitBtn" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded transition-all flex justify-center items-center gap-2 uppercase text-xs shadow-lg shadow-slate-900/20">
+                        <i data-lucide="plus-square" class="w-4 h-4"></i> <span>INSERIR NO RELATÓRIO</span>
                     </button>
                 </form>
             </div>
 
             <!-- Lista de Itens -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-bold text-slate-700">Itens Gerados</h3>
-                    <button onclick="clearAll()" class="text-xs text-red-500 hover:text-red-700 font-bold underline">Limpar Tudo</button>
+            <div class="bg-white p-6 rounded shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
+                    <h3 class="text-sm font-bold text-slate-700 uppercase">REGISTROS INSERIDOS</h3>
+                    <button onclick="clearAll()" class="text-[10px] font-bold text-red-500 hover:text-red-700 uppercase underline">LIMPAR LISTA</button>
                 </div>
                 <ul id="itemsList" class="space-y-2 text-sm text-slate-600">
                     <!-- JS -->
@@ -277,6 +278,9 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Resumo Superior (Novo Local) -->
+                <div id="summaryHeader" class="bg-white shrink-0"></div>
 
                 <!-- Conteúdo -->
                 <div id="reportContent" class="divide-y divide-slate-50 flex-1 overflow-y-auto">
@@ -431,8 +435,8 @@
             div.className = "flex gap-2 items-center";
             div.id = rowId;
             div.innerHTML = `
-                <div class="flex-1"><input type="text" value="${label}" class="stage-label w-full p-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Semana X"></div>
-                <div class="w-1/3"><input type="text" value="${value}" oninput="formatNumberInput(this)" class="stage-value w-full p-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Qtd"></div>
+                <div class="flex-1"><input type="text" value="${label}" class="stage-label w-full p-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 uppercase" placeholder="Semana X"></div>
+                <div class="w-1/3"><input type="text" value="${value}" oninput="formatNumberInput(this)" class="stage-value w-full p-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 text-right" placeholder="Qtd"></div>
                 <button type="button" onclick="document.getElementById('${rowId}').remove()" class="text-red-400 hover:text-red-600 p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
             `;
             container.appendChild(div);
@@ -454,14 +458,14 @@
         function updateCommercialInput() {
             const variety = document.getElementById('variety').value;
             const wrapper = document.getElementById('commercialVarietyWrapper');
-            let html = `<label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Var. Comercial</label>`;
+            let html = `<label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">VARIEDADE</label>`;
             
             if (variety === 'Brócolis') {
-                html += `<select id="commercialVariety" class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white"><option value="">Selecione...</option><option value="BRO 68 Syngenta">BRO 68 Syngenta</option><option value="Master TSV">Master TSV</option><option value="Sakata Jiraya F1">Sakata Jiraya F1</option><option value="PHAR LAP">PHAR LAP</option></select>`;
+                html += `<select id="commercialVariety" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700"><option value="">Selecione...</option><option value="BRO 68 Syngenta">BRO 68 Syngenta</option><option value="Master TSV">Master TSV</option><option value="Sakata Jiraya F1">Sakata Jiraya F1</option><option value="PHAR LAP">PHAR LAP</option></select>`;
             } else if (variety === 'Couve-Flor') {
-                html += `<select id="commercialVariety" class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white"><option value="">Selecione...</option><option value="Vereda">Vereda</option><option value="Copacabana">Copacabana</option><option value="Tirsuli">Tirsuli</option><option value="SF-1758 F1">SF-1758 F1</option><option value="Champagne Snow">Champagne Snow</option><option value="Serena">Serena</option><option value="Supremo">Supremo</option></select>`;
+                html += `<select id="commercialVariety" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700"><option value="">Selecione...</option><option value="Vereda">Vereda</option><option value="Copacabana">Copacabana</option><option value="Tirsuli">Tirsuli</option><option value="SF-1758 F1">SF-1758 F1</option><option value="Champagne Snow">Champagne Snow</option><option value="Serena">Serena</option><option value="Supremo">Supremo</option></select>`;
             } else {
-                html += `<input type="text" id="commercialVariety" placeholder="Ex: Avenger" class="w-full p-2 border border-slate-300 rounded-lg text-sm">`;
+                html += `<input type="text" id="commercialVariety" placeholder="Nome da variedade" class="w-full p-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">`;
             }
             wrapper.innerHTML = html;
         }
@@ -469,7 +473,7 @@
         function clearBlockForm() {
             ['talhao','startDate','date','plants','totalUnits','boxes','dailyUnits','details', 'productionDays', 'status', 'forecastDate'].forEach(id => {
                 const el = document.getElementById(id);
-                if(el) el.value = (id === 'status' ? 'Em Andamento' : '');
+                if(el) el.value = (id === 'status' ? 'EM ANDAMENTO' : '');
             });
             document.getElementById('stagesList').innerHTML = '';
             document.getElementById('hasStages').checked = false;
@@ -479,10 +483,10 @@
             editingIndex = -1;
             
             const btn = document.getElementById('submitBtn');
-            btn.innerHTML = '<i data-lucide="plus-circle" class="w-4 h-4"></i> <span>Adicionar ao Relatório</span>';
+            btn.innerHTML = '<i data-lucide="plus-square" class="w-4 h-4"></i> <span>INSERIR NO RELATÓRIO</span>';
             btn.classList.replace('bg-blue-600', 'bg-slate-800');
             btn.classList.replace('hover:bg-blue-700', 'hover:bg-slate-900');
-            document.getElementById('formTitle').innerHTML = '<i data-lucide="file-plus" class="text-emerald-600"></i> Adicionar Bloco';
+            document.getElementById('formTitle').innerHTML = '<i data-lucide="clipboard-list" class="w-4 h-4 text-slate-500"></i> DADOS DO BLOCO';
             document.getElementById('formContainer').classList.remove('border-blue-300', 'ring-2', 'ring-blue-100');
             lucide.createIcons();
         }
@@ -506,7 +510,7 @@
                 boxes: document.getElementById('boxes').value,
                 totalUnits: totalUnitsRaw,
                 days: document.getElementById('productionDays').value,
-                status: document.getElementById('status').value, 
+                status: document.getElementById('status').value === 'FINALIZADO' ? 'Finalizado' : 'Em Andamento', 
                 details: document.getElementById('details').value
             };
 
@@ -532,10 +536,12 @@
             if(item.startDate) document.getElementById('startDate').value = item.startDate.split('/').reverse().join('-');
             if(item.forecastDate) document.getElementById('forecastDate').value = item.forecastDate.split('/').reverse().join('-');
             
-            ['plants','totalUnits','boxes','dailyUnits', 'status'].forEach(k => {
+            ['plants','totalUnits','boxes','dailyUnits'].forEach(k => {
                 const el = document.getElementById(k);
-                if (el) el.value = item[k] || (k === 'status' ? 'Em Andamento' : '');
+                if (el) el.value = item[k] || '';
             });
+
+            document.getElementById('status').value = item.status === 'Finalizado' ? 'FINALIZADO' : 'EM ANDAMENTO';
             
             document.getElementById('productionDays').value = item.days || '';
 
@@ -554,10 +560,10 @@
             toggleDetailsField();
 
             const btn = document.getElementById('submitBtn');
-            btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Alterações</span>';
+            btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> <span>SALVAR ALTERAÇÕES</span>';
             btn.classList.replace('bg-slate-800', 'bg-blue-600');
             btn.classList.replace('hover:bg-slate-900', 'hover:bg-blue-700');
-            document.getElementById('formTitle').innerHTML = '<i data-lucide="pencil" class="text-blue-600"></i> Editando Bloco';
+            document.getElementById('formTitle').innerHTML = '<i data-lucide="pencil" class="w-4 h-4 text-blue-600"></i> EDITANDO BLOCO';
             document.getElementById('formContainer').classList.add('border-blue-300', 'ring-2', 'ring-blue-100');
             document.getElementById('formContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
             
@@ -604,6 +610,7 @@
         function renderReport() {
             saveInputs();
             const container = document.getElementById('reportContent');
+            const summaryHeader = document.getElementById('summaryHeader');
             const footer = document.getElementById('operationalFooter');
             let sumBoxes = 0, sumDailyUnits = 0;
 
@@ -716,18 +723,27 @@
             const crew = crewValue ? (parseInt(crewValue) === 1 ? `${crewValue} Colaborador` : `${crewValue} Colaboradores`) : '-';
             const estDay = document.getElementById('estimateDay').value || '';
             
+            // Renderiza o cabeçalho de resumo (Totais e Estimativa)
+            summaryHeader.innerHTML = `
+                <div class="p-4 pb-0 border-b border-slate-100">
+                    <div class="bg-emerald-50 rounded-lg p-4 mb-3 flex justify-around items-center border border-emerald-100">
+                        <div class="text-center">
+                            <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">TOTAL DE UNIDADES (HOJE)</div>
+                            <div class="text-xl font-extrabold text-emerald-800">${sumDailyUnits.toLocaleString('pt-BR')}</div>
+                        </div>
+                        <div class="w-px h-10 bg-emerald-200"></div>
+                        <div class="text-center">
+                            <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">TOTAL DE CAIXAS (HOJE)</div>
+                            <div class="text-xl font-extrabold text-emerald-800">${sumBoxes.toLocaleString('pt-BR')}</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-center items-center pb-3">
+                        <span class="text-base font-bold text-[#00838f]">${estDay ? `Estimativas de Caixas para ${estDay}:` : 'Estimativas de Caixas:'} <span class="text-[#00838f] text-2xl font-extrabold">${document.getElementById('estimatedBoxes').value || '-'}</span></span>
+                    </div>
+                </div>`;
+
+            // Renderiza o footer operacional (Equipe e Horários)
             footer.innerHTML = `
-                <div class="bg-emerald-50 rounded-lg p-4 mb-4 flex justify-around items-center">
-                    <div class="text-center">
-                        <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">TOTAL DE UNIDADES (HOJE)</div>
-                        <div class="text-xl font-extrabold text-emerald-800">${sumDailyUnits.toLocaleString('pt-BR')}</div>
-                    </div>
-                    <div class="w-px h-10 bg-emerald-200"></div>
-                    <div class="text-center">
-                        <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">TOTAL DE CAIXAS (HOJE)</div>
-                        <div class="text-xl font-extrabold text-emerald-800">${sumBoxes.toLocaleString('pt-BR')}</div>
-                    </div>
-                </div>
                 <div class="flex justify-center items-center mb-4 pb-4 border-b border-slate-200 border-dashed">
                      <span class="text-xs font-bold text-slate-600">Equipe de Colheita: <span class="text-slate-800 text-sm font-extrabold">${crew}</span></span>
                 </div>
@@ -739,9 +755,6 @@
                     <div class="flex flex-col items-center border-l border-slate-200"><span class="text-red-600 font-bold mb-0.5 uppercase">Final</span><span class="text-slate-700 font-bold text-xs">${document.getElementById('endTime').value || '--:--'}</span></div>
                     <div class="flex flex-col items-center border-l border-slate-200"><span class="text-amber-600 font-bold mb-0.5 uppercase">INTERVALO</span><span class="text-slate-700 font-bold text-xs">${document.getElementById('intervalDuration').value || '0'} min</span></div>
                     <div class="flex flex-col items-center border-l border-slate-200"><span class="text-emerald-700 font-bold mb-0.5 uppercase">Total</span><span class="text-slate-900 font-extrabold text-xs">${calculateTimeDifference(document.getElementById('startTime').value, document.getElementById('endTime').value, document.getElementById('intervalDuration').value)} h</span></div>
-                </div>
-                <div class="flex justify-center items-center pt-4 border-t border-slate-100 mt-2">
-                    <span class="text-lg font-bold text-[#00838f]">${estDay ? `Estimativas de Caixas para ${estDay}:` : 'Estimativas de Caixas:'} <span class="text-[#00838f] text-2xl font-extrabold">${document.getElementById('estimatedBoxes').value || '-'}</span></span>
                 </div>`;
             lucide.createIcons();
         }
