@@ -725,8 +725,8 @@
             
             // Renderiza o cabeçalho de resumo (Totais e Estimativa)
             summaryHeader.innerHTML = `
-                <div class="p-4 pb-0 border-b border-slate-100">
-                    <div class="bg-emerald-50 rounded-lg p-4 mb-3 flex justify-around items-center border border-emerald-100">
+                <div class="p-4 border-b border-slate-100">
+                    <div class="bg-emerald-50 rounded-lg p-4 flex justify-around items-center border border-emerald-100">
                         <div class="text-center">
                             <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">TOTAL DE UNIDADES (HOJE)</div>
                             <div class="text-xl font-extrabold text-emerald-800">${sumDailyUnits.toLocaleString('pt-BR')}</div>
@@ -736,9 +736,6 @@
                             <div class="text-[10px] text-emerald-600 font-bold uppercase mb-1">TOTAL DE CAIXAS (HOJE)</div>
                             <div class="text-xl font-extrabold text-emerald-800">${sumBoxes.toLocaleString('pt-BR')}</div>
                         </div>
-                    </div>
-                    <div class="flex justify-center items-center pb-3">
-                        <span class="text-base font-bold text-[#00838f]">${estDay ? `Estimativas de Caixas para ${estDay}:` : 'Estimativas de Caixas:'} <span class="text-[#00838f] text-2xl font-extrabold">${document.getElementById('estimatedBoxes').value || '-'}</span></span>
                     </div>
                 </div>`;
 
@@ -755,6 +752,9 @@
                     <div class="flex flex-col items-center border-l border-slate-200"><span class="text-red-600 font-bold mb-0.5 uppercase">Final</span><span class="text-slate-700 font-bold text-xs">${document.getElementById('endTime').value || '--:--'}</span></div>
                     <div class="flex flex-col items-center border-l border-slate-200"><span class="text-amber-600 font-bold mb-0.5 uppercase">INTERVALO</span><span class="text-slate-700 font-bold text-xs">${document.getElementById('intervalDuration').value || '0'} min</span></div>
                     <div class="flex flex-col items-center border-l border-slate-200"><span class="text-emerald-700 font-bold mb-0.5 uppercase">Total</span><span class="text-slate-900 font-extrabold text-xs">${calculateTimeDifference(document.getElementById('startTime').value, document.getElementById('endTime').value, document.getElementById('intervalDuration').value)} h</span></div>
+                </div>
+                <div class="flex justify-center items-center pt-4 border-t border-slate-100 mt-2">
+                    <span class="text-lg font-bold text-[#00838f]">${estDay ? `Estimativas de Caixas para ${estDay}:` : 'Estimativas de Caixas:'} <span class="text-[#00838f] text-2xl font-extrabold">${document.getElementById('estimatedBoxes').value || '-'}</span></span>
                 </div>`;
             lucide.createIcons();
         }
