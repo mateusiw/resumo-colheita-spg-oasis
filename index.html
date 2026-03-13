@@ -825,7 +825,8 @@
                     useCORS: true, 
                     allowTaint: true,
                     scrollY: -window.scrollY,
-                    backgroundColor: '#ffffff', 
+                    backgroundColor: '#ffffff',
+                    windowWidth: 480, // Adicionado para forçar renderização mobile/mais larga
                     onclone: (doc) => {
                         const el = doc.getElementById('report-card');
                         const content = doc.getElementById('reportContent');
@@ -882,6 +883,7 @@
                     allowTaint: true,
                     scrollY: -window.scrollY,
                     backgroundColor: '#ffffff',
+                    windowWidth: 480, // Adicionado para forçar renderização mobile
                     onclone: (doc) => {
                         const el = doc.getElementById('report-card');
                         const content = doc.getElementById('reportContent');
