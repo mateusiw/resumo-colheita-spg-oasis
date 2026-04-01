@@ -121,7 +121,7 @@
                     
                     <!-- IDENTIFICAÇÃO (BLOCO) -->
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">IDENTIFICAÇÃO (BLOCO)</label>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Nº BLOCO</label>
                         <select id="talhao" required class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
                             <option value="">Selecione...</option>
                             <option value="1">1</option>
@@ -176,11 +176,11 @@
 
                         <div class="grid grid-cols-2 gap-3">
                              <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">DIAS PROD.</label>
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">DIAS DE PRODUÇÃO</label>
                                 <input type="number" id="productionDays" placeholder="0" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
                             </div>
                             <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">STATUS OPERACIONAL</label>
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">STATUS</label>
                                 <select id="status" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
                                     <option value="EM ANDAMENTO">EM ANDAMENTO</option>
                                     <option value="FINALIZADO">FINALIZADO</option>
@@ -214,7 +214,7 @@
                                 <input type="text" id="plants" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 text-right" placeholder="0">
                             </div>
                             <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">COLHIDO (TOTAL)</label>
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">UNIDADES ACUMULADAS</label>
                                 <input type="text" id="totalUnits" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 text-right" placeholder="0">
                             </div>
                         </div>
@@ -234,11 +234,11 @@
 
                         <div class="grid grid-cols-2 gap-3">
                              <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">CAIXAS (DIA)</label>
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">CAIXAS</label>
                                 <input type="text" id="boxes" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 text-right" placeholder="0">
                             </div>
                              <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">UNIDADES (DIA)</label>
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">TOTAL DE UNIDADES (HOJE)</label>
                                 <input type="text" id="dailyUnits" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 text-right" placeholder="0">
                             </div>
                         </div>
@@ -707,7 +707,7 @@
                              <div class="flex justify-end items-end mb-1">
                                 <div class="flex items-center gap-2">
                                     <span class="text-xs font-medium text-slate-500">
-                                        Total Acumulado: <span class="font-bold text-slate-700">${item.totalUnits} un.</span>
+                                        Unidades Acumuladas: <span class="font-bold text-slate-700">${item.totalUnits} un.</span>
                                     </span>
                                     <span class="text-slate-300 text-xs">|</span>
                                     <span class="text-xs font-bold text-slate-400">
@@ -746,8 +746,8 @@
                                 ${createStatItem('calendar-days', item.startDate, 'DATA DE INÍCIO COLHEITA')}
                             </div>
                             <div class="grid grid-cols-2 gap-2">
-                                ${createStatItem('package', item.dailyUnits, 'UNIDADES (HOJE)', true)}
-                                ${createStatItem('box', item.boxes, 'CAIXAS (HOJE)')}
+                                ${createStatItem('package', item.dailyUnits, 'TOTAL DE UNIDADES (HOJE)', true)}
+                                ${createStatItem('box', item.boxes, 'CAIXAS')}
                             </div>
                         </div>
                     </div>`;
@@ -880,7 +880,7 @@
                 let csvContent = "\uFEFF";
                 
                 // Cabeçalhos solicitados
-                csvContent += "Bloco;Cultura;Variedade;Caixas (Dia);Colhido Total;Qtd Plantada;Unidades (Dia);Previsão Finalizar;Status Operacional;Dias de Produção\n";
+                csvContent += "Bloco;Cultura;Variedade;Caixas;Unidades Acumuladas;Qtd Plantada;Total de Unidades (Hoje);Previsão Finalizar;Status;Dias de Produção\n";
 
                 // Preenchimento dos dados de todos os blocos
                 harvestData.forEach(item => {
