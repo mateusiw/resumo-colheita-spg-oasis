@@ -893,8 +893,8 @@
                 // Adiciona o BOM (\uFEFF) para o Excel reconhecer os caracteres UTF-8 corretamente
                 let csvContent = "\uFEFF";
                 
-                // Cabeçalhos solicitados
-                csvContent += "Bloco;Cultura;Variedade;Caixas;Unidades Acumuladas;Qtd Plantada;Total de Unidades (Hoje);Previsão Finalizar;Status;Dias de Produção\n";
+                // Cabeçalhos solicitados com a nova coluna "Ocultos"
+                csvContent += "Bloco;Cultura;Variedade;Caixas;Unidades Acumuladas;Qtd Plantada;Total de Unidades (Hoje);Previsão Finalizar;Status;Dias de Produção;Ocultos\n";
 
                 // Preenchimento dos dados de todos os blocos
                 harvestData.forEach(item => {
@@ -908,9 +908,10 @@
                     const previsaoFinalizar = item.forecastDate || "-";
                     const statusOperacional = item.status || "-";
                     const diasProducao = item.days || "0";
+                    const oculto = item.active === false ? "SIM" : "NÃO";
 
                     // Usa ponto e vírgula para não bugar no Excel pt-BR
-                    const row = [bloco, cultura, variedade, caixasDia, colhidoTotal, qtdPlantada, unidadesDia, previsaoFinalizar, statusOperacional, diasProducao].join(";");
+                    const row = [bloco, cultura, variedade, caixasDia, colhidoTotal, qtdPlantada, unidadesDia, previsaoFinalizar, statusOperacional, diasProducao, oculto].join(";");
                     csvContent += row + "\n";
                 });
 
