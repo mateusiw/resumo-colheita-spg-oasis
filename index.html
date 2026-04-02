@@ -349,7 +349,7 @@
         }
 
         function calculateTimeDifference(start, end, interval) {
-            if (!start || !end || start === "--:--" || end === "--:--") return "--:--";
+            if (!start || !end || start === "--:--") return "--:--";
             const [startH, startM] = start.split(':').map(Number);
             const [endH, endM] = end.split(':').map(Number);
             let diff = (endH * 60 + endM) - (startH * 60 + startM) - (parseInt(interval) || 0);
@@ -636,7 +636,10 @@
             } else if (!displayData.length) {
                 container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs italic flex flex-col items-center justify-center min-h-[200px]"><i data-lucide="eye-off" class="mb-2 w-8 h-8 opacity-20"></i><span>Todos os blocos estão ocultos no momento.</span></div>`;
             } else {
-                container.innerHTML = '';
+                const isGrid = displayData.length > 3;
+                const wrapperClass = isGrid ? "grid grid-cols-2 gap-4 p-4 bg-slate-50/50" : "flex flex-col divide-y divide-slate-50";
+                let itemsHtml = '';
+
                 displayData.forEach(item => {
                     let progressColor = item.percentage >= 90 ? 'bg-emerald-500' : (item.percentage >= 70 ? 'bg-blue-500' : 'bg-yellow-500');
                     let textColor = item.percentage >= 90 ? 'text-emerald-600' : 'text-slate-600';
@@ -693,8 +696,12 @@
                         </div>`;
                     }
 
-                    container.innerHTML += `
-                    <div class="p-5 hover:bg-slate-50 transition-colors group">
+                    let itemClass = isGrid 
+                        ? "p-5 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col" 
+                        : "p-5 hover:bg-slate-50 transition-colors group flex flex-col";
+
+                    itemsHtml += `
+                    <div class="${itemClass}">
                         <div class="flex justify-between items-center mb-3">
                             <div class="flex items-center gap-3">
                                 <span class="text-base font-bold text-slate-800">Bloco ${item.talhao}</span>
@@ -739,7 +746,7 @@
                             </div>
                         </div>
 
-                        <div class="flex flex-col gap-3"> 
+                        <div class="flex flex-col gap-3 mt-auto"> 
                             ${plantedBlockHtml}
                             <div class="grid grid-cols-2 gap-2">
                                 ${createStatItem('calendar', item.date, 'DATA PLANTIO')}
@@ -752,6 +759,8 @@
                         </div>
                     </div>`;
                 });
+                
+                container.innerHTML = `<div class="${wrapperClass}">${itemsHtml}</div>`;
             }
 
             const crewValue = document.getElementById('crewCount').value;
@@ -818,19 +827,24 @@
             }
 
             try {
+                const activeBlocksCount = harvestData.filter(item => item.active !== false).length;
+                const isGrid = activeBlocksCount > 3;
+                const targetWidth = isGrid ? 900 : 450;
+                const exportScale = isGrid ? 3 : 5;
+
                 const options = {
-                    scale: 5,
+                    scale: exportScale,
                     useCORS: true, 
                     allowTaint: true,
                     scrollY: -window.scrollY,
                     backgroundColor: '#ffffff',
-                    windowWidth: 480, // Adicionado para forçar renderização mobile
+                    windowWidth: targetWidth + 30, // Adicionado para forçar renderização mobile
                     onclone: (doc) => {
                         const el = doc.getElementById('report-card');
                         const content = doc.getElementById('reportContent');
                         if (el) { 
-                            el.style.width = '450px'; // 450px * scale 5 = 2250px de largura final
-                            el.style.maxWidth = '450px';
+                            el.style.width = targetWidth + 'px';
+                            el.style.maxWidth = targetWidth + 'px';
                             el.style.margin = '0'; 
                             el.style.boxShadow = 'none';
                             el.style.borderRadius = '0';
