@@ -1014,13 +1014,15 @@
                 let csvContent = "\uFEFF";
                 
                 // Cabeçalhos solicitados com a nova coluna "Ocultos"
-                csvContent += "Bloco;Cultura;Variedade;Caixas;Unidades Acumuladas;Qtd Plantada;Total de Unidades (Hoje);Previsão Finalizar;Status;Dias de Produção;Ocultos\n";
+                csvContent += "Bloco;Cultura;Variedade;Data Plantio;Início Colheita;Caixas;Unidades Acumuladas;Qtd Plantada;Total de Unidades (Hoje);Previsão Finalizar;Status;Dias de Produção;Ocultos\n";
 
                 // Preenchimento dos dados de todos os blocos
                 harvestData.forEach(item => {
                     const bloco = item.talhao || "-";
                     const cultura = item.variety || "-";
                     const variedade = item.commercialVariety || "-";
+                    const dataPlantio = item.date || "-";
+                    const inicioColheita = item.startDate || "-";
                     const caixasDia = item.boxes || "0";
                     const colhidoTotal = item.totalUnits || "0";
                     const qtdPlantada = item.plants || "0";
@@ -1031,7 +1033,7 @@
                     const oculto = item.active === false ? "SIM" : "NÃO";
 
                     // Usa ponto e vírgula para não bugar no Excel pt-BR
-                    const row = [bloco, cultura, variedade, caixasDia, colhidoTotal, qtdPlantada, unidadesDia, previsaoFinalizar, statusOperacional, diasProducao, oculto].join(";");
+                    const row = [bloco, cultura, variedade, dataPlantio, inicioColheita, caixasDia, colhidoTotal, qtdPlantada, unidadesDia, previsaoFinalizar, statusOperacional, diasProducao, oculto].join(";");
                     csvContent += row + "\n";
                 });
 
@@ -1138,6 +1140,8 @@
                 const idxTalhao = getIdx(['bloco', 'talhao', 'talhão']);
                 const idxVariety = getIdx(['cultura']);
                 const idxCommVariety = getIdx(['variedade']);
+                const idxDate = getIdx(['data plantio', 'plantio']);
+                const idxStartDate = getIdx(['início colheita', 'inicio colheita', 'início']);
                 const idxBoxes = getIdx(['caixas']);
                 const idxTotalUnits = getIdx(['unidades acumuladas', 'acumuladas']);
                 const idxPlants = getIdx(['qtd plantada', 'plantada']);
@@ -1171,8 +1175,8 @@
                         variety: idxVariety !== -1 && row[idxVariety] ? row[idxVariety] : 'Brócolis',
                         commercialVariety: idxCommVariety !== -1 && row[idxCommVariety] ? row[idxCommVariety] : '',
                         percentage: percentage,
-                        startDate: '', 
-                        date: '',
+                        startDate: idxStartDate !== -1 && row[idxStartDate] ? row[idxStartDate] : '', 
+                        date: idxDate !== -1 && row[idxDate] ? row[idxDate] : '',
                         forecastDate: idxForecast !== -1 && row[idxForecast] ? row[idxForecast] : '',
                         plants: plantsRaw,
                         dailyUnits: idxDailyUnits !== -1 && row[idxDailyUnits] ? row[idxDailyUnits] : '0',
