@@ -112,8 +112,8 @@
                     <h2 id="formTitle" class="text-sm font-bold text-slate-700 flex items-center gap-2 uppercase">
                         <i data-lucide="clipboard-list" class="w-4 h-4 text-slate-500"></i> DADOS DO BLOCO
                     </h2>
-                    <button type="button" onclick="clearBlockForm()" class="text-[10px] font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1 uppercase">
-                        <i data-lucide="x-circle" class="w-3 h-3"></i> LIMPAR
+                    <button type="button" onclick="promptClearForm()" class="text-[10px] font-bold text-slate-400 hover:text-amber-500 transition-colors flex items-center gap-1 uppercase">
+                        <i data-lucide="eraser" class="w-3 h-3"></i> LIMPAR
                     </button>
                 </div>
                 
@@ -253,7 +253,13 @@
             <!-- Lista de Itens -->
             <div class="bg-white p-6 rounded shadow-sm border border-slate-200">
                 <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
-                    <h3 class="text-sm font-bold text-slate-700 uppercase">REGISTROS INSERIDOS</h3>
+                    <div class="flex items-center gap-3">
+                        <h3 class="text-sm font-bold text-slate-700 uppercase">REGISTROS INSERIDOS</h3>
+                        <label id="btnImportCsv" class="cursor-pointer flex items-center gap-1 text-[10px] bg-slate-100 text-slate-600 hover:bg-slate-200 px-2 py-1 rounded font-bold transition-colors uppercase border border-slate-200">
+                            <input type="file" accept=".csv" class="hidden" onchange="importCSV(event)">
+                            <i data-lucide="upload" class="w-3 h-3"></i> Importar CSV
+                        </label>
+                    </div>
                     <button onclick="clearAll()" class="text-[10px] font-bold text-red-500 hover:text-red-700 uppercase underline">LIMPAR LISTA</button>
                 </div>
                 <ul id="itemsList" class="space-y-2 text-sm text-slate-600">
@@ -295,6 +301,74 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE SUCESSO DE IMPORTAÇÃO -->
+    <div id="importSuccessModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity opacity-0 duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300 flex flex-col">
+            <div class="bg-blue-600 p-6 flex flex-col items-center justify-center text-white">
+                <i data-lucide="check-circle" class="w-12 h-12 mb-3"></i>
+                <h3 class="text-xl font-bold">Importação Concluída</h3>
+            </div>
+            <div class="p-6 text-center">
+                <p id="importSuccessCount" class="text-lg font-extrabold text-slate-800 mb-2"></p>
+                <p class="text-sm text-slate-500 mb-6 leading-relaxed">
+                    Os dados do arquivo foram importados com sucesso para o relatório atual.
+                </p>
+                <button onclick="closeImportSuccessModal()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-95">
+                    Entendi!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIRMAÇÃO DE LIMPEZA (TUDO) -->
+    <div id="clearAllModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity opacity-0 duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300 flex flex-col">
+            <div class="bg-red-500 p-6 flex flex-col items-center justify-center text-white">
+                <i data-lucide="alert-triangle" class="w-12 h-12 mb-3"></i>
+                <h3 class="text-xl font-bold">Atenção!</h3>
+            </div>
+            <div class="p-6 text-center">
+                <p class="text-sm text-slate-600 mb-4 leading-relaxed">
+                    Tem certeza que deseja limpar <b>todos os blocos</b> de <span class="text-red-600 font-bold">SPG Oásis</span>?
+                </p>
+                <p class="text-[10px] text-slate-400 uppercase tracking-wide font-bold mb-6">
+                    Esta ação não pode ser desfeita.
+                </p>
+                <div class="flex gap-3">
+                    <button onclick="closeClearAllModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-all shadow-sm active:scale-95">
+                        Cancelar
+                    </button>
+                    <button onclick="confirmClearAll()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Limpar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIRMAÇÃO DE LIMPAR FORMULÁRIO (NOVO) -->
+    <div id="clearFormModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity opacity-0 duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300 flex flex-col">
+            <div class="bg-amber-500 p-6 flex flex-col items-center justify-center text-white">
+                <i data-lucide="eraser" class="w-12 h-12 mb-3"></i>
+                <h3 class="text-xl font-bold">Limpar Dados?</h3>
+            </div>
+            <div class="p-6 text-center">
+                <p class="text-sm text-slate-600 mb-6 leading-relaxed">
+                    Os dados preenchidos no momento serão apagados e a edição será cancelada. Deseja continuar?
+                </p>
+                <div class="flex gap-3">
+                    <button onclick="closeClearFormModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-all shadow-sm active:scale-95">
+                        Voltar
+                    </button>
+                    <button onclick="confirmClearForm()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
+                        <i data-lucide="eraser" class="w-4 h-4"></i> Limpar
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -393,13 +467,10 @@
             }
         }
 
-        // --- NOVA FUNÇÃO DE ORDENAÇÃO ---
         function sortHarvestData() {
             harvestData.sort((a, b) => {
-                if (!a.date || !b.date) return 0;
-                const [dayA, monthA, yearA] = a.date.split('/').map(Number);
-                const [dayB, monthB, yearB] = b.date.split('/').map(Number);
-                return new Date(yearA, monthA - 1, dayA) - new Date(yearB, monthB - 1, dayB);
+                // Ordena pelo número/letra do bloco (talhão) de forma alfanumérica natural (1, 2, 10, A, B...)
+                return String(a.talhao || '').localeCompare(String(b.talhao || ''), 'pt-BR', { numeric: true, sensitivity: 'base' });
             });
         }
 
@@ -466,6 +537,34 @@
                 html += `<input type="text" id="commercialVariety" placeholder="Nome da variedade" class="w-full p-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">`;
             }
             wrapper.innerHTML = html;
+        }
+
+        // --- FUNÇÕES DO MODAL DE LIMPAR/CANCELAR FORMULÁRIO (NOVAS) ---
+        function promptClearForm() {
+            const modal = document.getElementById('clearFormModal');
+            const innerBox = modal.querySelector('div.bg-white');
+            
+            modal.classList.remove('hidden');
+            void modal.offsetWidth; 
+            modal.classList.remove('opacity-0');
+            innerBox.classList.remove('scale-95');
+        }
+
+        function closeClearFormModal() {
+            const modal = document.getElementById('clearFormModal');
+            const innerBox = modal.querySelector('div.bg-white');
+            
+            modal.classList.add('opacity-0');
+            innerBox.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function confirmClearForm() {
+            clearBlockForm();
+            closeClearFormModal();
         }
 
         function clearBlockForm() {
@@ -589,13 +688,34 @@
         }
 
         function clearAll() {
-            if(confirm('Tem certeza?')) {
-                harvestData = [];
-                saveData();
-                clearBlockForm();
-                renderReport();
-                renderList();
-            }
+            const modal = document.getElementById('clearAllModal');
+            const innerBox = modal.querySelector('div.bg-white');
+            
+            modal.classList.remove('hidden');
+            void modal.offsetWidth; // Força renderização
+            modal.classList.remove('opacity-0');
+            innerBox.classList.remove('scale-95');
+        }
+
+        function closeClearAllModal() {
+            const modal = document.getElementById('clearAllModal');
+            const innerBox = modal.querySelector('div.bg-white');
+            
+            modal.classList.add('opacity-0');
+            innerBox.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function confirmClearAll() {
+            harvestData = [];
+            saveData();
+            clearBlockForm();
+            renderReport();
+            renderList();
+            closeClearAllModal();
         }
 
         function renderList() {
@@ -962,6 +1082,124 @@
             } finally {
                 if (btnSpan) btnSpan.innerText = originalText;
             }
+        }
+
+        // --- IMPORTAÇÃO DE CSV ---
+        function showImportSuccessModal(count) {
+            const modal = document.getElementById('importSuccessModal');
+            const countEl = document.getElementById('importSuccessCount');
+            const innerBox = modal.querySelector('div.bg-white');
+            
+            countEl.innerText = `${count} blocos importados com sucesso!`;
+            
+            modal.classList.remove('hidden');
+            void modal.offsetWidth; 
+            modal.classList.remove('opacity-0');
+            innerBox.classList.remove('scale-95');
+        }
+
+        function closeImportSuccessModal() {
+            const modal = document.getElementById('importSuccessModal');
+            const innerBox = modal.querySelector('div.bg-white');
+            
+            modal.classList.add('opacity-0');
+            innerBox.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function importCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+                if (lines.length < 2) {
+                    alert("O CSV parece estar vazio ou não possui dados válidos.");
+                    return;
+                }
+
+                // Detecta o separador
+                const sep = lines[0].includes(';') ? ';' : ',';
+                const headers = lines[0].split(sep).map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
+
+                const getIdx = (aliases) => {
+                    for (let alias of aliases) {
+                        const idx = headers.findIndex(h => h.includes(alias.toLowerCase()));
+                        if (idx !== -1) return idx;
+                    }
+                    return -1;
+                };
+
+                const idxTalhao = getIdx(['bloco', 'talhao', 'talhão']);
+                const idxVariety = getIdx(['cultura']);
+                const idxCommVariety = getIdx(['variedade']);
+                const idxBoxes = getIdx(['caixas']);
+                const idxTotalUnits = getIdx(['unidades acumuladas', 'acumuladas']);
+                const idxPlants = getIdx(['qtd plantada', 'plantada']);
+                const idxDailyUnits = getIdx(['total de unidades', 'hoje']);
+                const idxForecast = getIdx(['previsao', 'previsão', 'finalizar']);
+                const idxStatus = getIdx(['status']);
+                const idxDays = getIdx(['dias de produção', 'dias']);
+                const idxOculto = getIdx(['ocultos', 'oculto']);
+
+                let importedCount = 0;
+
+                // Limpa os dados atuais da lista para evitar duplicação ao importar novo arquivo
+                harvestData = [];
+
+                for (let i = 1; i < lines.length; i++) {
+                    const row = lines[i].split(sep).map(col => col.trim().replace(/^"|"$/g, '')); 
+                    if (row.length < 2) continue;
+
+                    let isActive = true;
+                    if (idxOculto !== -1 && row[idxOculto]) {
+                        const val = row[idxOculto].toLowerCase();
+                        if (['sim', 's', 'true', '1', 'x'].includes(val)) isActive = false;
+                    }
+
+                    const plantsRaw = idxPlants !== -1 && row[idxPlants] ? row[idxPlants] : '0';
+                    const totalUnitsRaw = idxTotalUnits !== -1 && row[idxTotalUnits] ? row[idxTotalUnits] : '0';
+                    const percentage = parsePTBRNumber(plantsRaw) > 0 ? Math.round((parsePTBRNumber(totalUnitsRaw) / parsePTBRNumber(plantsRaw)) * 100) : 0;
+
+                    const newItem = {
+                        talhao: idxTalhao !== -1 && row[idxTalhao] ? row[idxTalhao] : `Imp-${i}`,
+                        variety: idxVariety !== -1 && row[idxVariety] ? row[idxVariety] : 'Brócolis',
+                        commercialVariety: idxCommVariety !== -1 && row[idxCommVariety] ? row[idxCommVariety] : '',
+                        percentage: percentage,
+                        startDate: '', 
+                        date: '',
+                        forecastDate: idxForecast !== -1 && row[idxForecast] ? row[idxForecast] : '',
+                        plants: plantsRaw,
+                        dailyUnits: idxDailyUnits !== -1 && row[idxDailyUnits] ? row[idxDailyUnits] : '0',
+                        boxes: idxBoxes !== -1 && row[idxBoxes] ? row[idxBoxes] : '0',
+                        totalUnits: totalUnitsRaw,
+                        days: idxDays !== -1 && row[idxDays] ? row[idxDays] : '0',
+                        status: idxStatus !== -1 && row[idxStatus] ? row[idxStatus] : 'Em Andamento',
+                        details: '',
+                        active: isActive
+                    };
+
+                    harvestData.push(newItem);
+                    importedCount++;
+                }
+
+                sortHarvestData();
+                saveData();
+                renderList();
+                renderReport();
+                
+                event.target.value = ''; 
+                
+                if (importedCount > 0) {
+                    showImportSuccessModal(importedCount);
+                }
+            };
+            reader.readAsText(file);
         }
     </script>
 </body>
