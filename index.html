@@ -1032,6 +1032,14 @@
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
+                const getWeeksText = (totalDays) => {
+                    let w = Math.floor(totalDays / 7);
+                    let d = totalDays % 7;
+                    let wStr = w === 1 ? '1 semana' : w + ' semanas';
+                    let dStr = d === 1 ? '1 dia' : (d > 1 ? d + ' dias' : '');
+                    return dStr ? `(${wStr} e ${dStr})` : `(${wStr})`;
+                };
+
                 const listHtml = validForecasts.map(f => {
                     // Evitar problemas de fuso horário quebrando a data no JS
                     const [year, month, day] = f.date.split('-');
@@ -1043,10 +1051,12 @@
                     
                     let daysText = '';
                     let daysClass = '';
+                    let weeksText = '';
                     
                     if (diffDays > 1) {
                         daysText = `Faltam ${diffDays} dias`;
                         daysClass = 'text-blue-600';
+                        if (diffDays >= 7) weeksText = getWeeksText(diffDays);
                     } else if (diffDays === 1) {
                         daysText = `Amanhã`;
                         daysClass = 'text-amber-600';
@@ -1056,6 +1066,7 @@
                     } else {
                         daysText = `Atrasado ${Math.abs(diffDays)} dias`;
                         daysClass = 'text-red-600';
+                        if (Math.abs(diffDays) >= 7) weeksText = getWeeksText(Math.abs(diffDays));
                     }
 
                     return `<div class="bg-slate-50 border border-slate-200 shadow-sm rounded-lg p-2 flex flex-col gap-1 min-w-[110px]">
@@ -1063,8 +1074,11 @@
                                     <span class="text-[11px] font-extrabold text-slate-700">BLOCO ${f.block}</span>
                                     <span class="text-[10px] font-bold text-slate-500 uppercase">${formatDateBR(f.date)}</span>
                                 </div>
-                                <div class="text-[9px] font-extrabold px-1.5 py-0.5 rounded text-center uppercase tracking-wider ${daysClass}">
-                                    ${daysText}
+                                <div class="flex flex-col items-center justify-center mt-1">
+                                    <div class="text-[9px] font-extrabold px-1.5 py-0.5 rounded text-center uppercase tracking-wider ${daysClass}">
+                                        ${daysText}
+                                    </div>
+                                    ${weeksText ? `<div class="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-0.5">${weeksText}</div>` : ''}
                                 </div>
                             </div>`;
                 }).join('');
