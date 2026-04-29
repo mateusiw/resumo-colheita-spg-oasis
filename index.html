@@ -103,6 +103,16 @@
                         <input type="number" id="intervalDuration" oninput="renderReport()" placeholder="Min" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
                     </div>
                 </div>
+
+                <div class="mt-3 pt-3 border-t border-slate-100">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">PREVISÃO PRÓXIMOS BLOCOS</label>
+                        <button type="button" onclick="addForecastRow()" class="text-[10px] bg-slate-100 text-slate-600 hover:bg-slate-200 px-2 py-1 rounded font-bold transition-colors uppercase">
+                            + Adicionar
+                        </button>
+                    </div>
+                    <div id="forecastBlocksContainer" class="space-y-2"></div>
+                </div>
             </div>
 
             <!-- 2. DADOS DO BLOCO -->
@@ -135,6 +145,15 @@
                             <option value="9">9</option>
                             <option value="10">10</option>
                             <option value="11">11</option>
+                            <option value="12">12</option>
+                            <option value="13">13</option>
+                            <option value="14">14</option>
+                            <option value="15">15</option>
+                            <option value="16">16</option>
+                            <option value="17">17</option>
+                            <option value="18">18</option>
+                            <option value="19">19</option>
+                            <option value="20">20</option>
                             <option value="A">A</option>
                             <option value="B">B</option>
                             <option value="C">C</option>
@@ -270,7 +289,7 @@
 
         <!-- PREVIEW -->
         <div class="w-full lg:w-2/3 flex flex-col bg-slate-200/50 p-4 rounded-3xl border border-slate-300/50 min-h-[calc(100vh-6rem)]">
-            <div id="report-card" class="w-full flex-1 flex flex-col bg-white shadow-2xl overflow-hidden border border-slate-100 relative">
+            <div id="report-card" class="w-full flex-1 flex flex-col bg-white shadow-2xl overflow-hidden border border-slate-100 relative" style="text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased;">
                 
                 <!-- Cabeçalho -->
                 <div class="bg-gradient-to-br from-emerald-600 to-emerald-800 p-6 text-white relative overflow-hidden flex flex-col justify-start shrink-0 gap-3 antialiased">
@@ -444,6 +463,53 @@
 
         // --- STORAGE E ORDENAÇÃO ---
         function saveData() { localStorage.setItem('spg_harvestData', JSON.stringify(harvestData)); }
+        
+        function getForecastBlocks() {
+            const container = document.getElementById('forecastBlocksContainer');
+            if (!container) return [];
+            const rows = container.querySelectorAll('div[id^="forecast-"]');
+            const data = [];
+            rows.forEach(row => {
+                const block = row.querySelector('.forecast-block').value;
+                const date = row.querySelector('.forecast-date').value;
+                if (block || date) {
+                    data.push({ block, date });
+                }
+            });
+            return data;
+        }
+
+        function addForecastRow(block = '', date = '') {
+            const container = document.getElementById('forecastBlocksContainer');
+            const rowId = 'forecast-' + Date.now() + Math.random().toString(36).substr(2, 5);
+            
+            const div = document.createElement('div');
+            div.className = "flex gap-2 items-center";
+            div.id = rowId;
+            
+            const blockOptions = ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','A','B','C','D','E'];
+            let optionsHtml = '<option value="">Selecione...</option>';
+            blockOptions.forEach(b => {
+                optionsHtml += `<option value="${b}" ${block === b ? 'selected' : ''}>${b}</option>`;
+            });
+
+            div.innerHTML = `
+                <div class="w-1/3">
+                    <select class="forecast-block w-full p-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-400 outline-none text-slate-700" onchange="saveInputs(); renderReport()">
+                        ${optionsHtml}
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <input type="date" value="${date}" class="forecast-date w-full p-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 uppercase" onchange="saveInputs(); renderReport()">
+                </div>
+                <button type="button" onclick="document.getElementById('${rowId}').remove(); saveInputs(); renderReport()" class="text-red-400 hover:text-red-600 p-1 transition-colors">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            `;
+            container.appendChild(div);
+            lucide.createIcons();
+        }
+
         function saveInputs() {
             const inputs = {
                 estimatedBoxes: document.getElementById('estimatedBoxes').value,
@@ -451,10 +517,12 @@
                 estimateDay: document.getElementById('estimateDay').value,
                 startTime: document.getElementById('startTime').value,
                 endTime: document.getElementById('endTime').value,
-                intervalDuration: document.getElementById('intervalDuration').value
+                intervalDuration: document.getElementById('intervalDuration').value,
+                forecastBlocks: getForecastBlocks()
             };
             localStorage.setItem('spg_inputs', JSON.stringify(inputs));
         }
+        
         function loadInputs() {
             const saved = localStorage.getItem('spg_inputs');
             if (saved) {
@@ -463,6 +531,10 @@
                     ['estimatedBoxes', 'crewCount', 'estimateDay', 'startTime', 'endTime', 'intervalDuration'].forEach(id => {
                         if(inputs[id]) document.getElementById(id).value = inputs[id];
                     });
+                    
+                    if (inputs.forecastBlocks && Array.isArray(inputs.forecastBlocks)) {
+                        inputs.forecastBlocks.forEach(fb => addForecastRow(fb.block, fb.date));
+                    }
                 } catch (e) { console.error("Erro ao carregar inputs", e); }
             }
         }
@@ -886,6 +958,7 @@
             const crewValue = document.getElementById('crewCount').value;
             const crew = crewValue ? (parseInt(crewValue) === 1 ? `${crewValue} Colaborador` : `${crewValue} Colaboradores`) : '-';
             const estDay = document.getElementById('estimateDay').value || '';
+            const forecastBlocks = getForecastBlocks();
             
             // Renderiza o cabeçalho de resumo (Totais e Estimativa)
             summaryHeader.innerHTML = `
@@ -904,6 +977,64 @@
                 </div>`;
 
             // Renderiza o footer operacional (Equipe e Horários)
+            let forecastHtml = '';
+            const validForecasts = forecastBlocks.filter(f => f.block && f.date);
+            
+            if (validForecasts.length > 0) {
+                // Ordena os blocos pela data mais próxima (ordem crescente)
+                validForecasts.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                const listHtml = validForecasts.map(f => {
+                    // Evitar problemas de fuso horário quebrando a data no JS
+                    const [year, month, day] = f.date.split('-');
+                    const targetDate = new Date(year, month - 1, day);
+                    targetDate.setHours(0, 0, 0, 0);
+                    
+                    const diffTime = targetDate - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    let daysText = '';
+                    let daysClass = '';
+                    
+                    if (diffDays > 1) {
+                        daysText = `Faltam ${diffDays} dias`;
+                        daysClass = 'text-blue-600';
+                    } else if (diffDays === 1) {
+                        daysText = `Amanhã`;
+                        daysClass = 'text-amber-600';
+                    } else if (diffDays === 0) {
+                        daysText = `Hoje`;
+                        daysClass = 'text-emerald-600';
+                    } else {
+                        daysText = `Atrasado ${Math.abs(diffDays)} dias`;
+                        daysClass = 'text-red-600';
+                    }
+
+                    return `<div class="bg-slate-50 border border-slate-200 shadow-sm rounded-lg p-2 flex flex-col gap-1 min-w-[110px]">
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="text-[11px] font-extrabold text-slate-700">BLOCO ${f.block}</span>
+                                    <span class="text-[10px] font-bold text-slate-500 uppercase">${formatDateBR(f.date)}</span>
+                                </div>
+                                <div class="text-[9px] font-extrabold px-1.5 py-0.5 rounded text-center uppercase tracking-wider ${daysClass}">
+                                    ${daysText}
+                                </div>
+                            </div>`;
+                }).join('');
+
+                forecastHtml = `
+                <div class="mt-4 pt-4 border-t border-slate-100 border-dashed flex flex-col items-center justify-center">
+                    <div class="flex items-center gap-1 mb-3 text-blue-500">
+                        <span class="text-[10px] font-bold uppercase tracking-widest">Previsão de Colheita (Próximos Blocos)</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2 justify-center">
+                        ${listHtml}
+                    </div>
+                </div>`;
+            }
+
             footer.innerHTML = `
                 <div class="flex justify-center items-center mb-4 pb-4 border-b border-slate-200 border-dashed">
                      <span class="text-xs font-bold text-slate-600">Equipe de Colheita: <span class="text-slate-800 text-sm font-extrabold">${crew}</span></span>
@@ -919,7 +1050,8 @@
                 </div>
                 <div class="flex justify-center items-center pt-4 border-t border-slate-100 mt-2">
                     <span class="text-lg font-bold text-[#00838f]">${estDay ? `Estimativas de Caixas para ${estDay}:` : 'Estimativas de Caixas:'} <span class="text-[#00838f] text-2xl font-extrabold">${document.getElementById('estimatedBoxes').value || '-'}</span></span>
-                </div>`;
+                </div>
+                ${forecastHtml}`;
             lucide.createIcons();
         }
 
@@ -950,7 +1082,9 @@
                 const activeBlocksCount = harvestData.filter(item => item.active !== false).length;
                 const isGrid = activeBlocksCount > 3;
                 const targetWidth = isGrid ? 900 : 450;
-                const exportScale = isGrid ? 3 : 5;
+                
+                // Escala fixa em 8 (Ultra HD) para máxima nitidez de textos pequenos
+                const exportScale = 8;
 
                 const options = {
                     scale: exportScale,
@@ -1013,8 +1147,15 @@
                 // Adiciona o BOM (\uFEFF) para o Excel reconhecer os caracteres UTF-8 corretamente
                 let csvContent = "\uFEFF";
                 
-                // Cabeçalhos solicitados com a nova coluna "Ocultos"
-                csvContent += "Bloco;Cultura;Variedade;Data Plantio;Início Colheita;Caixas;Unidades Acumuladas;Qtd Plantada;Total de Unidades (Hoje);Previsão Finalizar;Status;Dias de Produção;Ocultos\n";
+                // Cabeçalhos solicitados com a nova coluna "Ocultos" e Parâmetros
+                csvContent += "Bloco;Cultura;Variedade;Data Plantio;Início Colheita;Caixas;Unidades Acumuladas;Qtd Plantada;Total de Unidades (Hoje);Previsão Finalizar;Status;Dias de Produção;Ocultos;Meta Caixas;Efetivo Pessoas;Ref Estimativa;Hora Inicio;Hora Termino;Intervalo Min\n";
+
+                const estimatedBoxes = document.getElementById('estimatedBoxes').value || '';
+                const crewCount = document.getElementById('crewCount').value || '';
+                const estimateDay = document.getElementById('estimateDay').value || '';
+                const startTime = document.getElementById('startTime').value || '';
+                const endTime = document.getElementById('endTime').value || '';
+                const intervalDuration = document.getElementById('intervalDuration').value || '';
 
                 // Preenchimento dos dados de todos os blocos
                 harvestData.forEach(item => {
@@ -1033,7 +1174,28 @@
                     const oculto = item.active === false ? "SIM" : "NÃO";
 
                     // Usa ponto e vírgula para não bugar no Excel pt-BR
-                    const row = [bloco, cultura, variedade, dataPlantio, inicioColheita, caixasDia, colhidoTotal, qtdPlantada, unidadesDia, previsaoFinalizar, statusOperacional, diasProducao, oculto].join(";");
+                    const row = [bloco, cultura, variedade, dataPlantio, inicioColheita, caixasDia, colhidoTotal, qtdPlantada, unidadesDia, previsaoFinalizar, statusOperacional, diasProducao, oculto, estimatedBoxes, crewCount, estimateDay, startTime, endTime, intervalDuration].join(";");
+                    csvContent += row + "\n";
+                });
+
+                // Adiciona os blocos da Previsão Próximos Blocos no final do CSV
+                const forecastBlocks = getForecastBlocks().filter(f => f.block && f.date);
+                forecastBlocks.forEach(f => {
+                    const bloco = f.block;
+                    const cultura = "-";
+                    const variedade = "-";
+                    const dataPlantio = "-";
+                    const inicioColheita = formatDateBR(f.date);
+                    const caixasDia = "-";
+                    const colhidoTotal = "-";
+                    const qtdPlantada = "-";
+                    const unidadesDia = "-";
+                    const previsaoFinalizar = "-";
+                    const statusOperacional = "PREVISÃO DE COLHEITA";
+                    const diasProducao = "-";
+                    const oculto = "NÃO";
+
+                    const row = [bloco, cultura, variedade, dataPlantio, inicioColheita, caixasDia, colhidoTotal, qtdPlantada, unidadesDia, previsaoFinalizar, statusOperacional, diasProducao, oculto, estimatedBoxes, crewCount, estimateDay, startTime, endTime, intervalDuration].join(";");
                     csvContent += row + "\n";
                 });
 
@@ -1150,15 +1312,51 @@
                 const idxStatus = getIdx(['status']);
                 const idxDays = getIdx(['dias de produção', 'dias']);
                 const idxOculto = getIdx(['ocultos', 'oculto']);
+                
+                const idxMeta = getIdx(['meta caixas', 'meta']);
+                const idxCrew = getIdx(['efetivo pessoas', 'efetivo']);
+                const idxEstDay = getIdx(['ref estimativa', 'ref']);
+                const idxStart = getIdx(['hora inicio', 'hora início']);
+                const idxEnd = getIdx(['hora termino', 'hora término']);
+                const idxInterval = getIdx(['intervalo min', 'intervalo']);
 
                 let importedCount = 0;
 
                 // Limpa os dados atuais da lista para evitar duplicação ao importar novo arquivo
                 harvestData = [];
+                document.getElementById('forecastBlocksContainer').innerHTML = ''; // Limpa as previsões anteriores
+
+                let isFirstRow = true;
 
                 for (let i = 1; i < lines.length; i++) {
                     const row = lines[i].split(sep).map(col => col.trim().replace(/^"|"$/g, '')); 
                     if (row.length < 2) continue;
+
+                    // Importa os parâmetros do turno baseados na primeira linha
+                    if (isFirstRow) {
+                        if (idxMeta !== -1 && row[idxMeta]) document.getElementById('estimatedBoxes').value = row[idxMeta];
+                        if (idxCrew !== -1 && row[idxCrew]) document.getElementById('crewCount').value = row[idxCrew];
+                        if (idxEstDay !== -1 && row[idxEstDay]) document.getElementById('estimateDay').value = row[idxEstDay];
+                        if (idxStart !== -1 && row[idxStart]) document.getElementById('startTime').value = row[idxStart];
+                        if (idxEnd !== -1 && row[idxEnd]) document.getElementById('endTime').value = row[idxEnd];
+                        if (idxInterval !== -1 && row[idxInterval]) document.getElementById('intervalDuration').value = row[idxInterval];
+                        isFirstRow = false;
+                    }
+
+                    const statusRaw = idxStatus !== -1 && row[idxStatus] ? row[idxStatus] : '';
+
+                    // Redireciona a linha se for previsão de bloco
+                    if (statusRaw.toUpperCase() === 'PREVISÃO DE COLHEITA') {
+                        const fBlock = idxTalhao !== -1 && row[idxTalhao] ? row[idxTalhao] : '';
+                        let fDate = idxStartDate !== -1 && row[idxStartDate] ? row[idxStartDate] : '';
+                        if (fDate && fDate.includes('/')) {
+                            fDate = fDate.split('/').reverse().join('-');
+                        }
+                        if (fBlock || fDate) {
+                            addForecastRow(fBlock, fDate);
+                        }
+                        continue;
+                    }
 
                     let isActive = true;
                     if (idxOculto !== -1 && row[idxOculto]) {
