@@ -107,9 +107,14 @@
                 <div class="mt-3 pt-3 border-t border-slate-100">
                     <div class="flex justify-between items-center mb-2">
                         <label class="text-[10px] font-bold text-slate-500 uppercase">PREVISÃO PRÓXIMOS BLOCOS</label>
-                        <button type="button" onclick="addForecastRow()" class="text-[10px] bg-slate-100 text-slate-600 hover:bg-slate-200 px-2 py-1 rounded font-bold transition-colors uppercase">
-                            + Adicionar
-                        </button>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="syncForecasts()" id="btnSyncForecast" class="text-[10px] bg-blue-50 text-blue-600 hover:bg-blue-100 px-2 py-1 rounded font-bold transition-colors uppercase flex items-center gap-1 border border-blue-200">
+                                <i data-lucide="refresh-cw" class="w-3 h-3"></i> Atualizar Blocos
+                            </button>
+                            <button type="button" onclick="addForecastRow()" class="text-[10px] bg-slate-100 text-slate-600 hover:bg-slate-200 px-2 py-1 rounded font-bold transition-colors uppercase">
+                                Inserir Manualmente
+                            </button>
+                        </div>
                     </div>
                     <div id="forecastBlocksContainer" class="space-y-2"></div>
                 </div>
@@ -508,6 +513,46 @@
             `;
             container.appendChild(div);
             lucide.createIcons();
+        }
+
+        async function syncForecasts() {
+            const btn = document.getElementById('btnSyncForecast');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> Buscando...`;
+            btn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                // Link do seu Google Apps Script Web App
+                const webAppUrl = "https://script.google.com/macros/s/AKfycbzLELFHQMfcIzmBzf-yhjsw4456Ouhg_Lk96GjqcmiAPBuPiAMQEhkK9m9xMQYDFTzJvA/exec";
+                const response = await fetch(webAppUrl);
+                const data = await response.json();
+
+                if (data.error) {
+                    alert("Erro ao buscar dados: " + data.error);
+                    return;
+                }
+
+                // Limpa as previsões atuais para evitar duplicidade
+                document.getElementById('forecastBlocksContainer').innerHTML = '';
+                
+                if (data && data.length > 0) {
+                    // Preenche automaticamente com as informações da planilha
+                    data.forEach(item => addForecastRow(item.block, item.date));
+                    saveInputs();
+                    renderReport();
+                } else {
+                    alert("Nenhum bloco pendente encontrado na planilha.");
+                }
+            } catch (error) {
+                console.error("Erro na sincronização:", error);
+                alert("Erro ao conectar com a planilha. Certifique-se de que o Web App foi implantado para acesso por 'Qualquer Pessoa'.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
         }
 
         function saveInputs() {
@@ -1392,12 +1437,13 @@
 
                 sortHarvestData();
                 saveData();
+                saveInputs(); // Salva os inputs que vieram da planilha
                 renderList();
                 renderReport();
                 
                 event.target.value = ''; 
                 
-                if (importedCount > 0) {
+                if (importedCount > 0 || !isFirstRow) {
                     showImportSuccessModal(importedCount);
                 }
             };
