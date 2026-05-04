@@ -525,9 +525,28 @@
 
             try {
                 // Link do seu Google Apps Script Web App
-                const webAppUrl = "https://script.google.com/macros/s/AKfycbzLELFHQMfcIzmBzf-yhjsw4456Ouhg_Lk96GjqcmiAPBuPiAMQEhkK9m9xMQYDFTzJvA/exec";
-                const response = await fetch(webAppUrl);
-                const data = await response.json();
+                const webAppUrl = "https://script.google.com/macros/s/AKfycbx-xn0diWKEl8ZluHc4C_fDB-0P5yKs_75POdcd6We6MlR6yjrKRNkmVct0kV7JksxDdA/exec";
+                
+                const response = await fetch(webAppUrl, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+                
+                // Tratamento para evitar erro de "Unexpected token" quando o Google retorna HTML
+                const textResponse = await response.text();
+                let data;
+                
+                try {
+                    data = JSON.parse(textResponse);
+                } catch (parseError) {
+                    console.error("A resposta não é um JSON válido. Resposta recebida do Google:", textResponse);
+                    
+                    if (textResponse.includes("Ação não reconhecida") || textResponse.includes("Action not recognized") || textResponse.includes("Ação não")) {
+                        throw new Error("Erro: 'Ação não reconhecida'. O Google Apps Script não foi implantado corretamente como um 'App da Web' ou a URL está incompleta. \n\nNo seu Google Sheets vá em: Extensões > Apps Script > Implantar > Nova Implantação. Em 'Quem pode acessar', coloque 'Qualquer Pessoa'.");
+                    }
+                    
+                    throw new Error("Erro de permissão no Google Script. Verifique se a implantação do Web App foi configurada com acesso para 'Qualquer Pessoa'.");
+                }
 
                 if (data.error) {
                     alert("Erro ao buscar dados: " + data.error);
@@ -547,7 +566,7 @@
                 }
             } catch (error) {
                 console.error("Erro na sincronização:", error);
-                alert("Erro ao conectar com a planilha. Certifique-se de que o Web App foi implantado para acesso por 'Qualquer Pessoa'.");
+                alert(error.message || "Erro ao conectar com a planilha. Certifique-se de que o Web App foi implantado para acesso por 'Qualquer Pessoa'.");
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
