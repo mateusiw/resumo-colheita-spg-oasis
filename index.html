@@ -1380,22 +1380,45 @@
             let originalText = btnSpan ? btnSpan.innerText : "";
             if (btnSpan) btnSpan.innerText = "Gerando Imagem...";
             
-            // Forçando a largura para garantir que nenhum texto de card se quebre/fique espremido ao capturar
-            const originalWidth = element.style.width;
-            
             try {
-                const activeBlocksCount = harvestData.filter(item => item.active !== false).length;
-                // Ajustado os tamanhos de janela para serem muito mais amplos e evitar o esmagamento:
-                const targetWidth = activeBlocksCount > 3 ? 1200 : 600;
-                
-                element.style.width = targetWidth + 'px';
+                // Preload de imagens para acelerar a renderização e evitar falhas
+                const images = element.querySelectorAll('img');
+                await Promise.all(Array.from(images).map(img => { 
+                    if (img.complete) return Promise.resolve(); 
+                    return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; }); 
+                }));
 
-                const canvas = await html2canvas(element, { 
-                    scale: 4, 
+                const activeBlocksCount = harvestData.filter(item => item.active !== false).length;
+                const isGrid = activeBlocksCount > 3;
+                const targetWidth = isGrid ? '900px' : '450px';
+
+                const options = {
+                    scale: 5, 
                     useCORS: true, 
+                    allowTaint: true,
+                    scrollY: -window.scrollY,
                     backgroundColor: '#ffffff', 
-                    windowWidth: targetWidth + 50 
-                });
+                    onclone: (doc) => {
+                        const el = doc.getElementById('report-card');
+                        const content = doc.getElementById('reportContent');
+                        
+                        if (el) { 
+                            el.style.width = targetWidth; 
+                            el.style.maxWidth = targetWidth;
+                            el.style.margin = '0'; 
+                            el.style.boxShadow = 'none';
+                            el.style.borderRadius = '0';
+                            el.style.border = 'none';
+                        }
+                        if (content) { 
+                            content.style.height = 'auto'; 
+                            content.style.overflow = 'visible'; 
+                            content.style.maxHeight = 'none';
+                        }
+                    }
+                };
+
+                const canvas = await html2canvas(element, options);
                 const imgData = canvas.toDataURL('image/png');
                 const link = document.createElement('a');
                 link.href = imgData;
@@ -1410,7 +1433,6 @@
             } catch (err) { 
                 console.error(err); 
             } finally { 
-                element.style.width = originalWidth; // Restaurando o estado original para não afetar a interface do site
                 if (btnSpan) btnSpan.innerText = originalText; 
             }
         }
