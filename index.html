@@ -251,7 +251,7 @@
                             </div>
                             <div>
                                 <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">ACUMULADAS</label>
-                                <input type="text" id="totalUnits" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 text-right" placeholder="0">
+                                <input type="text" id="totalUnits" readonly class="w-full p-2 border border-slate-200 rounded text-sm bg-slate-50 text-slate-500 font-bold outline-none text-right cursor-not-allowed" placeholder="0">
                             </div>
                         </div>
 
@@ -275,7 +275,7 @@
                             </div>
                              <div>
                                 <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">TOTAL DE UNIDADES (HOJE)</label>
-                                <input type="text" id="dailyUnits" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 text-right" placeholder="0">
+                                <input type="text" id="dailyUnits" oninput="formatNumberInput(this); updateAccumulated()" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 text-right" placeholder="0">
                             </div>
                         </div>
                     </div>
@@ -548,6 +548,7 @@
             const inputTotalBloco = document.getElementById('totalBlockPlants');
             const inputPlantas = document.getElementById('plants');
             const inputDataPlantio = document.getElementById('date');
+            const inputTotalUnits = document.getElementById('totalUnits');
 
             if (!blocoAtual) {
                 inputTotalBloco.value = '';
@@ -594,8 +595,48 @@
                     inputDataPlantio.value = ''; // Limpa caso não ache a variedade
                 }
 
+                // 3. Preenche automaticamente "Unidades Acumuladas" com base no Histórico de Colheita
+                const rawHistory = localStorage.getItem('spg_harvest_history');
+                let foundHistory = false;
+                let historyValue = 0;
+
+                if (rawHistory && blocoAtual && cicloAtual && culturaAtual && variedadeAtual) {
+                    const historyData = JSON.parse(rawHistory);
+                    let matchHistory = historyData.filter(item => 
+                        item.bloco == blocoAtual && 
+                        item.ciclo == cicloAtual && 
+                        (item.cultura || '').trim().toLowerCase() === culturaAtual.trim().toLowerCase() && 
+                        (item.variedade || '').trim().toLowerCase() === variedadeAtual.trim().toLowerCase()
+                    );
+                    
+                    if (matchHistory.length > 0) {
+                        foundHistory = true;
+                        historyValue = matchHistory[0].totalUnidades;
+                    }
+                }
+
+                // Aplica o histórico na base de dados do input (mesmo que seja 0, para permitir somar com o campo HOJE)
+                inputTotalUnits.dataset.baseValue = historyValue;
+                updateAccumulated(); // Dispara a soma de (Histórico + Hoje) automaticamente
+
             } catch (error) {
                 console.error("Erro ao cruzar plantas locais:", error);
+            }
+        }
+
+        function updateAccumulated() {
+            const inputTotalUnits = document.getElementById('totalUnits');
+            const dailyUnits = document.getElementById('dailyUnits');
+
+            if (inputTotalUnits.hasAttribute('data-base-value')) {
+                const baseValue = parseFloat(inputTotalUnits.dataset.baseValue) || 0;
+                const dailyVal = parsePTBRNumber(dailyUnits.value);
+                
+                if (baseValue > 0 || dailyVal > 0) {
+                     inputTotalUnits.value = (baseValue + dailyVal).toLocaleString('pt-BR');
+                } else {
+                     inputTotalUnits.value = '0';
+                }
             }
         }
 
@@ -749,15 +790,13 @@
             const modal = document.getElementById('syncModal');
             
             try {
-                // Reaproveita o script de "Plantas" para popular tudo na memória
+                // 1. Sincroniza Plantas e Variedades
                 const webAppUrl = "https://script.google.com/macros/s/AKfycbypGiOpHEYQ9Hc4zzXi9age7jb54lrLaGZXLEGpeoiJZudqMsHjE86xeULpH_hVefTaSg/exec";
                 const response = await fetch(webAppUrl, { method: 'GET', redirect: 'follow' });
-                
                 const textResponse = await response.text();
                 let data = JSON.parse(textResponse);
 
                 if (!data.error) {
-                    // Salva os dados brutos de plantas para o autoFillPlants usar
                     localStorage.setItem('spg_plants_data', JSON.stringify(data));
 
                     let tempVarieties = {};
@@ -784,13 +823,24 @@
                         localStorage.setItem('spg_cultures', JSON.stringify(finalCultures));
                     }
                 }
-            } catch (error) {
-                console.error("Erro ao sincronizar dados iniciais (usando cache local):", error);
-            } finally {
-                // Sempre carrega a interface (seja com dados novos ou do cache)
-                loadCultures();
                 
-                // Remove o modal de sincronização suavemente
+                // 2. Sincroniza Histórico da Colheita 
+                const urlHistorico = "https://script.google.com/macros/s/AKfycbxMvA1xEKhZ-BKGUQPcmYcpsTEki2sUwfHT1qBSmzyQRx4ywCFvOAK5tlkrOppcO8QC7A/exec"; 
+                
+                if (urlHistorico.startsWith("http")) {
+                    const responseHist = await fetch(urlHistorico, { method: 'GET', redirect: 'follow' });
+                    const textResponseHist = await responseHist.text();
+                    let dataHist = JSON.parse(textResponseHist);
+                    
+                    if (!dataHist.error) {
+                        localStorage.setItem('spg_harvest_history', JSON.stringify(dataHist));
+                    }
+                }
+                
+            } catch (error) {
+                console.error("Erro ao sincronizar dados iniciais:", error);
+            } finally {
+                loadCultures();
                 modal.classList.add('opacity-0');
                 setTimeout(() => {
                     modal.classList.add('hidden');
@@ -854,6 +904,7 @@
                 const el = document.getElementById(id);
                 if(el) el.value = (id === 'status' ? 'EM ANDAMENTO' : '');
             });
+            document.getElementById('totalUnits').removeAttribute('data-base-value');
             document.getElementById('stagesList').innerHTML = '';
             document.getElementById('hasStages').checked = false;
             toggleDetailsField();
@@ -929,6 +980,10 @@
             document.getElementById('status').value = item.status === 'Finalizado' ? 'FINALIZADO' : 'EM ANDAMENTO';
             document.getElementById('productionDays').value = item.days || '';
             document.getElementById('details').value = item.details || '';
+
+            // Calcula a base original (Acumuladas - Hoje) para permitir a soma dinâmica ao editar "Hoje"
+            const baseForEdit = parsePTBRNumber(item.totalUnits) - parsePTBRNumber(item.dailyUnits);
+            document.getElementById('totalUnits').dataset.baseValue = Math.max(0, baseForEdit);
 
             // Ao editar, recalcula o "Total do Bloco" visualmente caso não tenha sido salvo anteriormente
             if (!item.totalBlockPlants) {
@@ -1049,15 +1104,35 @@
             const displayData = harvestData.filter(item => item.active !== false);
 
             const blockAggregates = {};
+            
+            // 1. Inicia os agregados com a base de histórico armazenada (Aba Colheita)
+            const rawHistory = localStorage.getItem('spg_harvest_history');
+            if (rawHistory) {
+                try {
+                    const historyData = JSON.parse(rawHistory);
+                    historyData.forEach(h => {
+                        const key = `${h.bloco}-${h.ciclo}`;
+                        if (!blockAggregates[key]) {
+                            blockAggregates[key] = { varieties: {}, totalBlockPlants: 0 };
+                        }
+                        const varKey = `${h.cultura}-${h.variedade}`;
+                        // Inicializa a variedade com o total arquivado no histórico
+                        blockAggregates[key].varieties[varKey] = h.totalUnidades;
+                    });
+                } catch(e) {}
+            }
+
+            // 2. Sobrepõe/Adiciona os valores que estão AGORA no relatório de hoje
             displayData.forEach(item => {
                 const key = `${item.talhao}-${item.cycle || ''}`;
                 if (!blockAggregates[key]) {
-                    blockAggregates[key] = {
-                        totalUnitsSum: 0,
-                        totalBlockPlants: parsePTBRNumber(item.totalBlockPlants)
-                    };
+                    blockAggregates[key] = { varieties: {}, totalBlockPlants: 0 };
                 }
-                blockAggregates[key].totalUnitsSum += parsePTBRNumber(item.totalUnits);
+                const varKey = `${item.variety}-${item.commercialVariety}`;
+                
+                // O valor que você acabou de digitar (ou confirmou) prevalece!
+                blockAggregates[key].varieties[varKey] = parsePTBRNumber(item.totalUnits);
+
                 if(parsePTBRNumber(item.totalBlockPlants) > blockAggregates[key].totalBlockPlants) {
                     blockAggregates[key].totalBlockPlants = parsePTBRNumber(item.totalBlockPlants);
                 }
@@ -1082,8 +1157,12 @@
                     let itemBlockPercentage = 0;
                     let totalUnitsSumGeral = 0;
                     let pendenteGeral = 0;
+                    
                     if (blockAggregates[key] && blockAggregates[key].totalBlockPlants > 0) {
-                        totalUnitsSumGeral = blockAggregates[key].totalUnitsSum;
+                        // Soma todos os valores de variedade dentro deste bloco
+                        for (const v in blockAggregates[key].varieties) {
+                            totalUnitsSumGeral += blockAggregates[key].varieties[v];
+                        }
                         let totalBlockPlantsGeral = blockAggregates[key].totalBlockPlants;
                         itemBlockPercentage = Math.round((totalUnitsSumGeral / totalBlockPlantsGeral) * 100);
                         pendenteGeral = Math.max(0, totalBlockPlantsGeral - totalUnitsSumGeral);
