@@ -640,7 +640,8 @@
             }
         }
 
-        async function syncForecasts() {
+        // Função de Sincronizar Previsões atualizada para receber parâmetro "silent" (sem alertas na tela inicial)
+        async function syncForecasts(silent = false) {
             const btn = document.getElementById('btnSyncForecast');
             const originalText = btn.innerHTML;
             
@@ -667,7 +668,7 @@
                 }
 
                 if (data.error) {
-                    alert("Erro ao buscar dados: " + data.error);
+                    if (!silent) alert("Erro ao buscar dados: " + data.error);
                     return;
                 }
 
@@ -678,11 +679,11 @@
                     saveInputs();
                     renderReport();
                 } else {
-                    alert("Nenhum bloco pendente encontrado na planilha.");
+                    if (!silent) alert("Nenhum bloco pendente encontrado na planilha.");
                 }
             } catch (error) {
                 console.error("Erro na sincronização:", error);
-                alert(error.message || "Erro ao conectar com a planilha.");
+                if (!silent) alert(error.message || "Erro ao conectar com a planilha.");
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
@@ -836,6 +837,9 @@
                         localStorage.setItem('spg_harvest_history', JSON.stringify(dataHist));
                     }
                 }
+
+                // 3. Sincroniza Previsão de Próximos Blocos (Modo silencioso, sem alertas)
+                await syncForecasts(true);
                 
             } catch (error) {
                 console.error("Erro ao sincronizar dados iniciais:", error);
@@ -1359,10 +1363,23 @@
             const btnSpan = document.querySelector('button[onclick="downloadImage()"] span');
             let originalText = btnSpan ? btnSpan.innerText : "";
             if (btnSpan) btnSpan.innerText = "Gerando Imagem...";
+            
+            // Forçando a largura para garantir que nenhum texto de card se quebre/fique espremido ao capturar
+            const originalWidth = element.style.width;
+            
             try {
                 const activeBlocksCount = harvestData.filter(item => item.active !== false).length;
-                const targetWidth = activeBlocksCount > 3 ? 900 : 450;
-                const canvas = await html2canvas(element, { scale: 6, useCORS: true, backgroundColor: '#ffffff', windowWidth: targetWidth + 30 });
+                // Ajustado os tamanhos de janela para serem muito mais amplos e evitar o esmagamento:
+                const targetWidth = activeBlocksCount > 3 ? 1200 : 600;
+                
+                element.style.width = targetWidth + 'px';
+
+                const canvas = await html2canvas(element, { 
+                    scale: 4, 
+                    useCORS: true, 
+                    backgroundColor: '#ffffff', 
+                    windowWidth: targetWidth + 50 
+                });
                 const imgData = canvas.toDataURL('image/png');
                 const link = document.createElement('a');
                 link.href = imgData;
@@ -1374,8 +1391,12 @@
                 link.download = `Dados Colheita SPG_imagem (${day}-${month}-${year}).png`;
                 
                 link.click();
-            } catch (err) { console.error(err); }
-            finally { if (btnSpan) btnSpan.innerText = originalText; }
+            } catch (err) { 
+                console.error(err); 
+            } finally { 
+                element.style.width = originalWidth; // Restaurando o estado original para não afetar a interface do site
+                if (btnSpan) btnSpan.innerText = originalText; 
+            }
         }
         
         async function downloadCSV() {
