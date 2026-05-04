@@ -41,9 +41,13 @@
             </div>
         </div>
         <div class="flex gap-2">
-            <button type="button" onclick="downloadBoth()" class="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95 active:bg-blue-800">
-                <i data-lucide="layers" class="w-4 h-4"></i>
-                <span class="hidden sm:inline">Enviar Informações</span>
+            <button type="button" onclick="downloadImage()" class="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95 active:bg-blue-800">
+                <i data-lucide="image" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Enviar Imagem</span>
+            </button>
+            <button type="button" onclick="downloadCSV()" class="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-emerald-600/20 transition-all active:scale-95 active:bg-emerald-800">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Enviar CSV</span>
             </button>
         </div>
     </div>
@@ -134,52 +138,56 @@
                 
                 <form id="harvestForm" onsubmit="addItem(event)" class="space-y-4">
                     
-                    <!-- IDENTIFICAÇÃO (BLOCO) -->
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Nº BLOCO</label>
-                        <select id="talhao" required class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
-                            <option value="">Selecione...</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10">10</option>
-                            <option value="11">11</option>
-                            <option value="12">12</option>
-                            <option value="13">13</option>
-                            <option value="14">14</option>
-                            <option value="15">15</option>
-                            <option value="16">16</option>
-                            <option value="17">17</option>
-                            <option value="18">18</option>
-                            <option value="19">19</option>
-                            <option value="20">20</option>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="C">C</option>
-                            <option value="D">D</option>
-                            <option value="E">E</option>
-                        </select>
+                    <!-- IDENTIFICAÇÃO (BLOCO & CICLO) -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Nº BLOCO</label>
+                            <select id="talhao" onchange="autoFillPlants()" required class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
+                                <option value="">Selecione...</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                                <option value="13">13</option>
+                                <option value="14">14</option>
+                                <option value="15">15</option>
+                                <option value="16">16</option>
+                                <option value="17">17</option>
+                                <option value="18">18</option>
+                                <option value="19">19</option>
+                                <option value="20">20</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                                <option value="E">E</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">CICLO</label>
+                            <input type="text" id="cycle" oninput="autoFillPlants()" placeholder="Ex: 4" class="w-full p-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
+                        </div>
                     </div>
 
                     <!-- CULTURA & VARIEDADE -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">CULTURA</label>
-                            <select id="variety" onchange="updateCommercialInput()" required class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
+                            <select id="variety" onchange="updateCommercialInput(); autoFillPlants()" required class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
                                 <option value="">Selecione...</option>
-                                <option value="Brócolis">Brócolis</option>
-                                <option value="Couve-Flor">Couve-Flor</option>
                             </select>
                         </div>
                         <div id="commercialVarietyWrapper">
                             <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">VARIEDADE</label>
-                            <input type="text" id="commercialVariety" placeholder="Nome da variedade" class="w-full p-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
+                            <input type="text" id="commercialVariety" oninput="autoFillPlants()" placeholder="Nome da variedade" class="w-full p-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">
                         </div>
                     </div>
 
@@ -190,7 +198,7 @@
                         <div class="grid grid-cols-2 gap-3 mb-3">
                             <div>
                                 <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">DATA PLANTIO</label>
-                                <input type="date" id="date" required class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 uppercase">
+                                <input type="date" id="date" required readonly class="w-full p-2 border border-slate-200 rounded text-sm bg-slate-50 text-slate-500 font-bold outline-none uppercase cursor-not-allowed">
                             </div>
                             <div>
                                 <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">INÍCIO COLHEITA</label>
@@ -232,13 +240,17 @@
                             </label>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div class="grid grid-cols-3 gap-3 mb-3">
                             <div>
-                                <label class="text-[10px] font-bold text-slate-500 block uppercase mb-1">QTD. PLANTADA</label>
-                                <input type="text" id="plants" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 text-right" placeholder="0">
+                                <label class="text-[10px] font-bold text-slate-500 block uppercase mb-1" title="Soma total do Bloco e Ciclo selecionados">TOTAL BLOCO</label>
+                                <input type="text" id="totalBlockPlants" readonly class="w-full p-2 border border-slate-200 rounded text-sm bg-slate-50 text-slate-500 font-bold outline-none text-right cursor-not-allowed" placeholder="0">
                             </div>
                             <div>
-                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">UNIDADES ACUMULADAS</label>
+                                <label class="text-[10px] font-bold text-slate-500 block uppercase mb-1" title="Quantidade plantada da variedade/ciclo selecionado">QTD. VARIEDADE</label>
+                                <input type="text" id="plants" readonly class="w-full p-2 border border-slate-200 rounded text-sm bg-slate-50 text-slate-500 font-bold outline-none text-right cursor-not-allowed" placeholder="0">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">ACUMULADAS</label>
                                 <input type="text" id="totalUnits" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 text-right" placeholder="0">
                             </div>
                         </div>
@@ -397,6 +409,14 @@
         </div>
     </div>
 
+    <!-- MODAL DE SINCRONIZAÇÃO INICIAL -->
+    <div id="syncModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl px-12 py-8 flex flex-col items-center justify-center gap-4 transform scale-100 transition-transform duration-300">
+            <i data-lucide="loader-2" class="w-10 h-10 text-slate-800 animate-spin"></i>
+            <h3 class="text-lg font-bold text-slate-800">Sincronizando Dados</h3>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT -->
     <script>
         console.log("Aplicação 'Resumo de Colheita SPG Oásis' reiniciada.");
@@ -412,6 +432,9 @@
         sortHarvestData();
         renderList(); 
         renderReport(); 
+        
+        // --- INICIALIZAÇÃO DE DADOS (Puxa do Google Sheets ao abrir) ---
+        syncAppOnLoad();
 
         // --- FUNÇÕES DE DATA E HORA ---
         function getWeekNumber(d) {
@@ -515,6 +538,67 @@
             lucide.createIcons();
         }
 
+        // --- PREENCHIMENTO AUTOMÁTICO DE PLANTAS ---
+        function autoFillPlants() {
+            const blocoAtual = document.getElementById('talhao').value;
+            const cicloAtual = document.getElementById('cycle').value;
+            const culturaAtual = document.getElementById('variety').value;
+            const variedadeAtual = document.getElementById('commercialVariety').value;
+            
+            const inputTotalBloco = document.getElementById('totalBlockPlants');
+            const inputPlantas = document.getElementById('plants');
+            const inputDataPlantio = document.getElementById('date');
+
+            if (!blocoAtual) {
+                inputTotalBloco.value = '';
+                return;
+            }
+
+            const rawData = localStorage.getItem('spg_plants_data');
+            if (!rawData) return;
+
+            try {
+                const data = JSON.parse(rawData);
+                
+                // 1. Calcula o Total do Bloco (Bloco + Ciclo)
+                let matchBloco = data.filter(item => item.bloco == blocoAtual);
+                if (cicloAtual) {
+                    matchBloco = matchBloco.filter(item => item.ciclo == cicloAtual);
+                }
+                let somaBloco = matchBloco.reduce((sum, item) => sum + (item.totalPlantas || 0), 0);
+                
+                inputTotalBloco.value = somaBloco > 0 ? somaBloco.toLocaleString('pt-BR') : '';
+
+                // 2. Calcula a Qtd da Variedade Baseado nos filtros selecionados
+                let matchVariedade = matchBloco;
+                
+                if (culturaAtual) {
+                    matchVariedade = matchVariedade.filter(item => item.cultura && item.cultura.toLowerCase() === culturaAtual.toLowerCase());
+                }
+                if (variedadeAtual) {
+                    matchVariedade = matchVariedade.filter(item => item.variedade && item.variedade.toLowerCase() === variedadeAtual.toLowerCase());
+                }
+                
+                // Se preencheu algum dado e achou match, preenche automático (Plantas e Data Plantio)
+                if (matchVariedade.length > 0 && (culturaAtual || variedadeAtual)) {
+                    const totalPlantas = matchVariedade.reduce((sum, item) => sum + (item.totalPlantas || 0), 0);
+                    inputPlantas.value = totalPlantas.toLocaleString('pt-BR');
+                    formatNumberInput(inputPlantas);
+
+                    // Busca a primeira data de plantio válida no agrupamento
+                    const firstValidDateItem = matchVariedade.find(item => item.dataPlantio && item.dataPlantio.trim() !== "");
+                    if (firstValidDateItem) {
+                        inputDataPlantio.value = firstValidDateItem.dataPlantio;
+                    }
+                } else {
+                    inputDataPlantio.value = ''; // Limpa caso não ache a variedade
+                }
+
+            } catch (error) {
+                console.error("Erro ao cruzar plantas locais:", error);
+            }
+        }
+
         async function syncForecasts() {
             const btn = document.getElementById('btnSyncForecast');
             const originalText = btn.innerHTML;
@@ -524,7 +608,6 @@
             lucide.createIcons();
 
             try {
-                // Link do seu Google Apps Script Web App
                 const webAppUrl = "https://script.google.com/macros/s/AKfycbx-xn0diWKEl8ZluHc4C_fDB-0P5yKs_75POdcd6We6MlR6yjrKRNkmVct0kV7JksxDdA/exec";
                 
                 const response = await fetch(webAppUrl, {
@@ -532,7 +615,6 @@
                     redirect: 'follow'
                 });
                 
-                // Tratamento para evitar erro de "Unexpected token" quando o Google retorna HTML
                 const textResponse = await response.text();
                 let data;
                 
@@ -540,12 +622,7 @@
                     data = JSON.parse(textResponse);
                 } catch (parseError) {
                     console.error("A resposta não é um JSON válido. Resposta recebida do Google:", textResponse);
-                    
-                    if (textResponse.includes("Ação não reconhecida") || textResponse.includes("Action not recognized") || textResponse.includes("Ação não")) {
-                        throw new Error("Erro: 'Ação não reconhecida'. O Google Apps Script não foi implantado corretamente como um 'App da Web' ou a URL está incompleta. \n\nNo seu Google Sheets vá em: Extensões > Apps Script > Implantar > Nova Implantação. Em 'Quem pode acessar', coloque 'Qualquer Pessoa'.");
-                    }
-                    
-                    throw new Error("Erro de permissão no Google Script. Verifique se a implantação do Web App foi configurada com acesso para 'Qualquer Pessoa'.");
+                    throw new Error("Erro de permissão no Google Script.");
                 }
 
                 if (data.error) {
@@ -553,11 +630,9 @@
                     return;
                 }
 
-                // Limpa as previsões atuais para evitar duplicidade
                 document.getElementById('forecastBlocksContainer').innerHTML = '';
                 
                 if (data && data.length > 0) {
-                    // Preenche automaticamente com as informações da planilha
                     data.forEach(item => addForecastRow(item.block, item.date));
                     saveInputs();
                     renderReport();
@@ -566,7 +641,7 @@
                 }
             } catch (error) {
                 console.error("Erro na sincronização:", error);
-                alert(error.message || "Erro ao conectar com a planilha. Certifique-se de que o Web App foi implantado para acesso por 'Qualquer Pessoa'.");
+                alert(error.message || "Erro ao conectar com a planilha.");
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
@@ -605,12 +680,10 @@
 
         function sortHarvestData() {
             harvestData.sort((a, b) => {
-                // Ordena pelo número/letra do bloco (talhão) de forma alfanumérica natural (1, 2, 10, A, B...)
                 return String(a.talhao || '').localeCompare(String(b.talhao || ''), 'pt-BR', { numeric: true, sensitivity: 'base' });
             });
         }
 
-        // --- LÓGICA DE ETAPAS ---
         function toggleDetailsField() {
             const checkbox = document.getElementById('hasStages');
             const container = document.getElementById('detailsContainer');
@@ -659,27 +732,104 @@
             document.getElementById('details').value = text.trim();
         }
 
-        // --- FORMULÁRIO ---
+        function loadCultures() {
+            const storedCultures = JSON.parse(localStorage.getItem('spg_cultures') || '["Brócolis", "Couve-Flor"]');
+            const varietySelect = document.getElementById('variety');
+            const currentVal = varietySelect.value;
+            varietySelect.innerHTML = '<option value="">Selecione...</option>';
+            storedCultures.forEach(c => {
+                varietySelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+            if (currentVal) varietySelect.value = currentVal;
+            
+            updateCommercialInput(); // Atualiza a variedade associada à cultura selecionada
+        }
+
+        async function syncAppOnLoad() {
+            const modal = document.getElementById('syncModal');
+            
+            try {
+                // Reaproveita o script de "Plantas" para popular tudo na memória
+                const webAppUrl = "https://script.google.com/macros/s/AKfycbypGiOpHEYQ9Hc4zzXi9age7jb54lrLaGZXLEGpeoiJZudqMsHjE86xeULpH_hVefTaSg/exec";
+                const response = await fetch(webAppUrl, { method: 'GET', redirect: 'follow' });
+                
+                const textResponse = await response.text();
+                let data = JSON.parse(textResponse);
+
+                if (!data.error) {
+                    // Salva os dados brutos de plantas para o autoFillPlants usar
+                    localStorage.setItem('spg_plants_data', JSON.stringify(data));
+
+                    let tempVarieties = {};
+                    let tempCultures = new Set();
+                    
+                    data.forEach(item => {
+                        if (item.cultura && item.variedade) {
+                            const c = item.cultura.trim();
+                            const v = item.variedade.trim();
+                            tempCultures.add(c);
+                            if (!tempVarieties[c]) tempVarieties[c] = new Set();
+                            tempVarieties[c].add(v);
+                        }
+                    });
+                    
+                    let finalVarieties = {};
+                    for (let c in tempVarieties) {
+                        finalVarieties[c] = Array.from(tempVarieties[c]).sort();
+                    }
+                    const finalCultures = Array.from(tempCultures).sort();
+
+                    if (finalCultures.length > 0) {
+                        localStorage.setItem('spg_varieties', JSON.stringify(finalVarieties));
+                        localStorage.setItem('spg_cultures', JSON.stringify(finalCultures));
+                    }
+                }
+            } catch (error) {
+                console.error("Erro ao sincronizar dados iniciais (usando cache local):", error);
+            } finally {
+                // Sempre carrega a interface (seja com dados novos ou do cache)
+                loadCultures();
+                
+                // Remove o modal de sincronização suavemente
+                modal.classList.add('opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+
         function updateCommercialInput() {
             const variety = document.getElementById('variety').value;
             const wrapper = document.getElementById('commercialVarietyWrapper');
             let html = `<label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">VARIEDADE</label>`;
             
-            if (variety === 'Brócolis') {
-                html += `<select id="commercialVariety" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700"><option value="">Selecione...</option><option value="BRO 68 Syngenta">BRO 68 Syngenta</option><option value="Master TSV">Master TSV</option><option value="Sakata Jiraya F1">Sakata Jiraya F1</option><option value="PHAR LAP">PHAR LAP</option></select>`;
-            } else if (variety === 'Couve-Flor') {
-                html += `<select id="commercialVariety" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700"><option value="">Selecione...</option><option value="Vereda">Vereda</option><option value="Copacabana">Copacabana</option><option value="Tirsuli">Tirsuli</option><option value="SF-1758 F1">SF-1758 F1</option><option value="Champagne Snow">Champagne Snow</option><option value="Serena">Serena</option><option value="Supremo">Supremo</option></select>`;
+            const storedVarieties = JSON.parse(localStorage.getItem('spg_varieties') || '{}');
+            let varietyList = storedVarieties[variety];
+            
+            // Fallback caso a planilha não tenha sido sincronizada ainda
+            if (!varietyList) {
+                if (variety === 'Brócolis') {
+                    varietyList = ["BRO 68 Syngenta", "Master TSV", "Sakata Jiraya F1", "PHAR LAP"];
+                } else if (variety === 'Couve-Flor') {
+                    varietyList = ["Vereda", "Copacabana", "Tirsuli", "SF-1758 F1", "Champagne Snow", "Serena", "Supremo"];
+                }
+            }
+            
+            if (varietyList && varietyList.length > 0) {
+                html += `<select id="commercialVariety" onchange="autoFillPlants()" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700"><option value="">Selecione...</option>`;
+                varietyList.forEach(v => {
+                    html += `<option value="${v}">${v}</option>`;
+                });
+                html += `</select>`;
             } else {
-                html += `<input type="text" id="commercialVariety" placeholder="Nome da variedade" class="w-full p-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">`;
+                html += `<input type="text" id="commercialVariety" oninput="autoFillPlants()" placeholder="Nome da variedade" class="w-full p-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">`;
             }
             wrapper.innerHTML = html;
         }
 
-        // --- FUNÇÕES DO MODAL DE LIMPAR/CANCELAR FORMULÁRIO (NOVAS) ---
         function promptClearForm() {
             const modal = document.getElementById('clearFormModal');
             const innerBox = modal.querySelector('div.bg-white');
-            
             modal.classList.remove('hidden');
             void modal.offsetWidth; 
             modal.classList.remove('opacity-0');
@@ -689,13 +839,9 @@
         function closeClearFormModal() {
             const modal = document.getElementById('clearFormModal');
             const innerBox = modal.querySelector('div.bg-white');
-            
             modal.classList.add('opacity-0');
             innerBox.classList.add('scale-95');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
         function confirmClearForm() {
@@ -704,7 +850,7 @@
         }
 
         function clearBlockForm() {
-            ['talhao','startDate','date','plants','totalUnits','boxes','dailyUnits','details', 'productionDays', 'status', 'forecastDate'].forEach(id => {
+            ['talhao','cycle','startDate','date','plants','totalBlockPlants','totalUnits','boxes','dailyUnits','details', 'productionDays', 'status', 'forecastDate'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el) el.value = (id === 'status' ? 'EM ANDAMENTO' : '');
             });
@@ -728,17 +874,21 @@
             e.preventDefault();
             updateDetailsFromRows();
             const plantsRaw = document.getElementById('plants').value;
+            const totalBlockPlantsRaw = document.getElementById('totalBlockPlants').value;
             const totalUnitsRaw = document.getElementById('totalUnits').value;
             
             const item = {
                 talhao: document.getElementById('talhao').value,
+                cycle: document.getElementById('cycle').value,
                 variety: document.getElementById('variety').value,
                 commercialVariety: document.getElementById('commercialVariety').value,
                 percentage: parsePTBRNumber(plantsRaw) > 0 ? Math.round((parsePTBRNumber(totalUnitsRaw) / parsePTBRNumber(plantsRaw)) * 100) : 0,
+                blockPercentage: parsePTBRNumber(totalBlockPlantsRaw) > 0 ? Math.round((parsePTBRNumber(totalUnitsRaw) / parsePTBRNumber(totalBlockPlantsRaw)) * 100) : 0,
                 startDate: formatDateBR(document.getElementById('startDate').value),
                 date: formatDateBR(document.getElementById('date').value),
                 forecastDate: formatDateBR(document.getElementById('forecastDate').value),
                 plants: plantsRaw,
+                totalBlockPlants: totalBlockPlantsRaw,
                 dailyUnits: document.getElementById('dailyUnits').value,
                 boxes: document.getElementById('boxes').value,
                 totalUnits: totalUnitsRaw,
@@ -762,6 +912,7 @@
             const item = harvestData[index];
             editingIndex = index;
             document.getElementById('talhao').value = item.talhao;
+            document.getElementById('cycle').value = item.cycle || '';
             document.getElementById('variety').value = item.variety;
             updateCommercialInput();
             document.getElementById('commercialVariety').value = item.commercialVariety;
@@ -770,16 +921,31 @@
             if(item.startDate) document.getElementById('startDate').value = item.startDate.split('/').reverse().join('-');
             if(item.forecastDate) document.getElementById('forecastDate').value = item.forecastDate.split('/').reverse().join('-');
             
-            ['plants','totalUnits','boxes','dailyUnits'].forEach(k => {
+            ['plants','totalBlockPlants','totalUnits','boxes','dailyUnits'].forEach(k => {
                 const el = document.getElementById(k);
                 if (el) el.value = item[k] || '';
             });
 
             document.getElementById('status').value = item.status === 'Finalizado' ? 'FINALIZADO' : 'EM ANDAMENTO';
-            
             document.getElementById('productionDays').value = item.days || '';
-
             document.getElementById('details').value = item.details || '';
+
+            // Ao editar, recalcula o "Total do Bloco" visualmente caso não tenha sido salvo anteriormente
+            if (!item.totalBlockPlants) {
+                const rawData = localStorage.getItem('spg_plants_data');
+                if (rawData && item.talhao) {
+                    try {
+                        const data = JSON.parse(rawData);
+                        let matchBloco = data.filter(d => d.bloco == item.talhao);
+                        if (item.cycle) {
+                            matchBloco = matchBloco.filter(d => d.ciclo == item.cycle);
+                        }
+                        let somaBloco = matchBloco.reduce((sum, d) => sum + (d.totalPlantas || 0), 0);
+                        document.getElementById('totalBlockPlants').value = somaBloco > 0 ? somaBloco.toLocaleString('pt-BR') : '';
+                    } catch(e){}
+                }
+            }
+            
             const stagesList = document.getElementById('stagesList');
             stagesList.innerHTML = '';
             if (item.details && item.details.trim()) {
@@ -826,9 +992,8 @@
         function clearAll() {
             const modal = document.getElementById('clearAllModal');
             const innerBox = modal.querySelector('div.bg-white');
-            
             modal.classList.remove('hidden');
-            void modal.offsetWidth; // Força renderização
+            void modal.offsetWidth;
             modal.classList.remove('opacity-0');
             innerBox.classList.remove('scale-95');
         }
@@ -836,13 +1001,9 @@
         function closeClearAllModal() {
             const modal = document.getElementById('clearAllModal');
             const innerBox = modal.querySelector('div.bg-white');
-            
             modal.classList.add('opacity-0');
             innerBox.classList.add('scale-95');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
         function confirmClearAll() {
@@ -865,7 +1026,7 @@
 
                 list.innerHTML += `
                     <li class="flex justify-between items-center p-2 rounded border ${activeClass} ${inactiveStyle} transition-all">
-                        <span class="${textStyle}"><b>#${item.talhao}</b> - ${item.variety} <span class="text-slate-500 text-xs">(${item.date.substring(0,5)})</span> ${index === editingIndex ? '<span class="text-[10px] text-blue-600 font-bold ml-2">(Editando)</span>' : ''} ${activeTag}</span>
+                        <span class="${textStyle}"><b>#${item.talhao}</b>${item.cycle ? ` (C${item.cycle})` : ''} - ${item.variety} <span class="text-slate-500 text-xs">(${item.date.substring(0,5)})</span> ${index === editingIndex ? '<span class="text-[10px] text-blue-600 font-bold ml-2">(Editando)</span>' : ''} ${activeTag}</span>
                         <div class="flex items-center">
                             <button onclick="toggleItemActive(${index})" class="${item.active === false ? 'text-slate-400 hover:bg-slate-200' : 'text-emerald-500 hover:bg-emerald-100'} p-1.5 rounded-md mr-1 transition-colors" title="${item.active === false ? 'Mostrar no Relatório' : 'Ocultar do Relatório'}">
                                 <i data-lucide="${item.active === false ? 'eye-off' : 'eye'}" width="14"></i>
@@ -887,6 +1048,21 @@
 
             const displayData = harvestData.filter(item => item.active !== false);
 
+            const blockAggregates = {};
+            displayData.forEach(item => {
+                const key = `${item.talhao}-${item.cycle || ''}`;
+                if (!blockAggregates[key]) {
+                    blockAggregates[key] = {
+                        totalUnitsSum: 0,
+                        totalBlockPlants: parsePTBRNumber(item.totalBlockPlants)
+                    };
+                }
+                blockAggregates[key].totalUnitsSum += parsePTBRNumber(item.totalUnits);
+                if(parsePTBRNumber(item.totalBlockPlants) > blockAggregates[key].totalBlockPlants) {
+                    blockAggregates[key].totalBlockPlants = parsePTBRNumber(item.totalBlockPlants);
+                }
+            });
+
             if (!harvestData.length) {
                 container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs italic">Adicione dados no formulário ao lado.</div>`;
             } else if (!displayData.length) {
@@ -902,13 +1078,20 @@
                     sumBoxes += parsePTBRNumber(item.boxes);
                     sumDailyUnits += parsePTBRNumber(item.dailyUnits);
 
-                    // --- STATUS TEXT ONLY ---
+                    const key = `${item.talhao}-${item.cycle || ''}`;
+                    let itemBlockPercentage = 0;
+                    let totalUnitsSumGeral = 0;
+                    let pendenteGeral = 0;
+                    if (blockAggregates[key] && blockAggregates[key].totalBlockPlants > 0) {
+                        totalUnitsSumGeral = blockAggregates[key].totalUnitsSum;
+                        let totalBlockPlantsGeral = blockAggregates[key].totalBlockPlants;
+                        itemBlockPercentage = Math.round((totalUnitsSumGeral / totalBlockPlantsGeral) * 100);
+                        pendenteGeral = Math.max(0, totalBlockPlantsGeral - totalUnitsSumGeral);
+                    }
+                    itemBlockPercentage = Math.min(100, Math.max(0, itemBlockPercentage)); // Garante limite de 0 a 100%
+
                     const isFinalized = item.status === 'Finalizado';
-                    const statusBadge = `
-                        <div class="text-[10px] font-bold ${isFinalized ? 'text-red-600' : 'text-blue-600'} uppercase tracking-wider">
-                            ${item.status || 'Em Andamento'}
-                        </div>
-                    `;
+                    const statusBadge = `<div class="text-[10px] font-bold ${isFinalized ? 'text-red-600' : 'text-blue-600'} uppercase tracking-wider">${item.status || 'Em Andamento'}</div>`;
 
                     let plantedBlockHtml = '';
                     if (item.details && item.details.trim()) {
@@ -926,28 +1109,36 @@
                         }).join('');
 
                         plantedBlockHtml = `
-                        <div class="grid grid-cols-1 gap-2">
-                            <div class="flex flex-row items-stretch bg-slate-50 rounded-xl overflow-hidden border border-slate-100 min-h-[80px]">
-                                <div class="relative flex flex-col items-center justify-center p-2 w-1/3 bg-slate-50 shrink-0 z-10 border-r border-slate-100">
-                                     <div class="mb-1 text-slate-400"><i data-lucide="leaf" width="14"></i></div>
-                                     <span class="text-xs font-bold text-slate-700">${item.plants}</span>
-                                     <span class="text-[8px] uppercase tracking-wider font-semibold text-slate-400 mt-1 text-center leading-tight">QTD. PLANTADA</span>
-                                     <div class="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-300 rounded-full translate-x-[50%] z-20"></div>
+                        <div class="flex flex-col bg-slate-50 rounded-xl overflow-hidden border border-slate-100 mb-3">
+                            <div class="flex justify-between divide-x divide-slate-200 border-b border-slate-100 bg-white">
+                                <div class="flex-1 flex flex-col items-center justify-center p-2">
+                                    <div class="text-slate-400 mb-0.5"><i data-lucide="layout-grid" width="14"></i></div>
+                                    <span class="text-xs font-bold text-slate-700">${item.totalBlockPlants || '-'}</span>
+                                    <span class="text-[7px] uppercase tracking-wider font-bold text-slate-400 mt-0.5 text-center">TOTAL BLOCO</span>
                                 </div>
-                                <div class="flex-1 py-2 pr-2 pl-10 flex flex-col justify-center relative bg-white/50">
-                                     <div class="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-[2px] bg-slate-300"></div>
-                                     <div class="absolute left-10 top-3 bottom-3 w-[2px] bg-slate-300"></div>
-                                     <div class="flex flex-col gap-1">${detailsListHtml}</div>
+                                <div class="flex-1 flex flex-col items-center justify-center p-2">
+                                    <div class="text-slate-400 mb-0.5"><i data-lucide="leaf" width="14"></i></div>
+                                    <span class="text-xs font-bold text-slate-700">${item.plants || '-'}</span>
+                                    <span class="text-[7px] uppercase tracking-wider font-bold text-slate-400 mt-0.5 text-center">QTD VARIEDADE</span>
                                 </div>
+                            </div>
+                            <div class="py-2 pr-2 pl-4 flex flex-col justify-center relative bg-slate-50/50">
+                                 <div class="absolute left-4 top-2 bottom-2 w-[2px] bg-slate-300"></div>
+                                 <div class="flex flex-col gap-1 ml-2">${detailsListHtml}</div>
                             </div>
                         </div>`;
                     } else {
                         plantedBlockHtml = `
-                        <div class="grid grid-cols-1 gap-2">
-                            <div class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50">
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <div class="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-50 border border-slate-100">
+                                <div class="mb-1 text-slate-400"><i data-lucide="layout-grid" width="14"></i></div>
+                                <span class="text-xs font-bold text-slate-700">${item.totalBlockPlants || '-'}</span>
+                                <span class="text-[8px] uppercase tracking-wider font-bold text-slate-400 mt-1 text-center leading-tight">TOTAL BLOCO</span>
+                            </div>
+                            <div class="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-50 border border-slate-100">
                                 <div class="mb-1 text-slate-400"><i data-lucide="leaf" width="14"></i></div>
-                                <span class="text-xs font-bold text-slate-700">${item.plants}</span>
-                                <span class="text-[9px] uppercase tracking-wider font-semibold text-slate-400 mt-1 text-center leading-tight">QTD. PLANTADA</span>
+                                <span class="text-xs font-bold text-slate-700">${item.plants || '-'}</span>
+                                <span class="text-[8px] uppercase tracking-wider font-bold text-slate-400 mt-1 text-center leading-tight">QTD VARIEDADE</span>
                             </div>
                         </div>`;
                     }
@@ -960,7 +1151,7 @@
                     <div class="${itemClass}">
                         <div class="flex justify-between items-center mb-3">
                             <div class="flex items-center gap-3">
-                                <span class="text-base font-bold text-slate-800">Bloco ${item.talhao}</span>
+                                <span class="text-base font-bold text-slate-800">Bloco ${item.talhao}${item.cycle ? ` (Ciclo ${item.cycle})` : ''}</span>
                                 ${statusBadge}
                             </div>
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide text-right">${item.commercialVariety ? `${item.variety} - ${item.commercialVariety}` : item.variety}</span>
@@ -978,27 +1169,29 @@
                                     </span>
                                 </div>
                             </div>
-                             
-                            <!-- Barra de Progresso -->
                             <div class="flex items-center gap-3 mb-2">
                                 <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
                                     <div class="h-full rounded-full ${progressColor}" style="width: ${item.percentage}%"></div>
                                 </div>
                                 <span class="text-[11px] font-extrabold text-red-400 uppercase tracking-wide">Falta: ${Math.max(0, 100 - item.percentage)}%</span>
                             </div>
-
-                             <!-- Divisor sutil -->
                              <div class="h-px bg-slate-200 my-2"></div>
-                            
-                            <div class="mt-2 flex flex-col gap-1">
-                                <div class="text-[11px] font-bold text-[#00838f]">
-                                    Dias de Produção: ${item.days} dias
+                            <div class="mt-2 flex justify-between items-center">
+                                <div class="flex flex-col gap-1">
+                                    <div class="text-[11px] font-bold text-[#00838f]">
+                                        Dias de Produção: ${item.days} dias
+                                    </div>
+                                    ${item.forecastDate ? `
+                                    <div class="text-[10px] font-bold text-red-600">
+                                        Previsão Finalizar Bloco: <span class="text-slate-700">${item.forecastDate}</span>
+                                    </div>
+                                    ` : ''}
                                 </div>
-                                ${item.forecastDate ? `
-                                <div class="text-[10px] font-bold text-red-600">
-                                    Previsão Finalizar Bloco: <span class="text-slate-700">${item.forecastDate}</span>
+                                <div class="flex flex-col text-right border-l border-slate-200 pl-3">
+                                    <div class="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest mb-0.5">Progresso Bloco</div>
+                                    <div class="text-[10px] font-bold text-emerald-600">Colhido: ${totalUnitsSumGeral.toLocaleString('pt-BR')} un. <span class="opacity-75">(${itemBlockPercentage}%)</span></div>
+                                    <div class="text-[10px] font-bold text-red-500">Pendente: ${pendenteGeral.toLocaleString('pt-BR')} un. <span class="opacity-75">(${Math.max(0, 100 - itemBlockPercentage)}%)</span></div>
                                 </div>
-                                ` : ''}
                             </div>
                         </div>
 
@@ -1024,7 +1217,6 @@
             const estDay = document.getElementById('estimateDay').value || '';
             const forecastBlocks = getForecastBlocks();
             
-            // Renderiza o cabeçalho de resumo (Totais e Estimativa)
             summaryHeader.innerHTML = `
                 <div class="p-4 border-b border-slate-100">
                     <div class="bg-emerald-50 rounded-lg p-4 flex justify-around items-center border border-emerald-100">
@@ -1040,95 +1232,37 @@
                     </div>
                 </div>`;
 
-            // Renderiza o footer operacional (Equipe e Horários)
             let forecastHtml = '';
             const validForecasts = forecastBlocks.filter(f => f.block && f.date);
-            
             if (validForecasts.length > 0) {
-                // Ordena os blocos pela data mais próxima (ordem crescente)
                 validForecasts.sort((a, b) => new Date(a.date) - new Date(b.date));
-
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-
-                const getWeeksText = (totalDays) => {
-                    let w = Math.floor(totalDays / 7);
-                    let d = totalDays % 7;
-                    let wStr = w === 1 ? '1 semana' : w + ' semanas';
-                    let dStr = d === 1 ? '1 dia' : (d > 1 ? d + ' dias' : '');
-                    return dStr ? `(${wStr} e ${dStr})` : `(${wStr})`;
-                };
-
                 const listHtml = validForecasts.map(f => {
-                    // Evitar problemas de fuso horário quebrando a data no JS
                     const [year, month, day] = f.date.split('-');
                     const targetDate = new Date(year, month - 1, day);
                     targetDate.setHours(0, 0, 0, 0);
-                    
-                    const diffTime = targetDate - today;
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    
-                    let daysText = '';
-                    let daysClass = '';
-                    let weeksText = '';
-                    
-                    if (diffDays > 1) {
-                        daysText = `Faltam ${diffDays} dias`;
-                        daysClass = 'text-blue-600';
-                        if (diffDays >= 7) weeksText = getWeeksText(diffDays);
-                    } else if (diffDays === 1) {
-                        daysText = `Amanhã`;
-                        daysClass = 'text-amber-600';
-                    } else if (diffDays === 0) {
-                        daysText = `Hoje`;
-                        daysClass = 'text-emerald-600';
-                    } else {
-                        daysText = `Atrasado ${Math.abs(diffDays)} dias`;
-                        daysClass = 'text-red-600';
-                        if (Math.abs(diffDays) >= 7) weeksText = getWeeksText(Math.abs(diffDays));
-                    }
-
+                    const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+                    let daysText = diffDays > 1 ? `Faltam ${diffDays} dias` : (diffDays === 1 ? 'Amanhã' : (diffDays === 0 ? 'Hoje' : `Atrasado ${Math.abs(diffDays)} dias`));
+                    let daysClass = diffDays > 1 ? 'text-blue-600' : (diffDays === 1 ? 'text-amber-600' : (diffDays === 0 ? 'text-emerald-600' : 'text-red-600'));
                     return `<div class="bg-slate-50 border border-slate-200 shadow-sm rounded-lg p-2 flex flex-col gap-1 min-w-[110px]">
-                                <div class="flex items-center justify-between gap-3">
-                                    <span class="text-[11px] font-extrabold text-slate-700">BLOCO ${f.block}</span>
-                                    <span class="text-[10px] font-bold text-slate-500 uppercase">${formatDateBR(f.date)}</span>
-                                </div>
-                                <div class="flex flex-col items-center justify-center mt-1">
-                                    <div class="text-[9px] font-extrabold px-1.5 py-0.5 rounded text-center uppercase tracking-wider ${daysClass}">
-                                        ${daysText}
-                                    </div>
-                                    ${weeksText ? `<div class="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-0.5">${weeksText}</div>` : ''}
-                                </div>
+                                <div class="flex items-center justify-between gap-3"><span class="text-[11px] font-extrabold text-slate-700">BLOCO ${f.block}</span><span class="text-[10px] font-bold text-slate-500 uppercase">${formatDateBR(f.date)}</span></div>
+                                <div class="text-[9px] font-extrabold px-1.5 py-0.5 rounded text-center uppercase tracking-wider ${daysClass}">${daysText}</div>
                             </div>`;
                 }).join('');
-
-                forecastHtml = `
-                <div class="mt-4 pt-4 border-t border-slate-100 border-dashed flex flex-col items-center justify-center">
-                    <div class="flex items-center gap-1 mb-3 text-blue-500">
-                        <span class="text-[10px] font-bold uppercase tracking-widest">Previsão de Colheita (Próximos Blocos)</span>
-                    </div>
-                    <div class="flex flex-wrap gap-2 justify-center">
-                        ${listHtml}
-                    </div>
-                </div>`;
+                forecastHtml = `<div class="mt-4 pt-4 border-t border-slate-100 border-dashed flex flex-col items-center justify-center"><div class="text-[10px] font-bold uppercase tracking-widest text-blue-500 mb-3">Previsão de Colheita (Próximos Blocos)</div><div class="flex flex-wrap gap-2 justify-center">${listHtml}</div></div>`;
             }
 
             footer.innerHTML = `
-                <div class="flex justify-center items-center mb-4 pb-4 border-b border-slate-200 border-dashed">
-                     <span class="text-xs font-bold text-slate-600">Equipe de Colheita: <span class="text-slate-800 text-sm font-extrabold">${crew}</span></span>
-                </div>
-                <div class="text-center mb-2">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Horas de Colheita</span>
-                </div>
+                <div class="flex justify-center items-center mb-4 pb-4 border-b border-slate-200 border-dashed"><span class="text-xs font-bold text-slate-600">Equipe de Colheita: <span class="text-slate-800 text-sm font-extrabold">${crew}</span></span></div>
+                <div class="text-center mb-2"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Horas de Colheita</span></div>
                 <div class="grid grid-cols-4 gap-2 text-[10px] text-slate-500 font-medium mb-1">
                     <div class="flex flex-col items-center"><span class="text-green-600 font-bold mb-0.5 uppercase">Início</span><span class="text-slate-700 font-bold text-xs">${document.getElementById('startTime').value || '--:--'}</span></div>
                     <div class="flex flex-col items-center border-l border-slate-200"><span class="text-red-600 font-bold mb-0.5 uppercase">Final</span><span class="text-slate-700 font-bold text-xs">${document.getElementById('endTime').value || '--:--'}</span></div>
                     <div class="flex flex-col items-center border-l border-slate-200"><span class="text-amber-600 font-bold mb-0.5 uppercase">INTERVALO</span><span class="text-slate-700 font-bold text-xs">${document.getElementById('intervalDuration').value || '0'} min</span></div>
                     <div class="flex flex-col items-center border-l border-slate-200"><span class="text-emerald-700 font-bold mb-0.5 uppercase">Total</span><span class="text-slate-900 font-extrabold text-xs">${calculateTimeDifference(document.getElementById('startTime').value, document.getElementById('endTime').value, document.getElementById('intervalDuration').value)} h</span></div>
                 </div>
-                <div class="flex justify-center items-center pt-4 border-t border-slate-100 mt-2">
-                    <span class="text-lg font-bold text-[#00838f]">${estDay ? `Estimativas de Caixas para ${estDay}:` : 'Estimativas de Caixas:'} <span class="text-[#00838f] text-2xl font-extrabold">${document.getElementById('estimatedBoxes').value || '-'}</span></span>
-                </div>
+                <div class="flex justify-center items-center pt-4 border-t border-slate-100 mt-2"><span class="text-lg font-bold text-[#00838f]">${estDay ? `Estimativas de Caixas para ${estDay}:` : 'Estimativas de Caixas:'} <span class="text-[#00838f] text-2xl font-extrabold">${document.getElementById('estimatedBoxes').value || '-'}</span></span></div>
                 ${forecastHtml}`;
             lucide.createIcons();
         }
@@ -1138,96 +1272,39 @@
             const iconClass = highlight ? 'text-emerald-600' : 'text-slate-400';
             const valueClass = highlight ? 'text-emerald-800' : 'text-slate-700';
             const labelClass = highlight ? 'text-emerald-600' : 'text-slate-400';
-
-            return `
-            <div class="flex flex-col items-center justify-center p-3 rounded-xl ${bgClass}">
-                <div class="mb-1 ${iconClass} icon-fix"><i data-lucide="${iconName}" width="14"></i></div>
-                <span class="text-xs font-bold ${valueClass}">${value}</span>
-                <span class="text-[9px] uppercase tracking-wider font-semibold ${labelClass} mt-1 text-center leading-tight">${label}</span>
-            </div>`;
+            return `<div class="flex flex-col items-center justify-center p-3 rounded-xl ${bgClass}"><div class="mb-1 ${iconClass}"><i data-lucide="${iconName}" width="14"></i></div><span class="text-xs font-bold ${valueClass}">${value}</span><span class="text-[9px] uppercase tracking-wider font-semibold ${labelClass} mt-1 text-center leading-tight">${label}</span></div>`;
         }
 
         async function downloadImage() {
             const element = document.getElementById('report-card');
             const btnSpan = document.querySelector('button[onclick="downloadImage()"] span');
-            let originalText = "";
-            if (btnSpan) {
-                originalText = btnSpan.innerText;
-                btnSpan.innerText = "Gerando Imagem...";
-            }
-
+            let originalText = btnSpan ? btnSpan.innerText : "";
+            if (btnSpan) btnSpan.innerText = "Gerando Imagem...";
             try {
                 const activeBlocksCount = harvestData.filter(item => item.active !== false).length;
-                const isGrid = activeBlocksCount > 3;
-                const targetWidth = isGrid ? 900 : 450;
-                
-                // Escala fixa em 8 (Ultra HD) para máxima nitidez de textos pequenos
-                const exportScale = 8;
-
-                const options = {
-                    scale: exportScale,
-                    useCORS: true, 
-                    allowTaint: true,
-                    scrollY: -window.scrollY,
-                    backgroundColor: '#ffffff',
-                    windowWidth: targetWidth + 30, // Adicionado para forçar renderização mobile
-                    onclone: (doc) => {
-                        const el = doc.getElementById('report-card');
-                        const content = doc.getElementById('reportContent');
-                        if (el) { 
-                            el.style.width = targetWidth + 'px';
-                            el.style.maxWidth = targetWidth + 'px';
-                            el.style.margin = '0'; 
-                            el.style.boxShadow = 'none';
-                            el.style.borderRadius = '0';
-                            el.style.border = 'none';
-                        }
-                        if (content) { 
-                            content.style.height = 'auto'; 
-                            content.style.overflow = 'visible'; 
-                            content.style.maxHeight = 'none';
-                        }
-                    }
-                };
-
-                const canvas = await html2canvas(element, options);
+                const targetWidth = activeBlocksCount > 3 ? 900 : 450;
+                const canvas = await html2canvas(element, { scale: 6, useCORS: true, backgroundColor: '#ffffff', windowWidth: targetWidth + 30 });
                 const imgData = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = imgData;
+                
                 const now = new Date();
-                const daysOfWeek = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
-                const dayOfWeek = daysOfWeek[now.getDay()];
                 const day = String(now.getDate()).padStart(2, '0');
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const year = now.getFullYear();
-                const weekNumber = getWeekNumber(now); 
-                const filename = `Resumo Colheita - ${dayOfWeek} ${day}-${month}-${year} Semana ${weekNumber} - SPG Oásis.png`;
-                const link = document.createElement('a');
-                link.href = imgData;
-                link.download = filename;
-                document.body.appendChild(link);
+                link.download = `Dados Colheita SPG_imagem (${day}-${month}-${year}).png`;
+                
                 link.click();
-                document.body.removeChild(link);
-            } catch (err) {
-                console.error("Erro ao gerar imagem:", err);
-            } finally {
-                if (btnSpan) btnSpan.innerText = originalText;
-            }
+            } catch (err) { console.error(err); }
+            finally { if (btnSpan) btnSpan.innerText = originalText; }
         }
         
         async function downloadCSV() {
             const btnSpan = document.querySelector('button[onclick="downloadCSV()"] span');
-            let originalText = "";
-            if (btnSpan) {
-                originalText = btnSpan.innerText;
-                btnSpan.innerText = "Gerando...";
-            }
-
+            let originalText = btnSpan ? btnSpan.innerText : "";
+            if (btnSpan) btnSpan.innerText = "Gerando CSV...";
             try {
-                // Adiciona o BOM (\uFEFF) para o Excel reconhecer os caracteres UTF-8 corretamente
-                let csvContent = "\uFEFF";
-                
-                // Cabeçalhos solicitados com a nova coluna "Ocultos" e Parâmetros
-                csvContent += "Bloco;Cultura;Variedade;Data Plantio;Início Colheita;Caixas;Unidades Acumuladas;Qtd Plantada;Total de Unidades (Hoje);Previsão Finalizar;Status;Dias de Produção;Ocultos;Meta Caixas;Efetivo Pessoas;Ref Estimativa;Hora Inicio;Hora Termino;Intervalo Min\n";
-
+                let csvContent = "\uFEFFBloco;Ciclo;Cultura;Variedade;Data Plantio;Início Colheita;Caixas;Unidades Acumuladas;Total Bloco;Qtd Variedade Plantada;Total de Unidades (Hoje);Previsão Finalizar;Status;Dias de Produção;Ocultos;Meta Caixas;Efetivo Pessoas;Ref Estimativa;Hora Inicio;Hora Termino;Intervalo Min\n";
                 const estimatedBoxes = document.getElementById('estimatedBoxes').value || '';
                 const crewCount = document.getElementById('crewCount').value || '';
                 const estimateDay = document.getElementById('estimateDay').value || '';
@@ -1235,250 +1312,74 @@
                 const endTime = document.getElementById('endTime').value || '';
                 const intervalDuration = document.getElementById('intervalDuration').value || '';
 
-                // Preenchimento dos dados de todos os blocos
                 harvestData.forEach(item => {
-                    const bloco = item.talhao || "-";
-                    const cultura = item.variety || "-";
-                    const variedade = item.commercialVariety || "-";
-                    const dataPlantio = item.date || "-";
-                    const inicioColheita = item.startDate || "-";
-                    const caixasDia = item.boxes || "0";
-                    const colhidoTotal = item.totalUnits || "0";
-                    const qtdPlantada = item.plants || "0";
-                    const unidadesDia = item.dailyUnits || "0";
-                    const previsaoFinalizar = item.forecastDate || "-";
-                    const statusOperacional = item.status || "-";
-                    const diasProducao = item.days || "0";
-                    const oculto = item.active === false ? "SIM" : "NÃO";
-
-                    // Usa ponto e vírgula para não bugar no Excel pt-BR
-                    const row = [bloco, cultura, variedade, dataPlantio, inicioColheita, caixasDia, colhidoTotal, qtdPlantada, unidadesDia, previsaoFinalizar, statusOperacional, diasProducao, oculto, estimatedBoxes, crewCount, estimateDay, startTime, endTime, intervalDuration].join(";");
+                    const row = [item.talhao, item.cycle || "-", item.variety, item.commercialVariety, item.date, item.startDate, item.boxes, item.totalUnits, item.totalBlockPlants || "-", item.plants, item.dailyUnits, item.forecastDate, item.status, item.days, item.active === false ? "SIM" : "NÃO", estimatedBoxes, crewCount, estimateDay, startTime, endTime, intervalDuration].join(";");
                     csvContent += row + "\n";
                 });
 
-                // Adiciona os blocos da Previsão Próximos Blocos no final do CSV
-                const forecastBlocks = getForecastBlocks().filter(f => f.block && f.date);
-                forecastBlocks.forEach(f => {
-                    const bloco = f.block;
-                    const cultura = "-";
-                    const variedade = "-";
-                    const dataPlantio = "-";
-                    const inicioColheita = formatDateBR(f.date);
-                    const caixasDia = "-";
-                    const colhidoTotal = "-";
-                    const qtdPlantada = "-";
-                    const unidadesDia = "-";
-                    const previsaoFinalizar = "-";
-                    const statusOperacional = "PREVISÃO DE COLHEITA";
-                    const diasProducao = "-";
-                    const oculto = "NÃO";
-
-                    const row = [bloco, cultura, variedade, dataPlantio, inicioColheita, caixasDia, colhidoTotal, qtdPlantada, unidadesDia, previsaoFinalizar, statusOperacional, diasProducao, oculto, estimatedBoxes, crewCount, estimateDay, startTime, endTime, intervalDuration].join(";");
-                    csvContent += row + "\n";
-                });
-
-                // Criação e download do arquivo
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
                 
                 const now = new Date();
                 const day = String(now.getDate()).padStart(2, '0');
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const year = now.getFullYear();
-                const filename = `Dados_Colheita_SPG_${day}-${month}-${year}.csv`;
-
-                const link = document.createElement("a");
-                link.setAttribute("href", url);
-                link.setAttribute("download", filename);
-                document.body.appendChild(link);
+                link.download = `Dados Colheita SPG_csv (${day}-${month}-${year}).csv`;
+                
                 link.click();
-                document.body.removeChild(link);
-                
-            } catch (err) {
-                console.error("Erro ao gerar CSV:", err);
-            } finally {
-                if (btnSpan) btnSpan.innerText = originalText;
-            }
-        }
-
-        async function downloadBoth() {
-            const btnSpan = document.querySelector('button[onclick="downloadBoth()"] span');
-            let originalText = "";
-            if (btnSpan) {
-                originalText = btnSpan.innerText;
-                btnSpan.innerText = "Gerando...";
-            }
-
-            try {
-                // 1. Chama a geração e download da imagem
-                await downloadImage();
-                
-                // 2. Pequeno delay (800ms) para garantir que o navegador processe o primeiro popup e não bloqueie o segundo
-                await new Promise(resolve => setTimeout(resolve, 800));
-                
-                // 3. Chama a geração e download do CSV
-                await downloadCSV();
-                
-            } catch (err) {
-                console.error("Erro ao gerar arquivos:", err);
-            } finally {
-                if (btnSpan) btnSpan.innerText = originalText;
-            }
-        }
-
-        // --- IMPORTAÇÃO DE CSV ---
-        function showImportSuccessModal(count) {
-            const modal = document.getElementById('importSuccessModal');
-            const countEl = document.getElementById('importSuccessCount');
-            const innerBox = modal.querySelector('div.bg-white');
-            
-            countEl.innerText = `${count} blocos importados com sucesso!`;
-            
-            modal.classList.remove('hidden');
-            void modal.offsetWidth; 
-            modal.classList.remove('opacity-0');
-            innerBox.classList.remove('scale-95');
-        }
-
-        function closeImportSuccessModal() {
-            const modal = document.getElementById('importSuccessModal');
-            const innerBox = modal.querySelector('div.bg-white');
-            
-            modal.classList.add('opacity-0');
-            innerBox.classList.add('scale-95');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+            } catch (err) { console.error(err); }
+            finally { if (btnSpan) btnSpan.innerText = originalText; }
         }
 
         function importCSV(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 const text = e.target.result;
                 const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
-                if (lines.length < 2) {
-                    alert("O CSV parece estar vazio ou não possui dados válidos.");
-                    return;
-                }
-
-                // Detecta o separador
                 const sep = lines[0].includes(';') ? ';' : ',';
-                const headers = lines[0].split(sep).map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
-
-                const getIdx = (aliases) => {
-                    for (let alias of aliases) {
-                        const idx = headers.findIndex(h => h.includes(alias.toLowerCase()));
-                        if (idx !== -1) return idx;
-                    }
-                    return -1;
-                };
-
-                const idxTalhao = getIdx(['bloco', 'talhao', 'talhão']);
-                const idxVariety = getIdx(['cultura']);
-                const idxCommVariety = getIdx(['variedade']);
-                const idxDate = getIdx(['data plantio', 'plantio']);
-                const idxStartDate = getIdx(['início colheita', 'inicio colheita', 'início']);
-                const idxBoxes = getIdx(['caixas']);
-                const idxTotalUnits = getIdx(['unidades acumuladas', 'acumuladas']);
-                const idxPlants = getIdx(['qtd plantada', 'plantada']);
-                const idxDailyUnits = getIdx(['total de unidades', 'hoje']);
-                const idxForecast = getIdx(['previsao', 'previsão', 'finalizar']);
-                const idxStatus = getIdx(['status']);
-                const idxDays = getIdx(['dias de produção', 'dias']);
-                const idxOculto = getIdx(['ocultos', 'oculto']);
+                const headers = lines[0].split(sep).map(h => h.trim().toLowerCase());
                 
-                const idxMeta = getIdx(['meta caixas', 'meta']);
-                const idxCrew = getIdx(['efetivo pessoas', 'efetivo']);
-                const idxEstDay = getIdx(['ref estimativa', 'ref']);
-                const idxStart = getIdx(['hora inicio', 'hora início']);
-                const idxEnd = getIdx(['hora termino', 'hora término']);
-                const idxInterval = getIdx(['intervalo min', 'intervalo']);
-
-                let importedCount = 0;
-
-                // Limpa os dados atuais da lista para evitar duplicação ao importar novo arquivo
                 harvestData = [];
-                document.getElementById('forecastBlocksContainer').innerHTML = ''; // Limpa as previsões anteriores
-
-                let isFirstRow = true;
-
                 for (let i = 1; i < lines.length; i++) {
-                    const row = lines[i].split(sep).map(col => col.trim().replace(/^"|"$/g, '')); 
+                    const row = lines[i].split(sep).map(col => col.trim().replace(/^"|"$/g, ''));
                     if (row.length < 2) continue;
+                    const getVal = (idx) => row[idx] || "";
+                    
+                    const totalBlockRaw = getVal(headers.indexOf('total bloco'));
+                    const totalUnitsRaw = getVal(headers.indexOf('unidades acumuladas'));
+                    const plantsRawVal = getVal(headers.indexOf('qtd variedade plantada')) || getVal(headers.indexOf('qtd plantada'));
+                    
+                    const calcPercentage = parsePTBRNumber(plantsRawVal) > 0 ? Math.round((parsePTBRNumber(totalUnitsRaw) / parsePTBRNumber(plantsRawVal)) * 100) : 0;
+                    const calcBlockPercentage = parsePTBRNumber(totalBlockRaw) > 0 ? Math.round((parsePTBRNumber(totalUnitsRaw) / parsePTBRNumber(totalBlockRaw)) * 100) : 0;
 
-                    // Importa os parâmetros do turno baseados na primeira linha
-                    if (isFirstRow) {
-                        if (idxMeta !== -1 && row[idxMeta]) document.getElementById('estimatedBoxes').value = row[idxMeta];
-                        if (idxCrew !== -1 && row[idxCrew]) document.getElementById('crewCount').value = row[idxCrew];
-                        if (idxEstDay !== -1 && row[idxEstDay]) document.getElementById('estimateDay').value = row[idxEstDay];
-                        if (idxStart !== -1 && row[idxStart]) document.getElementById('startTime').value = row[idxStart];
-                        if (idxEnd !== -1 && row[idxEnd]) document.getElementById('endTime').value = row[idxEnd];
-                        if (idxInterval !== -1 && row[idxInterval]) document.getElementById('intervalDuration').value = row[idxInterval];
-                        isFirstRow = false;
-                    }
-
-                    const statusRaw = idxStatus !== -1 && row[idxStatus] ? row[idxStatus] : '';
-
-                    // Redireciona a linha se for previsão de bloco
-                    if (statusRaw.toUpperCase() === 'PREVISÃO DE COLHEITA') {
-                        const fBlock = idxTalhao !== -1 && row[idxTalhao] ? row[idxTalhao] : '';
-                        let fDate = idxStartDate !== -1 && row[idxStartDate] ? row[idxStartDate] : '';
-                        if (fDate && fDate.includes('/')) {
-                            fDate = fDate.split('/').reverse().join('-');
-                        }
-                        if (fBlock || fDate) {
-                            addForecastRow(fBlock, fDate);
-                        }
-                        continue;
-                    }
-
-                    let isActive = true;
-                    if (idxOculto !== -1 && row[idxOculto]) {
-                        const val = row[idxOculto].toLowerCase();
-                        if (['sim', 's', 'true', '1', 'x'].includes(val)) isActive = false;
-                    }
-
-                    const plantsRaw = idxPlants !== -1 && row[idxPlants] ? row[idxPlants] : '0';
-                    const totalUnitsRaw = idxTotalUnits !== -1 && row[idxTotalUnits] ? row[idxTotalUnits] : '0';
-                    const percentage = parsePTBRNumber(plantsRaw) > 0 ? Math.round((parsePTBRNumber(totalUnitsRaw) / parsePTBRNumber(plantsRaw)) * 100) : 0;
-
-                    const newItem = {
-                        talhao: idxTalhao !== -1 && row[idxTalhao] ? row[idxTalhao] : `Imp-${i}`,
-                        variety: idxVariety !== -1 && row[idxVariety] ? row[idxVariety] : 'Brócolis',
-                        commercialVariety: idxCommVariety !== -1 && row[idxCommVariety] ? row[idxCommVariety] : '',
-                        percentage: percentage,
-                        startDate: idxStartDate !== -1 && row[idxStartDate] ? row[idxStartDate] : '', 
-                        date: idxDate !== -1 && row[idxDate] ? row[idxDate] : '',
-                        forecastDate: idxForecast !== -1 && row[idxForecast] ? row[idxForecast] : '',
-                        plants: plantsRaw,
-                        dailyUnits: idxDailyUnits !== -1 && row[idxDailyUnits] ? row[idxDailyUnits] : '0',
-                        boxes: idxBoxes !== -1 && row[idxBoxes] ? row[idxBoxes] : '0',
+                    harvestData.push({
+                        talhao: getVal(headers.indexOf('bloco')),
+                        cycle: getVal(headers.indexOf('ciclo')),
+                        variety: getVal(headers.indexOf('cultura')),
+                        commercialVariety: getVal(headers.indexOf('variedade')),
+                        percentage: calcPercentage, 
+                        blockPercentage: calcBlockPercentage,
+                        startDate: getVal(headers.indexOf('início colheita')),
+                        date: getVal(headers.indexOf('data plantio')),
+                        forecastDate: getVal(headers.indexOf('previsão finalizar')),
+                        totalBlockPlants: totalBlockRaw,
+                        plants: getVal(headers.indexOf('qtd variedade plantada')) || getVal(headers.indexOf('qtd plantada')),
+                        dailyUnits: getVal(headers.indexOf('total de unidades (hoje)')),
+                        boxes: getVal(headers.indexOf('caixas')),
                         totalUnits: totalUnitsRaw,
-                        days: idxDays !== -1 && row[idxDays] ? row[idxDays] : '0',
-                        status: idxStatus !== -1 && row[idxStatus] ? row[idxStatus] : 'Em Andamento',
+                        days: getVal(headers.indexOf('dias de produção')),
+                        status: getVal(headers.indexOf('status')),
                         details: '',
-                        active: isActive
-                    };
-
-                    harvestData.push(newItem);
-                    importedCount++;
+                        active: true
+                    });
                 }
-
-                sortHarvestData();
                 saveData();
-                saveInputs(); // Salva os inputs que vieram da planilha
                 renderList();
                 renderReport();
-                
-                event.target.value = ''; 
-                
-                if (importedCount > 0 || !isFirstRow) {
-                    showImportSuccessModal(importedCount);
-                }
+                showImportSuccessModal(harvestData.length);
             };
             reader.readAsText(file);
         }
