@@ -1169,15 +1169,15 @@
                 } catch(e) {}
             }
 
-            // 2. Sobrepõe/Adiciona os valores que estão AGORA no relatório de hoje
-            displayData.forEach(item => {
+            // 2. Sobrepõe/Adiciona os valores que estão AGORA no relatório (INCLUINDO OS OCULTOS para a conta bater)
+            harvestData.forEach(item => {
                 const key = `${item.talhao}-${item.cycle || ''}`;
                 if (!blockAggregates[key]) {
                     blockAggregates[key] = { varieties: {}, totalBlockPlants: 0 };
                 }
                 const varKey = `${item.variety}-${item.commercialVariety}`;
                 
-                // O valor que você acabou de digitar (ou confirmou) prevalece!
+                // O valor que você acabou de digitar prevalece, mesmo se estiver oculto!
                 blockAggregates[key].varieties[varKey] = parsePTBRNumber(item.totalUnits);
 
                 if(parsePTBRNumber(item.totalBlockPlants) > blockAggregates[key].totalBlockPlants) {
@@ -1472,7 +1472,7 @@
             let originalText = btnSpan ? btnSpan.innerText : "";
             if (btnSpan) btnSpan.innerText = "Gerando CSV...";
             try {
-                let csvContent = "\uFEFFBloco;Ciclo;Cultura;Variedade;Data Plantio;Início Colheita;Caixas;Unidades Acumuladas;Total Bloco;Qtd Variedade Plantada;Total de Unidades (Hoje);Previsão Finalizar;Status;Dias de Produção;Ocultos;Meta Caixas;Efetivo Pessoas;Ref Estimativa;Hora Inicio;Hora Termino;Intervalo Min\n";
+                let csvContent = "\uFEFFBloco;Ciclo;Cultura;Variedade;Data Plantio;Início Colheita;Caixas;Unidades Acumuladas;Total Acumulado Bloco;Total Bloco;Qtd Variedade Plantada;Total de Unidades (Hoje);Previsão Finalizar;Status;Dias de Produção;Ocultos;Meta Caixas;Efetivo Pessoas;Ref Estimativa;Hora Inicio;Hora Termino;Intervalo Min\n";
                 const estimatedBoxes = document.getElementById('estimatedBoxes').value || '';
                 const crewCount = document.getElementById('crewCount').value || '';
                 const estimateDay = document.getElementById('estimateDay').value || '';
@@ -1480,8 +1480,37 @@
                 const endTime = document.getElementById('endTime').value || '';
                 const intervalDuration = document.getElementById('intervalDuration').value || '';
 
+                // Calcula os agregados do bloco idêntico à interface para o CSV
+                const blockAggregates = {};
+                const rawHistory = localStorage.getItem('spg_harvest_history');
+                if (rawHistory) {
+                    try {
+                        const historyData = JSON.parse(rawHistory);
+                        historyData.forEach(h => {
+                            const key = `${h.bloco}-${h.ciclo}`;
+                            if (!blockAggregates[key]) blockAggregates[key] = { varieties: {} };
+                            const varKey = `${h.cultura}-${h.variedade}`;
+                            blockAggregates[key].varieties[varKey] = h.totalUnidades;
+                        });
+                    } catch(e) {}
+                }
                 harvestData.forEach(item => {
-                    const row = [item.talhao, item.cycle || "-", item.variety, item.commercialVariety, item.date, item.startDate, item.boxes, item.totalUnits, item.totalBlockPlants || "-", item.plants, item.dailyUnits, item.forecastDate, item.status, item.days, item.active === false ? "SIM" : "NÃO", estimatedBoxes, crewCount, estimateDay, startTime, endTime, intervalDuration].join(";");
+                    const key = `${item.talhao}-${item.cycle || ''}`;
+                    if (!blockAggregates[key]) blockAggregates[key] = { varieties: {} };
+                    const varKey = `${item.variety}-${item.commercialVariety}`;
+                    blockAggregates[key].varieties[varKey] = parsePTBRNumber(item.totalUnits);
+                });
+
+                harvestData.forEach(item => {
+                    const key = `${item.talhao}-${item.cycle || ''}`;
+                    let totalAcumuladoBloco = 0;
+                    if (blockAggregates[key]) {
+                        for (const v in blockAggregates[key].varieties) {
+                            totalAcumuladoBloco += blockAggregates[key].varieties[v];
+                        }
+                    }
+
+                    const row = [item.talhao, item.cycle || "-", item.variety, item.commercialVariety, item.date, item.startDate, item.boxes, item.totalUnits, totalAcumuladoBloco, item.totalBlockPlants || "-", item.plants, item.dailyUnits, item.forecastDate, item.status, item.days, item.active === false ? "SIM" : "NÃO", estimatedBoxes, crewCount, estimateDay, startTime, endTime, intervalDuration].join(";");
                     csvContent += row + "\n";
                 });
 
