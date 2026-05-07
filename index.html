@@ -849,6 +849,11 @@
         async function syncAppOnLoad() {
             const modal = document.getElementById('syncModal');
             
+            if (modal) {
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.remove('opacity-0'), 10);
+            }
+
             // Timeout de segurança: força o modal a fechar em 8 segundos caso a internet do celular falhe
             const forceCloseTimeout = setTimeout(() => {
                 if (modal && !modal.classList.contains('hidden')) {
@@ -1591,7 +1596,7 @@
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 const text = e.target.result;
                 const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
                 const sep = lines[0].includes(';') ? ';' : ',';
@@ -1655,10 +1660,17 @@
                     });
                 }
                 saveData();
-                refreshAllAccumulated(); // Aplica o Histórico Real automaticamente sobre o que acabou de ser importado
+                
+                // Sincroniza com a planilha logo após a importação (já inclui a atualização automática das acumuladas)
+                await syncAppOnLoad();
+                
                 renderList();
                 renderReport();
-                showImportSuccessModal(harvestData.length);
+                
+                // Espera a animação do modal de sincronização terminar antes de mostrar o de sucesso
+                setTimeout(() => {
+                    showImportSuccessModal(harvestData.length);
+                }, 350);
             };
             reader.readAsText(file);
         }
