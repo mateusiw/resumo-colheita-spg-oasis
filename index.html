@@ -664,6 +664,46 @@
             }
         }
 
+        // Função que corrige o Histórico de todos os blocos na lista de uma vez só
+        function refreshAllAccumulated() {
+            const rawHistory = localStorage.getItem('spg_harvest_history');
+            if (!rawHistory) return;
+            try {
+                const historyData = JSON.parse(rawHistory);
+                let hasChanges = false;
+                
+                harvestData.forEach(item => {
+                    let matchHistory = historyData.filter(h => 
+                        h.bloco == item.talhao && 
+                        h.ciclo == item.cycle && 
+                        (h.cultura || '').trim().toLowerCase() === (item.variety || '').trim().toLowerCase() && 
+                        (h.variedade || '').trim().toLowerCase() === (item.commercialVariety || '').trim().toLowerCase()
+                    );
+                    
+                    if (matchHistory.length > 0) {
+                        const realBase = matchHistory[0].totalUnidades;
+                        const daily = parsePTBRNumber(item.dailyUnits);
+                        const realTotal = realBase + daily;
+                        
+                        if (parsePTBRNumber(item.totalUnits) !== realTotal) {
+                            item.totalUnits = realTotal > 0 ? realTotal.toLocaleString('pt-BR') : '';
+                            const p = parsePTBRNumber(item.plants);
+                            const bp = parsePTBRNumber(item.totalBlockPlants);
+                            item.percentage = p > 0 ? Math.round((realTotal / p) * 100) : 0;
+                            item.blockPercentage = bp > 0 ? Math.round((realTotal / bp) * 100) : 0;
+                            hasChanges = true;
+                        }
+                    }
+                });
+                
+                if (hasChanges) {
+                    saveData();
+                    renderList();
+                    renderReport();
+                }
+            } catch(e) {}
+        }
+
         // Função de Sincronizar Previsões atualizada para receber parâmetro "silent" (sem alertas na tela inicial)
         async function syncForecasts(silent = false) {
             try {
@@ -863,6 +903,7 @@
                     
                     if (!dataHist.error) {
                         localStorage.setItem('spg_harvest_history', JSON.stringify(dataHist));
+                        refreshAllAccumulated(); // Atualiza a lista atual imediatamente com a verdade do Google
                     }
                 }
 
@@ -1019,7 +1060,7 @@
             if(item.startDate) document.getElementById('startDate').value = item.startDate.split('/').reverse().join('-');
             if(item.forecastDate) document.getElementById('forecastDate').value = item.forecastDate.split('/').reverse().join('-');
             
-            ['plants','totalBlockPlants','totalUnits','boxes','dailyUnits'].forEach(k => {
+            ['plants','totalBlockPlants','boxes','dailyUnits'].forEach(k => {
                 const el = document.getElementById(k);
                 if (el) el.value = item[k] || '';
             });
@@ -1028,9 +1069,26 @@
             document.getElementById('productionDays').value = item.days || '';
             document.getElementById('details').value = item.details || '';
 
-            // Calcula a base original (Acumuladas - Hoje) para permitir a soma dinâmica ao editar "Hoje"
-            const baseForEdit = parsePTBRNumber(item.totalUnits) - parsePTBRNumber(item.dailyUnits);
-            document.getElementById('totalUnits').dataset.baseValue = Math.max(0, baseForEdit);
+            // Ao editar, a base original das Acumuladas vem direto do Histórico Real se existir
+            let baseForEdit = Math.max(0, parsePTBRNumber(item.totalUnits) - parsePTBRNumber(item.dailyUnits)); // fallback
+            const rawHistory = localStorage.getItem('spg_harvest_history');
+            if (rawHistory && item.talhao && item.cycle && item.variety && item.commercialVariety) {
+                try {
+                    const historyData = JSON.parse(rawHistory);
+                    let matchHistory = historyData.filter(h => 
+                        h.bloco == item.talhao && 
+                        h.ciclo == item.cycle && 
+                        (h.cultura || '').trim().toLowerCase() === (item.variety || '').trim().toLowerCase() && 
+                        (h.variedade || '').trim().toLowerCase() === (item.commercialVariety || '').trim().toLowerCase()
+                    );
+                    if (matchHistory.length > 0) {
+                        baseForEdit = matchHistory[0].totalUnidades;
+                    }
+                } catch(e){}
+            }
+
+            document.getElementById('totalUnits').dataset.baseValue = baseForEdit;
+            updateAccumulated(); 
 
             // Ao editar, recalcula o "Total do Bloco" visualmente caso não tenha sido salvo anteriormente
             if (!item.totalBlockPlants) {
@@ -1597,6 +1655,7 @@
                     });
                 }
                 saveData();
+                refreshAllAccumulated(); // Aplica o Histórico Real automaticamente sobre o que acabou de ser importado
                 renderList();
                 renderReport();
                 showImportSuccessModal(harvestData.length);
