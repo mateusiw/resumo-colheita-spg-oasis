@@ -130,7 +130,7 @@
                                  <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">TOTAL DE UNIDADES</label><input type="text" id="c_dailyUnits" oninput="formatNumberInput(this); c_updateAccumulated()" class="w-full p-2 border border-slate-300 rounded text-sm outline-none text-right"></div>
                             </div>
                         </div>
-                        <button type="submit" id="c_submitBtn" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded uppercase text-xs shadow-lg"><i data-lucide="plus-square" class="w-4 h-4 inline"></i> INSERIR NO RELATÓRIO</button>
+                        <button type="submit" id="c_submitBtn" class="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded uppercase text-xs shadow-lg"><i data-lucide="plus-square" class="w-4 h-4"></i> <span>INSERIR NO RELATÓRIO</span></button>
                     </form>
                 </div>
 
@@ -179,7 +179,7 @@
                     </div>
                     <form id="p_harvestForm" onsubmit="p_addItem(event)" class="space-y-4">
                         <div class="grid grid-cols-2 gap-3">
-                            <div id="p_parceiroWrapper" class="col-span-2"><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Parceiro</label><select id="p_partner" required onchange="p_updateDynamicTitle(); p_toggleInputMode(); p_renderList(); p_renderReport();" class="w-full p-2 border border-slate-300 rounded-lg outline-none text-sm"><option value="">Selecione...</option><option value="SPG Oásis">SPG Oásis</option><option value="Sítio Araçá">Sítio Araçá</option><option value="Sítio Edivan">Sítio Edivan</option><option value="Sítio Evandro">Sítio Evandro</option><option value="Sítio São José">Sítio São José</option><option value="Sítio Márcia">Sítio Márcia</option><option value="Sítio Valdir">Sítio Valdir</option><option value="Sítio Leitão">Sítio Leitão</option><option value="Sítio Filho">Sítio Filho</option></select></div>
+                            <div id="p_parceiroWrapper" class="col-span-2"><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Parceiro</label><select id="p_partner" required onchange="p_updateDynamicTitle(); p_toggleInputMode(); p_renderList(); p_renderReport();" class="w-full p-2 border border-slate-300 rounded-lg outline-none text-sm"><option value="">Selecione...</option><option value="SPG Oásis">SPG Oásis</option><option value="Sítio Araçá">Sítio Araçá</option><option value="Sítio Edivan">Sítio Edivan</option><option value="Sítio Evandro">Sítio Evandro</option><option value="Sítio São José">Sítio São José</option><option value="Sítio Márcia">Sítio Márcia</option><option value="Sítio Valdir">Sítio Leitão</option><option value="Sítio Filho">Sítio Filho</option></select></div>
                             <div id="p_blocoWrapper" class="hidden"><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Nº Bloco</label><input type="text" id="p_talhao" required placeholder="Ex: 1 - A" class="w-full p-2 border border-slate-300 rounded-lg outline-none text-sm"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
@@ -214,7 +214,7 @@
                                 <div class="mt-3"><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">Previsão Finalizar</label><input type="date" id="p_estimatedCompletion" class="w-full p-2 border border-slate-200 rounded-lg text-sm outline-none"></div>
                             </div>
                         </div>
-                        <button type="submit" id="p_submitBtn" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl hidden"><i data-lucide="plus-circle" class="w-4 h-4 inline"></i> Adicionar ao Relatório</button>
+                        <button type="submit" id="p_submitBtn" class="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl hidden"><i data-lucide="plus-circle" class="w-4 h-4"></i> <span>Adicionar ao Relatório</span></button>
                     </form>
                 </div>
 
@@ -238,8 +238,11 @@
                             <div class="mt-3 pt-3 border-t border-white/20"><span id="p_headerDateTime" class="text-xs font-medium text-emerald-50 block opacity-90"></span></div>
                         </div>
                     </div>
-                    <div id="p_operationalFooter" class="bg-white border-b border-slate-200 p-4 shrink-0"></div>
+                    <!-- RESUMO MOVIDO PARA O TOPO -->
+                    <div id="p_summaryHeader" class="bg-white shrink-0"></div>
                     <div id="p_reportContent" class="divide-y divide-slate-50 flex-1 overflow-y-auto"></div>
+                    <!-- DADOS OPERACIONAIS MOVIDOS PARA O FUNDO -->
+                    <div id="p_operationalFooter" class="bg-white border-t border-slate-200 p-4 shrink-0"></div>
                     <div class="bg-slate-100 p-3 text-center border-t border-slate-200 shrink-0 text-[10px] text-slate-400 font-medium uppercase">SPG SEDE • Dados Oficiais</div>
                 </div>
             </div>
@@ -1045,7 +1048,14 @@
         }
 
         function p_renderReport() {
-            const container = document.getElementById('p_reportContent'); const footerContainer = document.getElementById('p_operationalFooter'); container.innerHTML = '';
+            const container = document.getElementById('p_reportContent'); 
+            const summaryHeader = document.getElementById('p_summaryHeader');
+            const footerContainer = document.getElementById('p_operationalFooter'); 
+            
+            container.innerHTML = '';
+            summaryHeader.innerHTML = '';
+            footerContainer.innerHTML = '';
+
             let sumBoxes = 0; let sumWeight = 0; let sumTotalUnits = 0;
             const rawData = p_getFilteredData(); const displayData = rawData.filter(item => item.active !== false); const blockAggregates = {};
             rawData.forEach(item => { if (item.partner === 'SPG Oásis') { const key = `${item.talhao}-${item.cycle || ''}`; if (!blockAggregates[key]) { blockAggregates[key] = { accumulatedSum: 0, totalBlockPlants: parseNumber(item.totalBlockPlants) }; } blockAggregates[key].accumulatedSum += parseNumber(item.accumulatedUnits); if(parseNumber(item.totalBlockPlants) > blockAggregates[key].totalBlockPlants) { blockAggregates[key].totalBlockPlants = parseNumber(item.totalBlockPlants); } } });
@@ -1117,11 +1127,27 @@
                 } catch(e) {}
             }
 
-            footerContainer.innerHTML = `
-                <div class="bg-emerald-50 rounded-xl p-4 mb-4 grid grid-cols-2 gap-y-4 gap-x-2 relative overflow-hidden"><div class="absolute top-0 right-0 w-16 h-16 bg-emerald-100/50 rounded-full -mr-8 -mt-8 pointer-events-none"></div><div class="absolute bottom-0 left-0 w-12 h-12 bg-emerald-100/50 rounded-full -ml-6 -mb-6 pointer-events-none"></div><div class="text-center border-r border-emerald-200/50"><div class="text-[10px] text-emerald-600 font-bold uppercase mb-0.5">Total Unidades</div><div class="text-xl font-extrabold text-emerald-800">${sumTotalUnitsStr}</div></div><div class="text-center"><div class="text-[10px] text-emerald-600 font-bold uppercase mb-0.5">TOTAL PESO (KG)</div><div class="text-xl font-extrabold text-emerald-800">${sumWeightStr}</div></div><div class="col-span-2 border-t border-emerald-200/50 w-3/4 mx-auto"></div><div class="text-center border-r border-emerald-200/50"><div class="text-[10px] text-emerald-600 font-bold uppercase mb-0.5">Total Caixas</div><div class="text-lg font-extrabold text-emerald-800">${sumBoxesStr}</div></div><div class="text-center"><div class="text-[10px] text-emerald-600 font-bold uppercase mb-0.5">MÉDIA GERAL (G/UNID.)</div><div class="text-lg font-extrabold text-emerald-800">${finalAvgWeightStr} g</div></div></div>
-                ${shiftParamsHtml}
-                ${forecastHtml}
-            `;
+            if (displayData.length > 0) {
+                summaryHeader.innerHTML = `
+                    <div class="p-4 border-b border-slate-100">
+                        <div class="bg-emerald-50 rounded-xl p-4 grid grid-cols-2 gap-y-4 gap-x-2 relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-16 h-16 bg-emerald-100/50 rounded-full -mr-8 -mt-8 pointer-events-none"></div>
+                            <div class="absolute bottom-0 left-0 w-12 h-12 bg-emerald-100/50 rounded-full -ml-6 -mb-6 pointer-events-none"></div>
+                            <div class="text-center border-r border-emerald-200/50"><div class="text-[10px] text-emerald-600 font-bold uppercase mb-0.5">Total Unidades</div><div class="text-xl font-extrabold text-emerald-800">${sumTotalUnitsStr}</div></div>
+                            <div class="text-center"><div class="text-[10px] text-emerald-600 font-bold uppercase mb-0.5">TOTAL PESO (KG)</div><div class="text-xl font-extrabold text-emerald-800">${sumWeightStr}</div></div>
+                            <div class="col-span-2 border-t border-emerald-200/50 w-3/4 mx-auto"></div>
+                            <div class="text-center border-r border-emerald-200/50"><div class="text-[10px] text-emerald-600 font-bold uppercase mb-0.5">Total Caixas</div><div class="text-lg font-extrabold text-emerald-800">${sumBoxesStr}</div></div>
+                            <div class="text-center"><div class="text-[10px] text-emerald-600 font-bold uppercase mb-0.5">MÉDIA GERAL (G/UNID.)</div><div class="text-lg font-extrabold text-emerald-800">${finalAvgWeightStr} g</div></div>
+                        </div>
+                    </div>
+                `;
+
+                footerContainer.innerHTML = `
+                    ${shiftParamsHtml}
+                    ${forecastHtml}
+                `;
+            }
+            
             lucide.createIcons();
         }
 
@@ -1149,7 +1175,11 @@
                     p_harvestData.push(newItem); importedCount++;
                 }
                 p_saveToStorage(); localStorage.setItem('spg_sede_forecasts', JSON.stringify(p_forecastBlocksData)); localStorage.setItem('spg_sede_shiftParams', JSON.stringify(shiftParams)); p_renderList(); p_renderReport(); event.target.value = '';
-                if (importedCount > 0) { const modal = document.getElementById('p_importSuccessModal'); const countEl = document.getElementById('p_importSuccessCount'); const innerBox = modal.querySelector('div.bg-white'); countEl.innerText = `${importedCount} blocos importados com sucesso!`; modal.classList.remove('hidden'); void modal.offsetWidth; modal.classList.remove('opacity-0'); innerBox.classList.remove('scale-95'); }
+                if (importedCount > 0) { 
+                    setTimeout(() => {
+                        showAlert('Importação Concluída', [`${importedCount} bloco(s) importado(s) com sucesso!`, 'Os dados foram integrados ao relatório de pesagem.'], 'success');
+                    }, 350);
+                }
             }; reader.readAsText(file);
         }
 
@@ -1213,8 +1243,6 @@
             const textArea = document.createElement("textarea"); textArea.value = text; textArea.style.position = "fixed"; textArea.style.left = "-9999px"; textArea.style.top = "0"; document.body.appendChild(textArea); textArea.focus(); textArea.select();
             try { const successful = document.execCommand('copy'); if(successful) { showAlert('Texto Copiado!', ['<span class="font-bold text-slate-800">Resumo copiado com sucesso!</span>', 'Basta ir no WhatsApp e colar.']); } else { showAlert('Atenção', ['Não foi possível copiar automaticamente.', 'Tente selecionar e copiar manualmente.'], 'error'); } } catch (err) { showAlert('Erro', ['Erro ao tentar copiar o texto.'], 'error'); } document.body.removeChild(textArea);
         }
-
-        function p_closeImportSuccessModal() { const modal = document.getElementById('p_importSuccessModal'); const innerBox = modal.querySelector('div.bg-white'); modal.classList.add('opacity-0'); innerBox.classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); }, 300); }
 
     </script>
 </body>
