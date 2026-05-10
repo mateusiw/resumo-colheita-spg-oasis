@@ -922,14 +922,44 @@
             const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
             reader.onload = async function(e) {
                 const text = e.target.result; const lines = text.split(/\r?\n/).filter(line => line.trim() !== ''); const sep = lines[0].includes(';') ? ';' : ','; const headers = lines[0].split(sep).map(h => h.trim().toLowerCase());
-                c_harvestData = []; let hasLoadedShiftParams = false;
+                c_harvestData = []; let hasLoadedShiftParams = false; let importedForecasts = [];
                 for (let i = 1; i < lines.length; i++) {
                     const row = lines[i].split(sep).map(col => col.trim().replace(/^"|"$/g, '')); if (row.length < 2) continue; const getVal = (idx) => idx >= 0 ? (row[idx] || "") : "";
                     if (!hasLoadedShiftParams) { const meta = getVal(headers.indexOf('meta caixas')); const efetivo = getVal(headers.indexOf('efetivo pessoas')); const refEst = getVal(headers.indexOf('ref estimativa')); const hInicio = getVal(headers.indexOf('hora inicio')); const hTermino = getVal(headers.indexOf('hora termino')); const intMin = getVal(headers.indexOf('intervalo min')); if (meta || efetivo || refEst || hInicio || hTermino || intMin) { document.getElementById('c_estimatedBoxes').value = meta; document.getElementById('c_crewCount').value = efetivo; document.getElementById('c_estimateDay').value = refEst; document.getElementById('c_startTime').value = hInicio; document.getElementById('c_endTime').value = hTermino; document.getElementById('c_intervalDuration').value = intMin; c_saveInputs(); hasLoadedShiftParams = true; } }
+                    
+                    const statusRaw = getVal(headers.indexOf('status'));
+                    if (statusRaw.toUpperCase() === 'PREVISÃO DE COLHEITA') {
+                        const fBlock = getVal(headers.indexOf('bloco'));
+                        let fDate = getVal(headers.indexOf('início colheita'));
+                        if (fDate && fDate.includes('/')) { fDate = fDate.split('/').reverse().join('-'); }
+                        if (fBlock || fDate) { importedForecasts.push({ block: fBlock, date: fDate }); }
+                        continue;
+                    }
+
                     const totalBlockRaw = getVal(headers.indexOf('total bloco')); const totalUnitsRaw = getVal(headers.indexOf('unidades acumuladas')); const plantsRawVal = getVal(headers.indexOf('qtd variedade plantada')) || getVal(headers.indexOf('qtd plantada'));
                     const calcPercentage = parseNumber(plantsRawVal) > 0 ? Math.round((parseNumber(totalUnitsRaw) / parseNumber(plantsRawVal)) * 100) : 0; const calcBlockPercentage = parseNumber(totalBlockRaw) > 0 ? Math.round((parseNumber(totalUnitsRaw) / parseNumber(totalBlockRaw)) * 100) : 0;
-                    c_harvestData.push({ talhao: getVal(headers.indexOf('bloco')), cycle: getVal(headers.indexOf('ciclo')), variety: getVal(headers.indexOf('cultura')), commercialVariety: getVal(headers.indexOf('variedade')), percentage: calcPercentage, blockPercentage: calcBlockPercentage, startDate: getVal(headers.indexOf('início colheita')), date: getVal(headers.indexOf('data plantio')), forecastDate: getVal(headers.indexOf('previsão finalizar')), totalBlockPlants: totalBlockRaw, plants: plantsRawVal, dailyUnits: getVal(headers.indexOf('total de unidades (hoje)')), boxes: getVal(headers.indexOf('caixas')), totalUnits: totalUnitsRaw, days: getVal(headers.indexOf('dias de produção')), status: getVal(headers.indexOf('status')), details: '', active: true });
+                    
+                    let cycleVal = getVal(headers.indexOf('ciclo')); if(cycleVal === "-") cycleVal = "";
+                    let varietyVal = getVal(headers.indexOf('cultura')); if(varietyVal === "-") varietyVal = "";
+                    let commVarietyVal = getVal(headers.indexOf('variedade')); if(commVarietyVal === "-") commVarietyVal = "";
+                    let dateVal = getVal(headers.indexOf('data plantio')); if(dateVal === "-") dateVal = "";
+                    let startDateVal = getVal(headers.indexOf('início colheita')); if(startDateVal === "-") startDateVal = "";
+                    let forecastDateVal = getVal(headers.indexOf('previsão finalizar')); if(forecastDateVal === "-") forecastDateVal = "";
+                    let daysVal = getVal(headers.indexOf('dias de produção')); if(daysVal === "-") daysVal = "";
+                    let totalBlockVal = totalBlockRaw === "-" ? "" : totalBlockRaw;
+                    let plantsVal = plantsRawVal === "-" ? "" : plantsRawVal;
+
+                    c_harvestData.push({ talhao: getVal(headers.indexOf('bloco')), cycle: cycleVal, variety: varietyVal, commercialVariety: commVarietyVal, percentage: calcPercentage, blockPercentage: calcBlockPercentage, startDate: startDateVal, date: dateVal, forecastDate: forecastDateVal, totalBlockPlants: totalBlockVal, plants: plantsVal, dailyUnits: getVal(headers.indexOf('total de unidades (hoje)')), boxes: getVal(headers.indexOf('caixas')), totalUnits: totalUnitsRaw, days: daysVal, status: statusRaw, details: '', active: true });
                 }
+                
+                if (importedForecasts.length > 0) {
+                    const inputs = JSON.parse(localStorage.getItem('spg_inputs') || '{}');
+                    inputs.forecastBlocks = importedForecasts;
+                    localStorage.setItem('spg_inputs', JSON.stringify(inputs));
+                    document.getElementById('c_forecastBlocksContainer').innerHTML = '';
+                    c_loadInputs();
+                }
+
                 c_saveData(); await c_syncAppOnLoad(); c_renderList(); c_renderReport(); event.target.value = ''; setTimeout(() => { showAlert('Importação Concluída', [`${c_harvestData.length} registro(s) importado(s)!`, 'Os dados do arquivo foram importados com sucesso para o relatório atual.'], 'success'); }, 350);
             }; reader.readAsText(file);
         }
@@ -951,7 +981,22 @@
 
         function p_getGroupedData(itemsToGroup, allPartnerItems = []) {
             const grouped = {}; const trueAggregates = {}; const sourceForAggregates = allPartnerItems.length > 0 ? allPartnerItems : itemsToGroup;
-            sourceForAggregates.forEach(item => { const block = item.talhao; if(!trueAggregates[block]) trueAggregates[block] = { accum: 0, plants: 0 }; trueAggregates[block].accum += parseNumber(item.accumulatedUnits); trueAggregates[block].plants = Math.max(trueAggregates[block].plants, parseNumber(item.totalBlockPlants)); });
+            
+            const rawHistory = localStorage.getItem('spg_harvest_history');
+            if (rawHistory) {
+                try {
+                    const historyData = JSON.parse(rawHistory);
+                    historyData.forEach(h => {
+                        const block = h.bloco;
+                        if(!trueAggregates[block]) trueAggregates[block] = { accum: 0, plants: 0, varieties: {} };
+                        const varKey = `${h.ciclo}-${h.cultura}-${h.variedade}`;
+                        trueAggregates[block].varieties[varKey] = h.totalUnidades;
+                    });
+                } catch(e) {}
+            }
+            
+            sourceForAggregates.forEach(item => { const block = item.talhao; if(!trueAggregates[block]) trueAggregates[block] = { accum: 0, plants: 0, varieties: {} }; const varKey = `${item.cycle || ''}-${item.variety}-${item.commercialVariety}`; trueAggregates[block].varieties[varKey] = parseNumber(item.accumulatedUnits); trueAggregates[block].plants = Math.max(trueAggregates[block].plants, parseNumber(item.totalBlockPlants)); });
+            for (const b in trueAggregates) { let s = 0; for(const v in trueAggregates[b].varieties) s += trueAggregates[b].varieties[v]; trueAggregates[b].accum = s; }
             itemsToGroup.forEach(item => { const block = item.talhao; if (!grouped[block]) { grouped[block] = { ...item, boxes: 0, harvestWeight: 0, totalUnits: 0, accumulatedUnits: trueAggregates[block].accum, plantedUnits: 0, totalBlockPlants: trueAggregates[block].plants, commercialVariety: '', variety: 'Agrupado', isGrouped: true }; } grouped[block].boxes += parseNumber(item.boxes); grouped[block].harvestWeight += parseNumber(item.harvestWeight); grouped[block].totalUnits += parseNumber(item.totalUnits); grouped[block].plantedUnits += parseNumber(item.plantedUnits); });
             return Object.values(grouped).map(group => { let avgValG = 0; if (group.totalUnits > 0) avgValG = group.harvestWeight / group.totalUnits; return { ...group, boxes: group.boxes > 0 ? group.boxes.toLocaleString('pt-BR') : "0", harvestWeight: group.harvestWeight > 0 ? group.harvestWeight.toLocaleString('pt-BR', { maximumFractionDigits: 3 }) : "", totalUnits: group.totalUnits > 0 ? group.totalUnits.toLocaleString('pt-BR') : "0", accumulatedUnits: group.accumulatedUnits > 0 ? group.accumulatedUnits.toLocaleString('pt-BR') : "0", plantedUnits: group.plantedUnits > 0 ? group.plantedUnits.toLocaleString('pt-BR') : "0", totalBlockPlants: group.totalBlockPlants > 0 ? group.totalBlockPlants.toLocaleString('pt-BR') : "0", averageWeight: avgValG > 0 ? avgValG.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) : "", unitsPerBox: group.boxes > 0 ? (group.totalUnits / group.boxes).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 }) : "" }; });
         }
@@ -1058,7 +1103,12 @@
 
             let sumBoxes = 0; let sumWeight = 0; let sumTotalUnits = 0;
             const rawData = p_getFilteredData(); const displayData = rawData.filter(item => item.active !== false); const blockAggregates = {};
-            rawData.forEach(item => { if (item.partner === 'SPG Oásis') { const key = `${item.talhao}-${item.cycle || ''}`; if (!blockAggregates[key]) { blockAggregates[key] = { accumulatedSum: 0, totalBlockPlants: parseNumber(item.totalBlockPlants) }; } blockAggregates[key].accumulatedSum += parseNumber(item.accumulatedUnits); if(parseNumber(item.totalBlockPlants) > blockAggregates[key].totalBlockPlants) { blockAggregates[key].totalBlockPlants = parseNumber(item.totalBlockPlants); } } });
+            
+            const rawHistory = localStorage.getItem('spg_harvest_history');
+            if (rawHistory) { try { const historyData = JSON.parse(rawHistory); historyData.forEach(h => { const key = `${h.bloco}-${h.ciclo}`; if (!blockAggregates[key]) blockAggregates[key] = { varieties: {}, totalBlockPlants: 0 }; const varKey = `${h.cultura}-${h.variedade}`; blockAggregates[key].varieties[varKey] = h.totalUnidades; }); } catch(e) {} }
+            
+            rawData.forEach(item => { if (item.partner === 'SPG Oásis') { const key = `${item.talhao}-${item.cycle || ''}`; if (!blockAggregates[key]) { blockAggregates[key] = { varieties: {}, totalBlockPlants: 0 }; } const varKey = `${item.variety}-${item.commercialVariety}`; blockAggregates[key].varieties[varKey] = parseNumber(item.accumulatedUnits); if(parseNumber(item.totalBlockPlants) > blockAggregates[key].totalBlockPlants) { blockAggregates[key].totalBlockPlants = parseNumber(item.totalBlockPlants); } } });
+            
             if (displayData.length === 0) {
                 container.className = "divide-y divide-slate-50 flex-1 overflow-y-auto";
                 if (rawData.length > 0) { container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs italic leading-relaxed h-full min-h-[300px] flex flex-col items-center justify-center"><i data-lucide="eye-off" class="mb-2 w-8 h-8 opacity-20"></i><span>Todos os blocos deste parceiro estão ocultos no momento.</span></div>`; } 
@@ -1078,7 +1128,7 @@
                         const days = item.productionDays || '-'; const accum = item.accumulatedUnits || '0'; const planted = item.plantedUnits || '0'; const totalBlockPlants = item.totalBlockPlants || '0'; let percentage = item.percentage || 0; const accumVal = parseNumber(accum); const plantedVal = parseNumber(planted);
                         if (plantedVal > 0) percentage = Math.round((accumVal / plantedVal) * 100); const remaining = Math.max(0, 100 - percentage);
                         const key = `${item.talhao}-${item.cycle || ''}`; let itemBlockPercentage = item.blockPercentage || 0; let totalAccumSumGeral = accumVal; let pendenteGeral = Math.max(0, parseNumber(totalBlockPlants) - totalAccumSumGeral);
-                        if (blockAggregates[key] && blockAggregates[key].totalBlockPlants > 0) { totalAccumSumGeral = blockAggregates[key].accumulatedSum; let totalBlockPlantsGeral = blockAggregates[key].totalBlockPlants; itemBlockPercentage = Math.round((totalAccumSumGeral / totalBlockPlantsGeral) * 100); pendenteGeral = Math.max(0, totalBlockPlantsGeral - totalAccumSumGeral); }
+                        if (blockAggregates[key] && blockAggregates[key].totalBlockPlants > 0) { totalAccumSumGeral = 0; for (const v in blockAggregates[key].varieties) { totalAccumSumGeral += blockAggregates[key].varieties[v]; } let totalBlockPlantsGeral = blockAggregates[key].totalBlockPlants; itemBlockPercentage = Math.round((totalAccumSumGeral / totalBlockPlantsGeral) * 100); pendenteGeral = Math.max(0, totalBlockPlantsGeral - totalAccumSumGeral); }
                         itemBlockPercentage = Math.min(100, Math.max(0, itemBlockPercentage));
                         if (item.isGrouped) {
                             let blockProgressColor = 'bg-yellow-500'; let blockTextColor = 'text-slate-600'; if (itemBlockPercentage >= 90) { blockProgressColor = 'bg-emerald-500'; blockTextColor = 'text-emerald-600'; } else if (itemBlockPercentage >= 70) { blockProgressColor = 'bg-blue-500'; }
