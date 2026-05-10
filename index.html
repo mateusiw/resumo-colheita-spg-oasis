@@ -179,7 +179,7 @@
                     </div>
                     <form id="p_harvestForm" onsubmit="p_addItem(event)" class="space-y-4">
                         <div class="grid grid-cols-2 gap-3">
-                            <div id="p_parceiroWrapper" class="col-span-2"><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Parceiro</label><select id="p_partner" required onchange="p_updateDynamicTitle(); p_toggleInputMode(); p_renderList(); p_renderReport();" class="w-full p-2 border border-slate-300 rounded-lg outline-none text-sm"><option value="">Selecione...</option><option value="SPG Oásis">SPG Oásis</option><option value="Sítio Araçá">Sítio Araçá</option><option value="Sítio Edivan">Sítio Edivan</option><option value="Sítio Evandro">Sítio Evandro</option><option value="Sítio São José">Sítio São José</option><option value="Sítio Márcia">Sítio Márcia</option><option value="Sítio Valdir">Sítio Leitão</option><option value="Sítio Filho">Sítio Filho</option></select></div>
+                            <div id="p_parceiroWrapper" class="col-span-2"><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Parceiro</label><select id="p_partner" required onchange="p_updateDynamicTitle(); p_toggleInputMode(); p_renderList(); p_renderReport();" class="w-full p-2 border border-slate-300 rounded-lg outline-none text-sm"><option value="SPG Oásis" selected>SPG Oásis</option><option value="Sítio Araçá">Sítio Araçá</option><option value="Sítio Edivan">Sítio Edivan</option><option value="Sítio Evandro">Sítio Evandro</option><option value="Sítio São José">Sítio São José</option><option value="Sítio Márcia">Sítio Márcia</option><option value="Sítio Valdir">Sítio Valdir</option><option value="Sítio Leitão">Sítio Leitão</option><option value="Sítio Filho">Sítio Filho</option></select></div>
                             <div id="p_blocoWrapper" class="hidden"><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Nº Bloco</label><input type="text" id="p_talhao" required placeholder="Ex: 1 - A" class="w-full p-2 border border-slate-300 rounded-lg outline-none text-sm"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
@@ -578,8 +578,12 @@
             c_renderList();
             c_renderReport();
 
+            p_updateDynamicTitle();
             p_toggleInputMode();
             p_loadFromStorage();
+            
+            // Atualiza os títulos a cada minuto para manter o horário sincronizado
+            setInterval(() => { c_updateDynamicTitle(); p_updateDynamicTitle(); }, 60000);
         });
 
         function loadAllCultures() {
@@ -987,17 +991,17 @@
                 try {
                     const historyData = JSON.parse(rawHistory);
                     historyData.forEach(h => {
-                        const block = h.bloco;
-                        if(!trueAggregates[block]) trueAggregates[block] = { accum: 0, plants: 0, varieties: {} };
-                        const varKey = `${h.ciclo}-${h.cultura}-${h.variedade}`;
-                        trueAggregates[block].varieties[varKey] = h.totalUnidades;
+                        const blockKey = `${h.bloco}-${h.ciclo || ''}`;
+                        if(!trueAggregates[blockKey]) trueAggregates[blockKey] = { accum: 0, plants: 0, varieties: {} };
+                        const varKey = `${h.cultura}-${h.variedade}`;
+                        trueAggregates[blockKey].varieties[varKey] = h.totalUnidades;
                     });
                 } catch(e) {}
             }
             
-            sourceForAggregates.forEach(item => { const block = item.talhao; if(!trueAggregates[block]) trueAggregates[block] = { accum: 0, plants: 0, varieties: {} }; const varKey = `${item.cycle || ''}-${item.variety}-${item.commercialVariety}`; trueAggregates[block].varieties[varKey] = parseNumber(item.accumulatedUnits); trueAggregates[block].plants = Math.max(trueAggregates[block].plants, parseNumber(item.totalBlockPlants)); });
+            sourceForAggregates.forEach(item => { const blockKey = `${item.talhao}-${item.cycle || ''}`; if(!trueAggregates[blockKey]) trueAggregates[blockKey] = { accum: 0, plants: 0, varieties: {} }; const varKey = `${item.variety}-${item.commercialVariety}`; trueAggregates[blockKey].varieties[varKey] = parseNumber(item.accumulatedUnits); trueAggregates[blockKey].plants = Math.max(trueAggregates[blockKey].plants, parseNumber(item.totalBlockPlants)); });
             for (const b in trueAggregates) { let s = 0; for(const v in trueAggregates[b].varieties) s += trueAggregates[b].varieties[v]; trueAggregates[b].accum = s; }
-            itemsToGroup.forEach(item => { const block = item.talhao; if (!grouped[block]) { grouped[block] = { ...item, boxes: 0, harvestWeight: 0, totalUnits: 0, accumulatedUnits: trueAggregates[block].accum, plantedUnits: 0, totalBlockPlants: trueAggregates[block].plants, commercialVariety: '', variety: 'Agrupado', isGrouped: true }; } grouped[block].boxes += parseNumber(item.boxes); grouped[block].harvestWeight += parseNumber(item.harvestWeight); grouped[block].totalUnits += parseNumber(item.totalUnits); grouped[block].plantedUnits += parseNumber(item.plantedUnits); });
+            itemsToGroup.forEach(item => { const blockKey = `${item.talhao}-${item.cycle || ''}`; if (!grouped[blockKey]) { grouped[blockKey] = { ...item, boxes: 0, harvestWeight: 0, totalUnits: 0, accumulatedUnits: trueAggregates[blockKey].accum, plantedUnits: 0, totalBlockPlants: trueAggregates[blockKey].plants, commercialVariety: '', variety: 'Agrupado', isGrouped: true }; } grouped[blockKey].boxes += parseNumber(item.boxes); grouped[blockKey].harvestWeight += parseNumber(item.harvestWeight); grouped[blockKey].totalUnits += parseNumber(item.totalUnits); grouped[blockKey].plantedUnits += parseNumber(item.plantedUnits); });
             return Object.values(grouped).map(group => { let avgValG = 0; if (group.totalUnits > 0) avgValG = group.harvestWeight / group.totalUnits; return { ...group, boxes: group.boxes > 0 ? group.boxes.toLocaleString('pt-BR') : "0", harvestWeight: group.harvestWeight > 0 ? group.harvestWeight.toLocaleString('pt-BR', { maximumFractionDigits: 3 }) : "", totalUnits: group.totalUnits > 0 ? group.totalUnits.toLocaleString('pt-BR') : "0", accumulatedUnits: group.accumulatedUnits > 0 ? group.accumulatedUnits.toLocaleString('pt-BR') : "0", plantedUnits: group.plantedUnits > 0 ? group.plantedUnits.toLocaleString('pt-BR') : "0", totalBlockPlants: group.totalBlockPlants > 0 ? group.totalBlockPlants.toLocaleString('pt-BR') : "0", averageWeight: avgValG > 0 ? avgValG.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) : "", unitsPerBox: group.boxes > 0 ? (group.totalUnits / group.boxes).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 }) : "" }; });
         }
 
@@ -1107,7 +1111,7 @@
             const rawHistory = localStorage.getItem('spg_harvest_history');
             if (rawHistory) { try { const historyData = JSON.parse(rawHistory); historyData.forEach(h => { const key = `${h.bloco}-${h.ciclo}`; if (!blockAggregates[key]) blockAggregates[key] = { varieties: {}, totalBlockPlants: 0 }; const varKey = `${h.cultura}-${h.variedade}`; blockAggregates[key].varieties[varKey] = h.totalUnidades; }); } catch(e) {} }
             
-            rawData.forEach(item => { if (item.partner === 'SPG Oásis') { const key = `${item.talhao}-${item.cycle || ''}`; if (!blockAggregates[key]) { blockAggregates[key] = { varieties: {}, totalBlockPlants: 0 }; } const varKey = `${item.variety}-${item.commercialVariety}`; blockAggregates[key].varieties[varKey] = parseNumber(item.accumulatedUnits); if(parseNumber(item.totalBlockPlants) > blockAggregates[key].totalBlockPlants) { blockAggregates[key].totalBlockPlants = parseNumber(item.totalBlockPlants); } } });
+            rawData.forEach(item => { if (item.partner === 'SPG Oásis' && !item.isGrouped) { const key = `${item.talhao}-${item.cycle || ''}`; if (!blockAggregates[key]) { blockAggregates[key] = { varieties: {}, totalBlockPlants: 0 }; } const varKey = `${item.variety}-${item.commercialVariety}`; blockAggregates[key].varieties[varKey] = parseNumber(item.accumulatedUnits); if(parseNumber(item.totalBlockPlants) > blockAggregates[key].totalBlockPlants) { blockAggregates[key].totalBlockPlants = parseNumber(item.totalBlockPlants); } } });
             
             if (displayData.length === 0) {
                 container.className = "divide-y divide-slate-50 flex-1 overflow-y-auto";
@@ -1128,7 +1132,7 @@
                         const days = item.productionDays || '-'; const accum = item.accumulatedUnits || '0'; const planted = item.plantedUnits || '0'; const totalBlockPlants = item.totalBlockPlants || '0'; let percentage = item.percentage || 0; const accumVal = parseNumber(accum); const plantedVal = parseNumber(planted);
                         if (plantedVal > 0) percentage = Math.round((accumVal / plantedVal) * 100); const remaining = Math.max(0, 100 - percentage);
                         const key = `${item.talhao}-${item.cycle || ''}`; let itemBlockPercentage = item.blockPercentage || 0; let totalAccumSumGeral = accumVal; let pendenteGeral = Math.max(0, parseNumber(totalBlockPlants) - totalAccumSumGeral);
-                        if (blockAggregates[key] && blockAggregates[key].totalBlockPlants > 0) { totalAccumSumGeral = 0; for (const v in blockAggregates[key].varieties) { totalAccumSumGeral += blockAggregates[key].varieties[v]; } let totalBlockPlantsGeral = blockAggregates[key].totalBlockPlants; itemBlockPercentage = Math.round((totalAccumSumGeral / totalBlockPlantsGeral) * 100); pendenteGeral = Math.max(0, totalBlockPlantsGeral - totalAccumSumGeral); }
+                        if (!item.isGrouped && blockAggregates[key] && blockAggregates[key].totalBlockPlants > 0) { totalAccumSumGeral = 0; for (const v in blockAggregates[key].varieties) { totalAccumSumGeral += blockAggregates[key].varieties[v]; } let totalBlockPlantsGeral = blockAggregates[key].totalBlockPlants; if (totalBlockPlantsGeral > 0) { itemBlockPercentage = Math.round((totalAccumSumGeral / totalBlockPlantsGeral) * 100); } pendenteGeral = Math.max(0, totalBlockPlantsGeral - totalAccumSumGeral); } else if (item.isGrouped) { let totalBlockPlantsGeral = parseNumber(totalBlockPlants); if (totalBlockPlantsGeral > 0) { itemBlockPercentage = Math.round((totalAccumSumGeral / totalBlockPlantsGeral) * 100); } pendenteGeral = Math.max(0, totalBlockPlantsGeral - totalAccumSumGeral); }
                         itemBlockPercentage = Math.min(100, Math.max(0, itemBlockPercentage));
                         if (item.isGrouped) {
                             let blockProgressColor = 'bg-yellow-500'; let blockTextColor = 'text-slate-600'; if (itemBlockPercentage >= 90) { blockProgressColor = 'bg-emerald-500'; blockTextColor = 'text-emerald-600'; } else if (itemBlockPercentage >= 70) { blockProgressColor = 'bg-blue-500'; }
