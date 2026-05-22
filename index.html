@@ -934,6 +934,9 @@
             reader.onload = async function(e) {
                 const text = e.target.result; const lines = text.split(/\r?\n/).filter(line => line.trim() !== ''); const sep = lines[0].includes(';') ? ';' : ','; const headers = lines[0].split(sep).map(h => h.trim().toLowerCase());
                 c_harvestData = []; let hasLoadedShiftParams = false; let importedForecasts = [];
+                
+                const idxOcultos = headers.findIndex(h => h.includes('oculto'));
+                
                 for (let i = 1; i < lines.length; i++) {
                     const row = lines[i].split(sep).map(col => col.trim().replace(/^"|"$/g, '')); if (row.length < 2) continue; const getVal = (idx) => idx >= 0 ? (row[idx] || "") : "";
                     if (!hasLoadedShiftParams) { const efetivo = getVal(headers.indexOf('efetivo pessoas')); const refEst = getVal(headers.indexOf('ref estimativa')); const hInicio = getVal(headers.indexOf('hora inicio')); const hTermino = getVal(headers.indexOf('hora termino')); const intMin = getVal(headers.indexOf('intervalo min')); if (efetivo || refEst || hInicio || hTermino || intMin) { document.getElementById('c_crewCount').value = efetivo; document.getElementById('c_estimateDay').value = refEst; document.getElementById('c_startTime').value = hInicio; document.getElementById('c_endTime').value = hTermino; document.getElementById('c_intervalDuration').value = intMin; c_saveInputs(); hasLoadedShiftParams = true; } }
@@ -945,6 +948,12 @@
                         if (fDate && fDate.includes('/')) { fDate = fDate.split('/').reverse().join('-'); }
                         if (fBlock || fDate) { importedForecasts.push({ block: fBlock, date: fDate }); }
                         continue;
+                    }
+
+                    let isActive = true;
+                    if (idxOcultos !== -1) {
+                        const val = getVal(idxOcultos).toLowerCase();
+                        if (['sim', 's', 'true', '1', 'x'].includes(val)) isActive = false;
                     }
 
                     const totalBlockRaw = getVal(headers.indexOf('total bloco')); const totalUnitsRaw = getVal(headers.indexOf('unidades acumuladas')); const plantsRawVal = getVal(headers.indexOf('qtd variedade plantada')) || getVal(headers.indexOf('qtd plantada'));
@@ -961,7 +970,7 @@
                     let plantsVal = plantsRawVal === "-" ? "" : plantsRawVal;
                     let estBlocoVal = getVal(headers.indexOf('estimativa caixas bloco')) || getVal(headers.indexOf('meta caixas')); if(estBlocoVal === "-") estBlocoVal = "";
 
-                    c_harvestData.push({ talhao: getVal(headers.indexOf('bloco')), cycle: cycleVal, variety: varietyVal, commercialVariety: commVarietyVal, percentage: calcPercentage, blockPercentage: calcBlockPercentage, startDate: startDateVal, date: dateVal, forecastDate: forecastDateVal, totalBlockPlants: totalBlockVal, plants: plantsVal, dailyUnits: getVal(headers.indexOf('total de unidades (hoje)')), boxes: getVal(headers.indexOf('caixas')), totalUnits: totalUnitsRaw, days: daysVal, status: statusRaw, details: '', blockEstimatedBoxes: estBlocoVal, active: true });
+                    c_harvestData.push({ talhao: getVal(headers.indexOf('bloco')), cycle: cycleVal, variety: varietyVal, commercialVariety: commVarietyVal, percentage: calcPercentage, blockPercentage: calcBlockPercentage, startDate: startDateVal, date: dateVal, forecastDate: forecastDateVal, totalBlockPlants: totalBlockVal, plants: plantsVal, dailyUnits: getVal(headers.indexOf('total de unidades (hoje)')), boxes: getVal(headers.indexOf('caixas')), totalUnits: totalUnitsRaw, days: daysVal, status: statusRaw, details: '', blockEstimatedBoxes: estBlocoVal, active: isActive });
                 }
                 
                 if (importedForecasts.length > 0) {
