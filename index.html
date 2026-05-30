@@ -12,7 +12,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/html-to-image@1.11.11/dist/html-to-image.js"></script>
     
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -905,8 +905,7 @@
             try {
                 const images = element.querySelectorAll('img'); await Promise.all(Array.from(images).map(img => { if (img.complete) return Promise.resolve(); return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; }); }));
                 const activeBlocksCount = c_harvestData.filter(item => item.active !== false).length; const isGrid = activeBlocksCount > 1; const targetWidth = isGrid ? '900px' : '450px';
-                const options = { scale: 5, useCORS: true, allowTaint: true, scrollY: -window.scrollY, backgroundColor: '#ffffff', onclone: (doc) => { const el = doc.getElementById('c_report-card'); const content = doc.getElementById('c_reportContent'); if (el) { el.style.width = targetWidth; el.style.maxWidth = targetWidth; el.style.margin = '0'; el.style.boxShadow = 'none'; el.style.borderRadius = '0'; el.style.border = 'none'; el.style.textRendering = 'geometricPrecision'; el.style.webkitFontSmoothing = 'antialiased'; } if (content) { content.style.height = 'auto'; content.style.overflow = 'visible'; content.style.maxHeight = 'none'; if(isGrid) { const wrapper = content.firstElementChild; if(wrapper) { wrapper.className = "grid grid-cols-2 gap-4 p-4 bg-slate-50/50"; Array.from(wrapper.children).forEach(child => { child.className = "p-5 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full"; }); } } } } };
-                const canvas = await html2canvas(element, options); const imgData = canvas.toDataURL('image/png'); const link = document.createElement('a'); link.href = imgData;
+                const imgData = await exportReportImage(element, { isGrid, targetWidth, contentId: 'c_reportContent', wrapperGridClass: "grid grid-cols-2 gap-4 p-4 bg-slate-50/50", wrapperChildClass: "p-5 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full" }); const link = document.createElement('a'); link.href = imgData;
                 const now = new Date(); const day = String(now.getDate()).padStart(2, '0'); const month = String(now.getMonth() + 1).padStart(2, '0'); const year = now.getFullYear(); link.download = `Dados Colheita SPG_imagem (${day}-${month}-${year}).png`; link.click();
             } catch (err) { console.error(err); } finally { if (btnSpan) btnSpan.innerText = originalText; }
         }
@@ -1271,8 +1270,7 @@
                 if (type === 'grupo') { originalDataTemp = [...p_harvestData]; const currentPartner = document.getElementById('p_partner').value; const allPartnerItems = originalDataTemp.filter(item => item.partner === currentPartner); const itemsToGroup = allPartnerItems.filter(item => item.active !== false); p_harvestData = p_getGroupedData(itemsToGroup, allPartnerItems); p_renderReport(); await new Promise(resolve => setTimeout(resolve, 200)); }
                 const element = document.getElementById('p_report-card'); const images = element.querySelectorAll('img'); await Promise.all(Array.from(images).map(img => { if (img.complete) return Promise.resolve(); return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; }); }));
                 const displayData = p_getFilteredData().filter(item => item.active !== false); const isGrid = displayData.length > 1; const targetWidth = isGrid ? '900px' : '450px';
-                const options = { scale: 5, useCORS: true, allowTaint: true, scrollY: -window.scrollY, backgroundColor: '#ffffff', onclone: (doc) => { const el = doc.getElementById('p_report-card'); const content = doc.getElementById('p_reportContent'); if (el) { el.style.width = targetWidth; el.style.maxWidth = targetWidth; el.style.margin = '0'; el.style.boxShadow = 'none'; el.style.borderRadius = '0'; el.style.border = 'none'; el.style.textRendering = 'geometricPrecision'; el.style.webkitFontSmoothing = 'antialiased'; } if (content) { content.style.height = 'auto'; content.style.overflow = 'visible'; content.style.maxHeight = 'none'; if(isGrid) { content.className = "grid grid-cols-2 gap-4 p-4 bg-slate-50/50 flex-1 content-start"; Array.from(content.children).forEach(child => { child.className = "bg-white rounded-2xl shadow-sm border border-slate-200 p-4 group flex flex-col h-full"; }); } } } };
-                const canvas = await html2canvas(element, options); const now = new Date(); const dateStr = now.toLocaleDateString('pt-BR'); const weekNum = getWeekNumber(now); let weekday = now.toLocaleDateString('pt-BR', { weekday: 'long' }); weekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+                const imgDataHD = await exportReportImage(element, { isGrid, targetWidth, contentId: 'p_reportContent', contentGridClass: "grid grid-cols-2 gap-4 p-4 bg-slate-50/50 flex-1 content-start", contentChildClass: "bg-white rounded-2xl shadow-sm border border-slate-200 p-4 group flex flex-col h-full" }); const now = new Date(); const dateStr = now.toLocaleDateString('pt-BR'); const weekNum = getWeekNumber(now); let weekday = now.toLocaleDateString('pt-BR', { weekday: 'long' }); weekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
                 const partnerInput = document.getElementById('p_partner'); let partnerName = "Geral"; if (partnerInput && partnerInput.value) { partnerName = partnerInput.value; } else if (p_harvestData.length > 0 && p_harvestData[0].partner) { partnerName = p_harvestData[0].partner; }
                 let filePrefix = "Resumo da Pesagem (kg)"; if (partnerName === "SPG Oásis") { filePrefix = type === 'grupo' ? "Resumo Producao Oásis (Agrupado)" : "Resumo Producao Oásis (Detalhado)"; }
                 const fileName = `${filePrefix} - ${weekday} ${dateStr.replace(/\//g, '-')} Semana ${weekNum} - ${partnerName}.png`;
@@ -1280,10 +1278,58 @@
                 const greetingStr = getGreeting(); let rawPartnerName = partnerInput && partnerInput.value ? partnerInput.value : ''; let displayHeaderName = (rawPartnerName === 'SPG Oásis' || !rawPartnerName) ? 'Pessoal' : rawPartnerName; const titlePrefix = rawPartnerName === 'SPG Oásis' ? 'Resumo da Produção' : 'Resumo da Pesagem';
                 let numBlocks = 0; if (rawPartnerName === 'SPG Oásis') { numBlocks = new Set(currentDataForStats.map(item => item.talhao)).size; } else { numBlocks = new Set(currentDataForStats.map(item => item.variety)).size; }
                 const summaryText = `*${greetingStr}, ${displayHeaderName}!*\n\n\`${titlePrefix} de ${weekday} (${dateStr} - S${weekNum})\`\n\n*Blocos em Produção:* ${numBlocks}\n\n*Unidades:* ${sumUnits.toLocaleString('pt-BR')}\n\n*Peso (kg):* ${sumKg.toLocaleString('pt-BR')}\n\n*Média (g):* ${avgW.toLocaleString('pt-BR', {minimumFractionDigits: 3, maximumFractionDigits: 3})}\n\n*Caixas:* ${sumBoxes.toLocaleString('pt-BR')}`;
-                const imgDataHD = canvas.toDataURL('image/png'); const link = document.createElement('a'); link.href = imgDataHD; link.download = fileName; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                const link = document.createElement('a'); link.href = imgDataHD; link.download = fileName; document.body.appendChild(link); link.click(); document.body.removeChild(link);
                 const textArea = document.createElement("textarea"); textArea.value = summaryText; document.body.appendChild(textArea); textArea.select();
                 try { document.execCommand('copy'); showAlert('Pronto para Enviar!', ['✅ <b>Imagem HD salva na galeria!</b>', '📝 O resumo foi copiado! Basta ir no WhatsApp, anexar a imagem e <b>"Colar"</b> o texto na legenda.'], 'success'); } catch(e) { showAlert('Imagem Salva!', ['✅ <b>Imagem HD salva na galeria!</b>', '<span class="text-amber-600 font-bold">Aviso: Seu navegador bloqueou a cópia automática do texto.</span>', 'Use o botão "Texto Zap" se precisar copiar o resumo.'], 'success'); } document.body.removeChild(textArea);
             } catch (err) { showAlert('Erro', ['Erro ao gerar imagem: ' + err.message], 'error'); } finally { if (btnSpan) btnSpan.innerText = originalText; if (type === 'grupo' && originalDataTemp) { p_harvestData = originalDataTemp; p_renderReport(); } }
+        }
+
+        async function exportReportImage(element, config) {
+            const cloneHost = document.createElement('div');
+            cloneHost.style.position = 'fixed';
+            cloneHost.style.left = '-100000px';
+            cloneHost.style.top = '0';
+            cloneHost.style.background = '#ffffff';
+            cloneHost.style.zIndex = '-1';
+            document.body.appendChild(cloneHost);
+
+            try {
+                const clone = element.cloneNode(true);
+                cloneHost.appendChild(clone);
+
+                clone.style.width = config.targetWidth;
+                clone.style.maxWidth = config.targetWidth;
+                clone.style.margin = '0';
+                clone.style.boxShadow = 'none';
+                clone.style.borderRadius = '0';
+                clone.style.border = 'none';
+                clone.style.textRendering = 'geometricPrecision';
+                clone.style.webkitFontSmoothing = 'antialiased';
+
+                const content = clone.querySelector(`#${config.contentId}`);
+                if (content) {
+                    content.style.height = 'auto';
+                    content.style.overflow = 'visible';
+                    content.style.maxHeight = 'none';
+
+                    if (config.isGrid) {
+                        if (config.wrapperGridClass) {
+                            const wrapper = content.firstElementChild;
+                            if (wrapper) {
+                                wrapper.className = config.wrapperGridClass;
+                                Array.from(wrapper.children).forEach(child => { child.className = config.wrapperChildClass; });
+                            }
+                        } else if (config.contentGridClass) {
+                            content.className = config.contentGridClass;
+                            Array.from(content.children).forEach(child => { child.className = config.contentChildClass; });
+                        }
+                    }
+                }
+
+                return await htmlToImage.toPng(clone, { pixelRatio: 5, cacheBust: true, backgroundColor: '#ffffff' });
+            } finally {
+                document.body.removeChild(cloneHost);
+            }
         }
 
         function p_copyToWhatsApp() {
