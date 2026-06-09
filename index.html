@@ -554,9 +554,11 @@
                 document.getElementById('view-colheita').classList.add('hidden'); document.getElementById('view-colheita').classList.remove('block');
                 document.getElementById('nav-actions-pesagem').classList.remove('hidden'); document.getElementById('nav-actions-pesagem').classList.add('flex');
                 document.getElementById('nav-actions-colheita').classList.add('hidden');
-                
+
                 document.getElementById('nav-logo').src = 'https://i.imgur.com/f7UnnL0.png'; document.getElementById('favicon').href = 'https://i.imgur.com/f7UnnL0.png';
                 document.getElementById('nav-title').innerText = 'SPG SEDE'; document.getElementById('nav-subtitle').innerText = 'Resumo da Pesagem Parceiros SPG SEDE';
+
+                if (!c_hasSynced) { c_syncAppOnLoad(); c_hasSynced = true; }
             }
         }
 
