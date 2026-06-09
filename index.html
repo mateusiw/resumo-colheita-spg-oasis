@@ -216,7 +216,11 @@
                                 <div class="mt-3 grid grid-cols-3 gap-2">
                                     <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">Previsão Finalizar</label><input type="date" id="p_estimatedCompletion" class="w-full p-2 border border-slate-200 rounded-lg text-sm outline-none"></div>
                                     <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">Est. Caixas Bloco</label><input type="text" id="p_blockEstimatedBoxes" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-200 rounded-lg text-sm outline-none"></div>
-                                    <div><label class="text-[10px] font-bold text-emerald-600 mb-1 block uppercase">Kg Acumuladas</label><input type="text" id="p_accumulatedKg" readonly class="w-full p-2 border border-emerald-200 bg-emerald-50 rounded-lg text-sm text-emerald-800 font-bold outline-none"></div>
+                                    <div><label class="text-[10px] font-bold text-emerald-600 mb-1 block uppercase">Kg Acum. Variedade</label><input type="text" id="p_accumulatedKg" readonly class="w-full p-2 border border-emerald-200 bg-emerald-50 rounded-lg text-sm text-emerald-800 font-bold outline-none"></div>
+                                </div>
+                                <div class="mt-2">
+                                    <label class="text-[10px] font-bold text-blue-600 mb-1 block uppercase">Kg Total Bloco + Ciclo</label>
+                                    <input type="text" id="p_totalBlockKg" readonly class="w-full p-2 border border-blue-200 bg-blue-50 rounded-lg text-sm text-blue-800 font-bold outline-none" placeholder="Calculado automaticamente">
                                 </div>
                             </div>
                         </div>
@@ -237,18 +241,16 @@
             <!-- PREVIEW PESAGEM -->
             <div class="w-full lg:w-2/3 flex flex-col bg-slate-200/50 p-4 rounded-3xl border border-slate-300/50 min-h-[calc(100vh-6rem)]">
                 <div id="p_report-card" class="w-full flex-1 flex flex-col bg-white shadow-2xl overflow-hidden relative">
-                    <div class="bg-gradient-to-br from-emerald-600 to-emerald-800 p-6 text-white relative flex flex-col justify-start shrink-0 gap-3">
-                        <img src="https://i.imgur.com/f7UnnL0.png" class="absolute top-4 right-4 w-20 h-20 z-0">
-                        <div class="relative z-10 w-full pr-24"> 
-                            <h2 id="p_reportTitle" class="text-sm font-bold leading-snug"></h2>
-                            <div class="mt-3 pt-3 border-t border-white/20"><span id="p_headerDateTime" class="text-xs font-medium text-emerald-50 block opacity-90"></span></div>
-                        </div>
+                    <div class="bg-gradient-to-br from-emerald-700 to-emerald-900 px-6 py-5 text-white shrink-0">
+                        <h2 id="p_reportTitle" class="text-base font-extrabold leading-tight tracking-tight"></h2>
+                        <span id="p_headerDateTime" class="text-[11px] font-medium text-emerald-200/80 mt-1 block"></span>
+                        <div id="p_headerParams"></div>
                     </div>
                     <!-- RESUMO MOVIDO PARA O TOPO -->
                     <div id="p_summaryHeader" class="bg-white shrink-0"></div>
                     <div id="p_reportContent" class="divide-y divide-slate-50 flex-1 overflow-y-auto"></div>
                     <!-- DADOS OPERACIONAIS MOVIDOS PARA O FUNDO -->
-                    <div id="p_operationalFooter" class="bg-white border-t border-slate-200 p-4 shrink-0"></div>
+                    <div id="p_operationalFooter" class="bg-white shrink-0"></div>
                     <div class="bg-slate-100 p-3 text-center border-t border-slate-200 shrink-0 text-[10px] text-slate-400 font-medium uppercase">SPG SEDE • Dados Oficiais</div>
                 </div>
             </div>
@@ -887,12 +889,16 @@
                 validForecasts.sort((a, b) => new Date(a.date) - new Date(b.date)); const today = new Date(); today.setHours(0, 0, 0, 0);
                 const listHtml = validForecasts.map(f => {
                     const [year, month, day] = f.date.split('-'); const targetDate = new Date(year, month - 1, day); targetDate.setHours(0, 0, 0, 0); const diffTime = targetDate - today; const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    let daysText = ''; let daysClass = ''; let subtitleHtml = '';
-                    if (diffDays > 1) { daysText = `FALTAM ${diffDays} DIAS`; daysClass = 'text-blue-600'; if (diffDays >= 7) { const weeks = Math.floor(diffDays / 7); const rDays = diffDays % 7; let weekStr = weeks === 1 ? '1 semana' : `${weeks} semanas`; let dayStr = rDays === 1 ? '1 dia' : `${rDays} dias`; let subText = rDays > 0 ? `(${weekStr} e ${dayStr})` : `(${weekStr})`; subtitleHtml = `<span class="text-[8px] font-semibold text-slate-400 mt-0.5 tracking-normal lowercase">${subText}</span>`; } }
-                    else if (diffDays === 1) { daysText = `AMANHÃ`; daysClass = 'text-amber-600'; } else if (diffDays === 0) { daysText = `HOJE`; daysClass = 'text-emerald-600'; } else { daysText = `ATRASADO ${Math.abs(diffDays)} DIAS`; daysClass = 'text-red-600'; }
-                    return `<div class="bg-white border border-slate-200 shadow-sm rounded-lg py-2 px-3 flex flex-col gap-1 items-center justify-center min-w-[140px]"><div class="flex items-baseline gap-2"><span class="text-[12px] font-extrabold text-slate-800">BLOCO ${f.block}</span><span class="text-[11px] font-medium text-slate-500">${formatDateBR(f.date)}</span></div><div class="text-[10px] font-bold text-center uppercase tracking-wider ${daysClass} mt-0.5 flex flex-col items-center"><span>${daysText}</span>${subtitleHtml}</div></div>`;
+                    let daysText = ''; let daysClass = ''; let subtitleHtml = ''; let cardBg = 'bg-white border-slate-200'; let accentBg = 'bg-slate-300';
+                    if (diffDays > 14) { daysText = `${diffDays} dias`; daysClass = 'text-slate-500'; cardBg = 'bg-white border-slate-200'; accentBg = 'bg-slate-300'; }
+                    else if (diffDays > 1) { daysText = `${diffDays} dias`; daysClass = 'text-blue-600'; cardBg = 'bg-blue-50/60 border-blue-200'; accentBg = 'bg-blue-400'; }
+                    else if (diffDays === 1) { daysText = `Amanhã`; daysClass = 'text-amber-700'; cardBg = 'bg-amber-50 border-amber-200'; accentBg = 'bg-amber-400'; }
+                    else if (diffDays === 0) { daysText = `Hoje`; daysClass = 'text-emerald-700'; cardBg = 'bg-emerald-50 border-emerald-200'; accentBg = 'bg-emerald-500'; }
+                    else { daysText = `${Math.abs(diffDays)}d atraso`; daysClass = 'text-red-600'; cardBg = 'bg-red-50 border-red-200'; accentBg = 'bg-red-400'; }
+                    if (diffDays >= 7) { const weeks = Math.floor(diffDays / 7); const rDays = diffDays % 7; let weekStr = weeks === 1 ? '1 sem.' : `${weeks} sem.`; subtitleHtml = `<span class="text-[8px] text-slate-400 font-medium">${weekStr}${rDays > 0 ? ` e ${rDays}d` : ''}</span>`; }
+                    return `<div class="overflow-hidden rounded-xl border ${cardBg} flex flex-col min-w-[88px] shadow-sm"><div class="h-[3px] w-full ${accentBg}"></div><div class="px-3 py-2 flex flex-col items-center gap-0.5"><span class="text-[10px] font-extrabold text-slate-700 tracking-wide">Bloco ${f.block}</span><span class="text-[9px] text-slate-400 font-medium">${formatDateBR(f.date)}</span><span class="text-[14px] font-extrabold ${daysClass} leading-none mt-1.5">${daysText}</span>${subtitleHtml}</div></div>`;
                 }).join('');
-                forecastHtml = `<div class="mt-4 pt-4 border-t border-slate-100 border-dashed flex flex-col items-center justify-center w-full"><div class="text-[11px] font-bold uppercase tracking-widest text-blue-500 mb-3 text-center w-full">PREVISÃO DE COLHEITA (PRÓXIMOS BLOCOS)</div><div class="flex flex-wrap gap-3 justify-center w-full">${listHtml}</div></div>`;
+                forecastHtml = `<div class="mt-4 pt-4 border-t border-slate-100 border-dashed w-full"><div class="flex items-center gap-1.5 mb-3 icon-fix"><i data-lucide="calendar-clock" width="11" class="text-blue-400"></i><span class="text-[10px] font-bold uppercase tracking-widest text-blue-500">Próximos Blocos</span></div><div class="flex flex-wrap gap-2">${listHtml}</div></div>`;
             }
             
             const finalHours = calcTimeDiff(document.getElementById('c_startTime').value, document.getElementById('c_endTime').value, document.getElementById('c_intervalDuration').value);
@@ -1025,8 +1031,8 @@
         function p_updateDynamicTitle() {
             const now = new Date(); let greeting = getGreeting(); const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']; const weekDay = days[now.getDay()]; const minutes = String(now.getMinutes()).padStart(2, '0'); const day = String(now.getDate()).padStart(2, '0'); const month = String(now.getMonth() + 1).padStart(2, '0'); const year = now.getFullYear(); const weekNumber = getWeekNumber(now); const ampm = now.getHours() >= 12 ? 'PM' : 'AM'; const timeString = `${String(now.getHours() % 12 || 12).padStart(2, '0')}:${minutes}${ampm}`;
             const partnerInput = document.getElementById('p_partner'); const currentPartner = (partnerInput && partnerInput.value) ? partnerInput.value : ''; const titleElement = document.getElementById('p_reportTitle');
-            if (currentPartner === 'SPG Oásis') { titleElement.innerHTML = `${greeting}, Pessoal!<br>Resumo da Produção de ${weekDay}`; } else { const displayPartner = currentPartner || 'Pessoal'; titleElement.innerHTML = `${greeting}, ${displayPartner}!<br>Resumo da Pesagem (kg) de ${weekDay}`; }
-            document.getElementById('p_headerDateTime').innerText = `Data: ${day}/${month}/${year} - ${timeString} - Semana ${weekNumber}`;
+            if (currentPartner === 'SPG Oásis') { titleElement.innerText = `Resumo da Produção · ${weekDay}`; } else { const displayPartner = currentPartner || 'Parceiro'; titleElement.innerText = `Pesagem · ${displayPartner} · ${weekDay}`; }
+            document.getElementById('p_headerDateTime').innerText = `${day}/${month}/${year}  ·  ${timeString}  ·  Semana ${weekNumber}`;
         }
         
         function p_toggleInputMode() {
@@ -1093,6 +1099,32 @@
             const todayKg = parseNumber(document.getElementById('p_grossWeight').value);
             const total = baseKg + todayKg;
             input.value = total > 0 ? total.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 }) : '';
+            p_updateTotalBlockKg();
+        }
+
+        function p_updateTotalBlockKg() {
+            const input = document.getElementById('p_totalBlockKg');
+            if (!input) return;
+            const baseKg = parseFloat(input.dataset.baseKg) || 0;
+            const todayKg = parseNumber(document.getElementById('p_grossWeight').value);
+            const total = baseKg + todayKg;
+            input.value = total > 0 ? total.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 }) : '';
+        }
+
+        function p_lookupTotalKgFromHistory(talhao, ciclo) {
+            if (!talhao || !ciclo) return 0;
+            const rawHistory = localStorage.getItem('spg_harvest_history');
+            if (!rawHistory) return 0;
+            try {
+                const historyData = JSON.parse(rawHistory);
+                let total = 0;
+                historyData.forEach(item => {
+                    if (item.bloco == talhao && item.ciclo == ciclo) {
+                        total += parseFloat(item.totalKg) || 0;
+                    }
+                });
+                return total;
+            } catch(e) { return 0; }
         }
 
         function p_autoFillKg() {
@@ -1105,11 +1137,13 @@
             const variedade = variedadeEl ? variedadeEl.value : '';
             const input = document.getElementById('p_accumulatedKg');
             input.dataset.baseKg = p_lookupKgFromHistory(talhao, ciclo, cultura, variedade);
+            const totalBlockKgInput = document.getElementById('p_totalBlockKg');
+            if (totalBlockKgInput) totalBlockKgInput.dataset.baseKg = p_lookupTotalKgFromHistory(talhao, ciclo);
             p_updateAccumulatedKg();
         }
 
         function p_clearBlockForm() {
-            document.getElementById('p_talhao').value = ''; document.getElementById('p_boxes').value = ''; document.getElementById('p_grossWeight').value = ''; document.getElementById('p_unitsPerBox').value = ''; document.getElementById('p_productionDays').value = ''; document.getElementById('p_totalBlockPlants').value = ''; document.getElementById('p_plantedUnits').value = ''; document.getElementById('p_cycle').value = ''; document.getElementById('p_accumulatedUnits').value = ''; const _kgInput = document.getElementById('p_accumulatedKg'); _kgInput.value = ''; _kgInput.dataset.baseKg = '0'; document.getElementById('p_harvestStatus').value = 'Em Andamento'; document.getElementById('p_estimatedCompletion').value = ''; document.getElementById('p_blockEstimatedBoxes').value = ''; document.getElementById('p_totalUnits').value = ''; document.getElementById('p_averageWeight').value = ''; document.getElementById('p_harvestWeight').value = '';
+            document.getElementById('p_talhao').value = ''; document.getElementById('p_boxes').value = ''; document.getElementById('p_grossWeight').value = ''; document.getElementById('p_unitsPerBox').value = ''; document.getElementById('p_productionDays').value = ''; document.getElementById('p_totalBlockPlants').value = ''; document.getElementById('p_plantedUnits').value = ''; document.getElementById('p_cycle').value = ''; document.getElementById('p_accumulatedUnits').value = ''; const _kgInput = document.getElementById('p_accumulatedKg'); _kgInput.value = ''; _kgInput.dataset.baseKg = '0'; const _totalBlockKgInput = document.getElementById('p_totalBlockKg'); if (_totalBlockKgInput) { _totalBlockKgInput.value = ''; _totalBlockKgInput.dataset.baseKg = '0'; } document.getElementById('p_harvestStatus').value = 'Em Andamento'; document.getElementById('p_estimatedCompletion').value = ''; document.getElementById('p_blockEstimatedBoxes').value = ''; document.getElementById('p_totalUnits').value = ''; document.getElementById('p_averageWeight').value = ''; document.getElementById('p_harvestWeight').value = '';
             const varietySelect = document.getElementById('p_variety'); varietySelect.selectedIndex = 0; p_updateCommercialInput(); p_updateDynamicTitle(); p_toggleInputMode(); p_editingIndex = -1;
             const submitBtn = document.getElementById('p_submitBtn'); const formTitle = document.getElementById('p_formTitle'); const formContainer = document.getElementById('p_formContainer');
             submitBtn.innerHTML = '<i data-lucide="plus-circle" class="w-4 h-4 inline"></i> <span>Adicionar ao Relatório</span>'; submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700'); submitBtn.classList.add('bg-slate-800', 'hover:bg-slate-900');
@@ -1129,7 +1163,7 @@
             e.preventDefault();
             const plantedRawVal = document.getElementById('p_plantedUnits').value; const accumRawVal = document.getElementById('p_accumulatedUnits').value; const totalBlockRaw = document.getElementById('p_totalBlockPlants').value;
             const calcPercentage = parseNumber(plantedRawVal) > 0 ? Math.round((parseNumber(accumRawVal) / parseNumber(plantedRawVal)) * 100) : 0; const calcBlockPercentage = parseNumber(totalBlockRaw) > 0 ? Math.round((parseNumber(accumRawVal) / parseNumber(totalBlockRaw)) * 100) : 0;
-            const newItem = { partner: document.getElementById('p_partner').value, talhao: document.getElementById('p_talhao').value, variety: document.getElementById('p_variety').value, commercialVariety: document.getElementById('p_commercialVariety').value, boxes: document.getElementById('p_boxes').value, grossWeight: document.getElementById('p_grossWeight').value, unitsPerBox: document.getElementById('p_unitsPerBox').value, harvestWeight: document.getElementById('p_harvestWeight').value, totalUnits: document.getElementById('p_totalUnits').value, averageWeight: document.getElementById('p_averageWeight').value, productionDays: document.getElementById('p_productionDays').value, totalBlockPlants: totalBlockRaw, plantedUnits: plantedRawVal, cycle: document.getElementById('p_cycle').value, accumulatedUnits: accumRawVal, accumulatedKg: document.getElementById('p_accumulatedKg').value, percentage: calcPercentage, blockPercentage: calcBlockPercentage, status: document.getElementById('p_harvestStatus').value, estimatedCompletion: document.getElementById('p_estimatedCompletion').value, blockEstimatedBoxes: document.getElementById('p_blockEstimatedBoxes').value };
+            const newItem = { partner: document.getElementById('p_partner').value, talhao: document.getElementById('p_talhao').value, variety: document.getElementById('p_variety').value, commercialVariety: document.getElementById('p_commercialVariety').value, boxes: document.getElementById('p_boxes').value, grossWeight: document.getElementById('p_grossWeight').value, unitsPerBox: document.getElementById('p_unitsPerBox').value, harvestWeight: document.getElementById('p_harvestWeight').value, totalUnits: document.getElementById('p_totalUnits').value, averageWeight: document.getElementById('p_averageWeight').value, productionDays: document.getElementById('p_productionDays').value, totalBlockPlants: totalBlockRaw, plantedUnits: plantedRawVal, cycle: document.getElementById('p_cycle').value, accumulatedUnits: accumRawVal, accumulatedKg: document.getElementById('p_accumulatedKg').value, totalBlockKg: document.getElementById('p_totalBlockKg').value, percentage: calcPercentage, blockPercentage: calcBlockPercentage, status: document.getElementById('p_harvestStatus').value, estimatedCompletion: document.getElementById('p_estimatedCompletion').value, blockEstimatedBoxes: document.getElementById('p_blockEstimatedBoxes').value };
             if (p_editingIndex >= 0) { newItem.active = p_harvestData[p_editingIndex].active !== false; p_harvestData[p_editingIndex] = newItem; p_editingIndex = -1; } else { newItem.active = true; p_harvestData.push(newItem); }
             p_saveToStorage(); p_clearBlockForm(); p_renderReport(); p_renderList();
         }
@@ -1159,6 +1193,7 @@
             container.innerHTML = '';
             summaryHeader.innerHTML = '';
             footerContainer.innerHTML = '';
+            const headerParamsElClear = document.getElementById('p_headerParams'); if (headerParamsElClear) headerParamsElClear.innerHTML = '';
 
             let sumBoxes = 0; let sumWeight = 0; let sumTotalUnits = 0; let sumEstimatedBoxes = 0;
             const rawData = p_getFilteredData(); const displayData = rawData.filter(item => item.active !== false); const blockAggregates = {};
@@ -1174,6 +1209,8 @@
                 else { container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs italic leading-relaxed h-full min-h-[300px] flex flex-col items-center justify-center"><i data-lucide="clipboard-list" class="mb-2 w-8 h-8 opacity-20"></i><span>Adicione dados para visualizar o relatório.</span></div>`; }
             } else {
                 container.className = "flex flex-col divide-y divide-slate-50 flex-1 overflow-y-auto";
+                const seenBlockCycles = new Set();
+                let estimateDay = ''; try { const _sp = localStorage.getItem('spg_sede_shiftParams'); if (_sp) { const _p = JSON.parse(_sp); estimateDay = _p.estimateDay || ''; } } catch(e) {}
                 displayData.forEach((item, index) => { 
                     const displayVariety = item.commercialVariety ? `${item.variety} - ${item.commercialVariety}` : item.variety;
                     const boxesVal = parseNumber(item.boxes); const weightVal = parseNumber(item.harvestWeight); const totalUnitsVal = parseNumber(item.totalUnits); const avgValG = parseNumber(item.averageWeight); const isMissingWeight = (!item.harvestWeight || item.harvestWeight === '0' || item.harvestWeight === '');
@@ -1182,6 +1219,7 @@
                     let avgWeightFormatted = "-"; if (avgValG > 0) { avgWeightFormatted = avgValG.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }); } else if (isMissingWeight && totalUnitsVal > 0) { avgWeightFormatted = '<span class="text-amber-500 text-[9px] font-extrabold bg-amber-50 px-1 py-0.5 rounded border border-amber-200">PENDENTE</span>'; }
                     const displayWeight = isMissingWeight ? '<span class="text-amber-500 text-[10px] font-extrabold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 animate-pulse">PENDENTE</span>' : item.harvestWeight;
                     const accumKgDisplay = item.accumulatedKg ? (() => { const v = parseNumber(item.accumulatedKg); return v > 0 ? v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 }) : ''; })() : '';
+                    const totalBlockKgDisplay = item.totalBlockKg ? (() => { const v = parseNumber(item.totalBlockKg); return v > 0 ? v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 }) : ''; })() : '';
                     const showPartnerTag = (item.partner !== 'SPG Oásis') ;
                     let spgHighlightBlock = '';
                     if (item.partner === 'SPG Oásis') {
@@ -1189,19 +1227,24 @@
                         if (plantedVal > 0) percentage = Math.round((accumVal / plantedVal) * 100); const remaining = Math.max(0, 100 - percentage);
                         const key = `${item.talhao}-${item.cycle || ''}`; let itemBlockPercentage = item.blockPercentage || 0; let totalAccumSumGeral = accumVal; let pendenteGeral = Math.max(0, parseNumber(totalBlockPlants) - totalAccumSumGeral);
                         if (!item.isGrouped && blockAggregates[key] && blockAggregates[key].totalBlockPlants > 0) { totalAccumSumGeral = 0; for (const v in blockAggregates[key].varieties) { totalAccumSumGeral += blockAggregates[key].varieties[v]; } let totalBlockPlantsGeral = blockAggregates[key].totalBlockPlants; if (totalBlockPlantsGeral > 0) { itemBlockPercentage = Math.round((totalAccumSumGeral / totalBlockPlantsGeral) * 100); } pendenteGeral = Math.max(0, totalBlockPlantsGeral - totalAccumSumGeral); } else if (item.isGrouped) { let totalBlockPlantsGeral = parseNumber(totalBlockPlants); if (totalBlockPlantsGeral > 0) { itemBlockPercentage = Math.round((totalAccumSumGeral / totalBlockPlantsGeral) * 100); } pendenteGeral = Math.max(0, totalBlockPlantsGeral - totalAccumSumGeral); }
-                        itemBlockPercentage = Math.min(100, Math.max(0, itemBlockPercentage));
+                        itemBlockPercentage = Math.min(100, Math.max(0, itemBlockPercentage)); const blockRemaining = Math.max(0, 100 - itemBlockPercentage);
                         if (item.isGrouped) {
                             let blockProgressColor = 'bg-yellow-500'; let blockTextColor = 'text-slate-600'; if (itemBlockPercentage >= 90) { blockProgressColor = 'bg-emerald-500'; blockTextColor = 'text-emerald-600'; } else if (itemBlockPercentage >= 70) { blockProgressColor = 'bg-blue-500'; }
-                            spgHighlightBlock = `<div class="bg-slate-50 p-3 rounded-xl border border-slate-100 mb-4"><div class="flex justify-end items-end mb-1"><div class="flex items-center gap-2"><span class="text-xs font-medium text-slate-500">Total Acumulado: <span class="font-bold text-slate-700">${totalAccumSumGeral.toLocaleString('pt-BR')} un.</span></span><span class="text-slate-300 text-xs">|</span><span class="text-xs font-bold text-slate-400">Colhido: <span class="${blockTextColor}">${itemBlockPercentage}%</span></span></div></div><div class="flex items-center gap-3 mb-2"><div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden"><div class="h-full rounded-full ${blockProgressColor}" style="width: ${itemBlockPercentage}%"></div></div><span class="text-[10px] font-extrabold text-red-500 uppercase tracking-wide">Pendente: ${pendenteGeral.toLocaleString('pt-BR')} un. (${Math.max(0, 100 - itemBlockPercentage)}%)</span></div><div class="h-px bg-slate-200 my-2"></div><div class="mt-2 flex justify-between items-center"><div class="flex flex-col gap-1"><div class="text-[11px] font-bold text-[#00838f]">Dias de Produção: ${days} dias</div>${item.blockEstimatedBoxes ? `<div class="text-[10px] font-bold text-blue-600">Estimativa de Caixas: <span class="text-slate-700">${item.blockEstimatedBoxes} cx</span></div>` : ''}${item.estimatedCompletion ? `<div class="text-[10px] font-bold text-red-600">Previsão Finalizar: <span class="text-slate-700">${formatDateBR(item.estimatedCompletion)}</span></div>` : ''}</div><div class="flex flex-col text-right border-l border-slate-200 pl-3"><div class="text-[9px] font-bold text-slate-500 mb-0.5">Total de Plantas: <span class="text-slate-700 text-[10px]">${parseNumber(totalBlockPlants).toLocaleString('pt-BR')}</span></div>${accumKgDisplay ? `<div class="mt-2 pt-1 border-t border-emerald-200"><div class="bg-emerald-100 border border-emerald-300 rounded-lg px-2 py-1 text-center"><div class="text-[8px] font-extrabold text-emerald-600 uppercase tracking-widest mb-0.5">Kg Acumulados</div><div class="text-[12px] font-extrabold text-emerald-800">${accumKgDisplay} kg</div></div></div>` : ''}</div></div></div>`;
+                            spgHighlightBlock = `<div class="px-4 pt-3 pb-2 border-t border-slate-100"><div class="flex items-center gap-1 icon-fix mb-1"><i data-lucide="layout-grid" width="10" class="text-slate-400"></i><span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Bloco</span><span class="text-[10px] font-semibold text-slate-400 ml-1">· Todas as variedades</span></div><p class="text-[11px] text-slate-600 leading-snug mb-1.5">De <span class="font-bold">${parseNumber(totalBlockPlants).toLocaleString('pt-BR')} plantas</span>, foram colhidas <span class="font-bold ${blockTextColor}">${totalAccumSumGeral.toLocaleString('pt-BR')} unidades</span> <span class="text-slate-400">(${itemBlockPercentage}%)</span>, ainda restam <span class="font-bold text-red-500">${pendenteGeral.toLocaleString('pt-BR')} pendentes</span> <span class="text-slate-400">(${blockRemaining}%)</span>${totalBlockKgDisplay ? ` e já produziu total de <span class="font-bold text-blue-600">${totalBlockKgDisplay} kg</span>` : ''}</p><div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full ${blockProgressColor}" style="width:${itemBlockPercentage}%"></div></div></div>`;
                         } else {
                             let progressColor = 'bg-yellow-500'; let textColor = 'text-slate-600'; if (percentage >= 90) { progressColor = 'bg-emerald-500'; textColor = 'text-emerald-600'; } else if (percentage >= 70) { progressColor = 'bg-blue-500'; }
-                            spgHighlightBlock = `<div class="bg-slate-50 p-3 rounded-xl border border-slate-100 mb-4"><div class="flex justify-end items-end mb-1"><div class="flex items-center gap-2"><span class="text-xs font-medium text-slate-500">Acumulado Variedade: <span class="font-bold text-slate-700">${accum} un.</span></span><span class="text-slate-300 text-xs">|</span><span class="text-xs font-bold text-slate-400">Colhido: <span class="${textColor}">${percentage}%</span></span></div></div><div class="flex items-center gap-3 mb-2"><div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden"><div class="h-full rounded-full ${progressColor}" style="width: ${percentage}%"></div></div><span class="text-[11px] font-extrabold text-red-400 uppercase tracking-wide">Falta: ${remaining}%</span></div><div class="h-px bg-slate-200 my-2"></div><div class="mt-2 flex justify-between items-center"><div class="flex flex-col gap-1"><div class="text-[11px] font-bold text-orange-600">Total de Plantas da Variedade: ${planted}</div><div class="text-[11px] font-bold text-[#00838f]">Dias de Produção: ${days} dias</div>${item.blockEstimatedBoxes ? `<div class="text-[10px] font-bold text-blue-600">Estimativa de Caixas: <span class="text-slate-700">${item.blockEstimatedBoxes} cx</span></div>` : ''}${item.estimatedCompletion ? `<div class="text-[10px] font-bold text-red-600">Previsão Finalizar: <span class="text-slate-700">${formatDateBR(item.estimatedCompletion)}</span></div>` : ''}</div><div class="flex flex-col text-right border-l border-slate-200 pl-3"><div class="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest mb-0.5">Progresso Total Bloco</div><div class="text-[9px] font-bold text-slate-500 mb-0.5">Total de Plantas: ${parseNumber(totalBlockPlants).toLocaleString('pt-BR')}</div><div class="text-[10px] font-bold text-emerald-600">Colhido: ${totalAccumSumGeral.toLocaleString('pt-BR')} un. <span class="opacity-75">(${itemBlockPercentage}%)</span></div><div class="text-[10px] font-bold text-red-500">Pendente: ${pendenteGeral.toLocaleString('pt-BR')} un. <span class="opacity-75">(${Math.max(0, 100 - itemBlockPercentage)}%)</span></div>${accumKgDisplay ? `<div class="mt-2 pt-1 border-t border-emerald-200"><div class="bg-emerald-100 border border-emerald-300 rounded-lg px-2 py-1 text-center"><div class="text-[8px] font-extrabold text-emerald-600 uppercase tracking-widest mb-0.5">Kg Acumulados</div><div class="text-[12px] font-extrabold text-emerald-800">${accumKgDisplay} kg</div></div></div>` : ''}</div></div></div>`;
+                            const blockProgressColor = itemBlockPercentage >= 90 ? 'bg-emerald-500' : itemBlockPercentage >= 70 ? 'bg-blue-500' : 'bg-yellow-500';
+                            const blockTextColor = itemBlockPercentage >= 90 ? 'text-emerald-600' : 'text-slate-600';
+                            const showBlockSection = !seenBlockCycles.has(key); if (showBlockSection) seenBlockCycles.add(key);
+                            spgHighlightBlock = `<div class="px-4 pt-3 pb-2 border-t border-slate-100 space-y-3"><div><div class="flex items-center gap-1 icon-fix mb-1"><i data-lucide="sprout" width="10" class="text-orange-400"></i><span class="text-[9px] font-extrabold text-orange-400 uppercase tracking-widest">Variedade</span><span class="text-[10px] font-semibold text-slate-600 ml-1">· ${item.commercialVariety || item.variety}</span></div><p class="text-[11px] text-slate-600 leading-snug mb-1.5">De <span class="font-bold">${planted} plantas</span>, foram colhidas <span class="font-bold ${textColor}">${accum} unidades</span> <span class="text-slate-400">(${percentage}%)</span>, ainda restam <span class="font-bold text-red-400">${Math.max(0, plantedVal - accumVal).toLocaleString('pt-BR')} pendentes</span> <span class="text-slate-400">(${remaining}%)</span>${accumKgDisplay ? ` e já produziu total de <span class="font-bold text-emerald-600">${accumKgDisplay} kg</span>` : ''}</p><div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full ${progressColor}" style="width:${percentage}%"></div></div></div>${showBlockSection ? `<div><div class="flex items-center gap-1 icon-fix mb-1"><i data-lucide="layout-grid" width="10" class="text-slate-400"></i><span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Bloco</span><span class="text-[10px] font-semibold text-slate-400 ml-1">· Todas as variedades</span></div><p class="text-[11px] text-slate-600 leading-snug mb-1.5">De <span class="font-bold">${parseNumber(totalBlockPlants).toLocaleString('pt-BR')} plantas</span>, foram colhidas <span class="font-bold ${blockTextColor}">${totalAccumSumGeral.toLocaleString('pt-BR')} unidades</span> <span class="text-slate-400">(${itemBlockPercentage}%)</span>, ainda restam <span class="font-bold text-red-500">${pendenteGeral.toLocaleString('pt-BR')} pendentes</span> <span class="text-slate-400">(${blockRemaining}%)</span>${totalBlockKgDisplay ? ` e já produziu total de <span class="font-bold text-blue-600">${totalBlockKgDisplay} kg</span>` : ''}</p><div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full ${blockProgressColor}" style="width:${itemBlockPercentage}%"></div></div></div>` : ''}</div>`;
                         }
                     }
-                    let statusBadge = ''; if (item.partner === 'SPG Oásis') { if (item.status === 'Finalizado') { statusBadge = `<span class="text-[10px] font-bold text-red-600 uppercase tracking-wide">FINALIZADO</span>`; } else { statusBadge = `<span class="text-[10px] font-bold text-blue-600 uppercase tracking-wide">EM ANDAMENTO</span>`; } }
-                    const statsContent = `<div class="grid grid-cols-3 gap-2 mt-auto">${createStatCard('weight', displayWeight, 'PESO (KG)', 'orange')}${createStatCard('hash', item.totalUnits, 'UNIDADES', 'orange')}${createStatCard('scale', avgWeightFormatted, 'PESO MÉDIO (G/UNID.)', 'orange')}${createStatCard('box', item.boxes, 'CAIXAS')}${createStatCard('package-check', avgKgBoxStr, 'MÉDIA KG POR CAIXA')}${createStatCard('layers', item.unitsPerBox, 'MÉDIA UNIDADES POR CAIXA')}</div>`;
-                    const baseItemClass = "p-5 hover:bg-slate-50 transition-colors group flex flex-col";
-                    const html = `<div class="${baseItemClass}"><div class="flex flex-col mb-3">${showPartnerTag ? `<span class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1 opacity-80">${item.partner}</span>` : ''}<div class="flex items-start justify-between"><div class="flex items-start gap-3"><div class="flex flex-col"><span class="text-[17px] font-extrabold text-slate-800 leading-none">${item.partner === 'SPG Oásis' ? `Bloco ${item.talhao}` : item.variety}</span>${item.partner === 'SPG Oásis' && item.cycle ? `<span class="text-[12px] font-bold text-slate-500 uppercase tracking-wide mt-1">Ciclo ${item.cycle}</span>` : ''}</div><div class="mt-0.5">${statusBadge}</div></div><span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide text-right mt-0.5">${item.partner === 'SPG Oásis' ? displayVariety : ''}</span></div></div>${spgHighlightBlock}${statsContent}</div>`;
+                    let statusBadge = ''; if (item.partner === 'SPG Oásis') { if (item.status === 'Finalizado') { statusBadge = `<span class="text-[9px] font-extrabold bg-red-50 text-red-500 border border-red-200 px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap">Finalizado</span>`; } else { statusBadge = `<span class="text-[9px] font-extrabold bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap">Em Andamento</span>`; } }
+                    const statsContent = `<div class="px-4 pb-4 border-t border-slate-100">${item.partner === 'SPG Oásis' ? `<div class="flex items-center gap-1.5 py-2 mb-1 icon-fix"><i data-lucide="sun" width="11" class="text-orange-400"></i><span class="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest">Colheita de Hoje</span></div>` : '<div class="h-3"></div>'}<div class="grid grid-cols-3 gap-2">${createStatCard('weight', displayWeight, 'PESO (KG)', 'orange')}${createStatCard('hash', item.totalUnits, 'UNIDADES', 'orange')}${createStatCard('scale', avgWeightFormatted, 'PESO MÉDIO (G)', 'orange')}</div><div class="flex items-center gap-1.5 mt-2 mb-1.5 icon-fix"><i data-lucide="package" width="10" class="text-slate-400"></i><span class="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest">Embalagem</span></div><div class="grid grid-cols-3 gap-2">${createStatCard('box', item.boxes, 'CAIXAS')}${createStatCard('package-check', avgKgBoxStr, 'KG POR CAIXA')}${createStatCard('layers', item.unitsPerBox, 'UNID. POR CAIXA')}</div>${item.blockEstimatedBoxes ? `<div class="flex items-center gap-1 icon-fix mt-2 pt-2 border-t border-slate-100"><i data-lucide="package" width="10" class="text-blue-400 shrink-0"></i><span class="text-[11px] text-slate-600">Estimativa de caixas${estimateDay ? ` para <span class="font-semibold text-slate-700">${estimateDay}</span>` : ''}: <span class="font-bold text-blue-600">${item.blockEstimatedBoxes} cx</span></span></div>` : ''}</div>`;
+                    const accentBorder = item.partner === 'SPG Oásis' ? (item.status === 'Finalizado' ? 'border-l-[3px] border-red-400' : 'border-l-[3px] border-emerald-400') : 'border-l-[3px] border-transparent';
+                    const baseItemClass = `${accentBorder} hover:bg-slate-50/50 transition-colors flex flex-col`;
+                    const finalizedStyle = item.partner === 'SPG Oásis' && item.status === 'Finalizado' ? ' style="box-shadow: inset 0 0 0 2px #fca5a5; background-color: rgba(254,242,242,0.3);"' : '';
+                    const html = `<div class="${baseItemClass}"${finalizedStyle}><div class="px-4 pt-4 pb-3 flex items-start justify-between gap-3">${showPartnerTag ? `<div class="flex flex-col"><div class="flex items-center gap-2 flex-wrap"><span class="text-[17px] font-extrabold text-slate-800 leading-none">${item.variety}</span></div><span class="text-[9px] font-bold text-emerald-500 uppercase tracking-widest mt-1 block">${item.partner}</span></div>` : `<div><div class="flex items-center gap-2 flex-wrap"><span class="text-[17px] font-extrabold text-slate-800 leading-none">Bloco ${item.talhao}</span>${item.cycle ? `<span class="text-[10px] font-bold text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full leading-none">Ciclo ${item.cycle}</span>` : ''}${(item.productionDays || item.estimatedCompletion) && !item.isGrouped ? `<span class="text-[11px] text-slate-500 leading-snug">${item.productionDays ? `está em produção há <span class="font-bold text-teal-600">${item.productionDays} dias</span>` : ''}${item.productionDays && item.estimatedCompletion ? ' e ' : ''}${item.estimatedCompletion ? `está previsto para finalizar no dia <span class="font-bold text-red-500">${formatDateBR(item.estimatedCompletion)}</span>` : ''}</span>` : ''}</div><span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-1 block">${item.variety}</span></div>`}${statusBadge ? `<div class="shrink-0 pt-0.5">${statusBadge}</div>` : ''}</div>${spgHighlightBlock}${statsContent}</div>`;
                     container.innerHTML += html;
                 });
             }
@@ -1219,12 +1262,16 @@
                         validForecasts.sort((a, b) => new Date(a.date) - new Date(b.date)); const today = new Date(); today.setHours(0, 0, 0, 0);
                         const listHtml = validForecasts.map(f => {
                             const [year, month, day] = f.date.split('-'); const targetDate = new Date(year, month - 1, day); targetDate.setHours(0, 0, 0, 0); const diffTime = targetDate - today; const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                            let daysText = ''; let daysClass = ''; let subtitleHtml = '';
-                            if (diffDays > 1) { daysText = `FALTAM ${diffDays} DIAS`; daysClass = 'text-blue-600'; if (diffDays >= 7) { const weeks = Math.floor(diffDays / 7); const rDays = diffDays % 7; let weekStr = weeks === 1 ? '1 semana' : `${weeks} semanas`; let dayStr = rDays === 1 ? '1 dia' : `${rDays} dias`; let subText = rDays > 0 ? `(${weekStr} e ${dayStr})` : `(${weekStr})`; subtitleHtml = `<span class="text-[8px] font-semibold text-slate-400 mt-0.5 tracking-normal lowercase">${subText}</span>`; } }
-                            else if (diffDays === 1) { daysText = `AMANHÃ`; daysClass = 'text-amber-600'; } else if (diffDays === 0) { daysText = `HOJE`; daysClass = 'text-emerald-600'; } else { daysText = `ATRASADO ${Math.abs(diffDays)} DIAS`; daysClass = 'text-red-600'; }
-                            return `<div class="bg-white border border-slate-200 shadow-sm rounded-lg py-2 px-3 flex flex-col gap-1 items-center justify-center min-w-[140px]"><div class="flex items-baseline gap-2"><span class="text-[12px] font-extrabold text-slate-800">BLOCO ${f.block}</span><span class="text-[11px] font-medium text-slate-500">${formatDateBR(f.date)}</span></div><div class="text-[10px] font-bold text-center uppercase tracking-wider ${daysClass} mt-0.5 flex flex-col items-center"><span>${daysText}</span>${subtitleHtml}</div></div>`;
+                            let daysText = ''; let daysClass = ''; let subtitleHtml = ''; let cardBg = 'bg-white border-slate-200'; let accentBg = 'bg-slate-200';
+                            if (diffDays > 14) { daysText = `${diffDays} dias`; daysClass = 'text-slate-500'; cardBg = 'bg-white border-slate-200'; accentBg = 'bg-slate-300'; }
+                            else if (diffDays > 1) { daysText = `${diffDays} dias`; daysClass = 'text-blue-600'; cardBg = 'bg-blue-50/60 border-blue-200'; accentBg = 'bg-blue-400'; }
+                            else if (diffDays === 1) { daysText = `Amanhã`; daysClass = 'text-amber-700'; cardBg = 'bg-amber-50 border-amber-200'; accentBg = 'bg-amber-400'; }
+                            else if (diffDays === 0) { daysText = `Hoje`; daysClass = 'text-emerald-700'; cardBg = 'bg-emerald-50 border-emerald-200'; accentBg = 'bg-emerald-500'; }
+                            else { daysText = `${Math.abs(diffDays)}d atraso`; daysClass = 'text-red-600'; cardBg = 'bg-red-50 border-red-200'; accentBg = 'bg-red-400'; }
+                            if (diffDays >= 7) { const weeks = Math.floor(diffDays / 7); const rDays = diffDays % 7; let weekStr = weeks === 1 ? '1 sem.' : `${weeks} sem.`; subtitleHtml = `<span class="text-[8px] text-slate-400 font-medium">${weekStr}${rDays > 0 ? ` e ${rDays}d` : ''}</span>`; }
+                            return `<div class="overflow-hidden rounded-xl border ${cardBg} flex flex-col min-w-[88px] shadow-sm"><div class="h-[3px] w-full ${accentBg}"></div><div class="px-3 py-2 flex flex-col items-center gap-0.5"><span class="text-[10px] font-extrabold text-slate-700 tracking-wide">Bloco ${f.block}</span><span class="text-[9px] text-slate-400 font-medium">${formatDateBR(f.date)}</span><span class="text-[14px] font-extrabold ${daysClass} leading-none mt-1.5">${daysText}</span>${subtitleHtml}</div></div>`;
                         }).join('');
-                        forecastHtml = `<div class="mt-6 pt-4 border-t border-slate-200 border-dashed flex flex-col items-center justify-center w-full"><div class="text-[11px] font-bold uppercase tracking-widest text-blue-600 mb-3 text-center w-full">PREVISÃO DE COLHEITA (PRÓXIMOS BLOCOS)</div><div class="flex flex-wrap gap-3 justify-center w-full">${listHtml}</div></div>`;
+                        forecastHtml = `<div class="border-t border-slate-100 px-4 pt-3 pb-4"><div class="flex items-center gap-1.5 mb-2.5 icon-fix"><i data-lucide="calendar-clock" width="10" class="text-slate-400"></i><p class="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest">Próximos Blocos</p></div><div class="flex flex-wrap gap-2">${listHtml}</div></div>`;
                     }
                 }
                 try {
@@ -1232,29 +1279,40 @@
                     let params = {}; if (savedParams) { params = JSON.parse(savedParams); }
                     const crewValue = params.crewCount; const crew = crewValue ? (parseInt(crewValue) === 1 ? `${crewValue} Colaborador` : `${crewValue} Colaboradores`) : '-'; const estDay = params.estimateDay || '';
                     let totalHours = '--:--'; if (typeof calcTimeDiff === 'function') { totalHours = calcTimeDiff(params.startTime, params.endTime, params.intervalDuration); }
-                    shiftParamsHtml = `<div class="mt-4 pt-4 border-t border-slate-100 w-full"><div class="flex justify-center items-center mb-4 pb-4 border-b border-slate-200 border-dashed"><span class="text-xs font-bold text-slate-600">Equipe de Colheita: <span class="text-slate-800 text-sm font-extrabold">${crew}</span></span></div><div class="text-center mb-2"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Horas de Colheita</span></div><div class="grid grid-cols-4 gap-2 text-[10px] text-slate-500 font-medium mb-1"><div class="flex flex-col items-center"><span class="text-green-600 font-bold mb-0.5 uppercase">Início</span><span class="text-slate-700 font-bold text-xs">${params.startTime || '--:--'}</span></div><div class="flex flex-col items-center border-l border-slate-200"><span class="text-red-600 font-bold mb-0.5 uppercase">Final</span><span class="text-slate-700 font-bold text-xs">${params.endTime || '--:--'}</span></div><div class="flex flex-col items-center border-l border-slate-200"><span class="text-amber-600 font-bold mb-0.5 uppercase">INTERVALO</span><span class="text-slate-700 font-bold text-xs">${params.intervalDuration || '0'} min</span></div><div class="flex flex-col items-center border-l border-slate-200"><span class="text-emerald-700 font-bold mb-0.5 uppercase">Total</span><span class="text-slate-900 font-extrabold text-xs">${totalHours} h</span></div></div><div class="flex justify-center items-center pt-4 border-t border-slate-100 mt-2"><span class="text-lg font-bold text-[#00838f]">${estDay ? `Estimativa Total de Caixas para ${estDay}:` : 'Estimativa Total de Caixas:'} <span class="text-[#00838f] text-2xl font-extrabold">${sumEstimatedBoxes > 0 ? sumEstimatedBoxes.toLocaleString('pt-BR') : '-'}</span></span></div></div>`;
+                    const headerParamsEl = document.getElementById('p_headerParams');
+                    if (headerParamsEl) {
+                        headerParamsEl.innerHTML = `<div class="mt-2 pt-2 border-t border-white/20 flex items-center gap-4 flex-wrap"><div class="flex items-center gap-2 icon-fix"><i data-lucide="users" width="13" class="text-white/70"></i><span class="text-[11px] font-bold text-white">${crew}</span></div><div class="flex items-center gap-1.5 text-[11px] font-bold text-white/70 icon-fix"><i data-lucide="play-circle" width="12" class="text-emerald-200 shrink-0"></i><span class="text-white">${params.startTime || '--:--'}</span><span class="text-white/30">›</span><i data-lucide="stop-circle" width="12" class="text-red-300 shrink-0"></i><span class="text-red-200">${params.endTime || '--:--'}</span><span class="text-white/20 mx-0.5">|</span><i data-lucide="coffee" width="12" class="text-amber-300 shrink-0"></i><span class="text-amber-200">${params.intervalDuration || '0'} min</span><span class="text-white/20 mx-0.5">|</span><i data-lucide="clock" width="12" class="text-white/70 shrink-0"></i><span class="font-extrabold text-white">${totalHours} h</span></div>${sumEstimatedBoxes > 0 ? `<div class="flex items-center gap-2 bg-white/15 border border-white/25 rounded-xl px-3 py-1.5 ml-auto"><span class="text-[10px] font-bold text-white/80">${estDay ? `Estimativa ${estDay}` : 'Estimativa'}</span><span class="text-[20px] font-extrabold text-white leading-none">${sumEstimatedBoxes.toLocaleString('pt-BR')}</span><span class="text-[12px] font-bold text-white/80">cx</span></div>` : ''}</div>`;
+                    }
                 } catch(e) {}
             }
 
             if (displayData.length > 0) {
                 summaryHeader.innerHTML = `
-                    <div class="p-4 border-b border-slate-100">
-                        <div class="bg-emerald-50 rounded-xl p-4 grid grid-cols-2 gap-y-4 gap-x-2 relative overflow-hidden">
-                            <div class="absolute top-0 right-0 w-16 h-16 bg-emerald-100/50 rounded-full -mr-8 -mt-8 pointer-events-none"></div>
-                            <div class="absolute bottom-0 left-0 w-12 h-12 bg-emerald-100/50 rounded-full -ml-6 -mb-6 pointer-events-none"></div>
-                            <div class="text-center border-r border-emerald-200/50"><div class="text-[10px] text-emerald-600 font-bold uppercase mb-0.5">Total Unidades</div><div class="text-xl font-extrabold text-emerald-800">${sumTotalUnitsStr}</div></div>
-                            <div class="text-center"><div class="text-[10px] text-emerald-600 font-bold uppercase mb-0.5">TOTAL PESO (KG)</div><div class="text-xl font-extrabold text-emerald-800">${sumWeightStr}</div></div>
-                            <div class="col-span-2 border-t border-emerald-200/50 w-3/4 mx-auto"></div>
-                            <div class="text-center border-r border-emerald-200/50"><div class="text-[10px] text-emerald-600 font-bold uppercase mb-0.5">Total Caixas</div><div class="text-lg font-extrabold text-emerald-800">${sumBoxesStr}</div></div>
-                            <div class="text-center"><div class="text-[10px] text-emerald-600 font-bold uppercase mb-0.5">MÉDIA GERAL (G/UNID.)</div><div class="text-lg font-extrabold text-emerald-800">${finalAvgWeightStr} g</div></div>
+                    <div class="grid grid-cols-4 divide-x divide-emerald-100 border-b border-emerald-100 bg-emerald-50">
+                        <div class="flex flex-col items-center justify-center px-3 py-2.5 gap-0.5">
+                            <div class="icon-fix text-emerald-400 mb-0.5"><i data-lucide="layers" width="12"></i></div>
+                            <span class="text-[8px] font-extrabold text-emerald-500 uppercase tracking-widest">Unidades</span>
+                            <span class="text-[16px] font-extrabold text-emerald-900 leading-none">${sumTotalUnitsStr}</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center px-3 py-2.5 gap-0.5">
+                            <div class="icon-fix text-emerald-400 mb-0.5"><i data-lucide="weight" width="12"></i></div>
+                            <span class="text-[8px] font-extrabold text-emerald-500 uppercase tracking-widest">Peso (kg)</span>
+                            <span class="text-[16px] font-extrabold text-emerald-900 leading-none">${sumWeightStr}</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center px-3 py-2.5 gap-0.5">
+                            <div class="icon-fix text-emerald-400 mb-0.5"><i data-lucide="box" width="12"></i></div>
+                            <span class="text-[8px] font-extrabold text-emerald-500 uppercase tracking-widest">Caixas</span>
+                            <span class="text-[16px] font-extrabold text-emerald-900 leading-none">${sumBoxesStr}</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center px-3 py-2.5 gap-0.5">
+                            <div class="icon-fix text-emerald-400 mb-0.5"><i data-lucide="scale" width="12"></i></div>
+                            <span class="text-[8px] font-extrabold text-emerald-500 uppercase tracking-widest">Média g/un.</span>
+                            <span class="text-[16px] font-extrabold text-emerald-900 leading-none">${finalAvgWeightStr}</span>
                         </div>
                     </div>
                 `;
 
-                footerContainer.innerHTML = `
-                    ${shiftParamsHtml}
-                    ${forecastHtml}
-                `;
+                footerContainer.innerHTML = forecastHtml;
             }
             
             lucide.createIcons();
@@ -1311,8 +1369,8 @@
             try {
                 if (type === 'grupo') { originalDataTemp = [...p_harvestData]; const currentPartner = document.getElementById('p_partner').value; const allPartnerItems = originalDataTemp.filter(item => item.partner === currentPartner); const itemsToGroup = allPartnerItems.filter(item => item.active !== false); p_harvestData = p_getGroupedData(itemsToGroup, allPartnerItems); p_renderReport(); await new Promise(resolve => setTimeout(resolve, 200)); }
                 const element = document.getElementById('p_report-card'); const images = element.querySelectorAll('img'); await Promise.all(Array.from(images).map(img => { if (img.complete) return Promise.resolve(); return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; }); }));
-                const displayData = p_getFilteredData().filter(item => item.active !== false); const isGrid = displayData.length > 1; const targetWidth = isGrid ? '900px' : '450px';
-                const imgDataHD = await exportReportImage(element, { isGrid, targetWidth, contentId: 'p_reportContent', contentGridClass: "grid grid-cols-2 gap-4 p-4 bg-slate-50/50 flex-1 content-start", contentChildClass: "bg-white rounded-2xl shadow-sm border border-slate-200 p-4 group flex flex-col h-full" }); const now = new Date(); const dateStr = now.toLocaleDateString('pt-BR'); const weekNum = getWeekNumber(now); let weekday = now.toLocaleDateString('pt-BR', { weekday: 'long' }); weekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+                const displayData = p_getFilteredData().filter(item => item.active !== false); const isGrid = displayData.length > 1; const targetWidth = isGrid ? '1500px' : '520px';
+                const imgDataHD = await exportReportImage(element, { isGrid, targetWidth, contentId: 'p_reportContent', contentGridClass: "grid grid-cols-2 gap-4 p-4 bg-slate-50/50 flex-1 content-start", contentChildClass: "bg-white rounded-2xl shadow-sm border border-slate-200 group flex flex-col" }); const now = new Date(); const dateStr = now.toLocaleDateString('pt-BR'); const weekNum = getWeekNumber(now); let weekday = now.toLocaleDateString('pt-BR', { weekday: 'long' }); weekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
                 const partnerInput = document.getElementById('p_partner'); let partnerName = "Geral"; if (partnerInput && partnerInput.value) { partnerName = partnerInput.value; } else if (p_harvestData.length > 0 && p_harvestData[0].partner) { partnerName = p_harvestData[0].partner; }
                 let filePrefix = "Resumo da Pesagem (kg)"; if (partnerName === "SPG Oásis") { filePrefix = type === 'grupo' ? "Resumo Producao Oásis (Agrupado)" : "Resumo Producao Oásis (Detalhado)"; }
                 const fileName = `${filePrefix} - ${weekday} ${dateStr.replace(/\//g, '-')} Semana ${weekNum} - ${partnerName}.png`;
