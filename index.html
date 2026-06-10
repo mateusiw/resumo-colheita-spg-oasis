@@ -324,6 +324,7 @@
         let c_harvestData = JSON.parse(localStorage.getItem('spg_harvestData')) || [];
         let c_editingIndex = -1;
         let c_hasSynced = false;
+        let p_hasSynced = false;
 
         let p_harvestData = [];
         let p_forecastBlocksData = []; 
@@ -467,7 +468,7 @@
             localStorage.removeItem('auth_colheita'); sessionStorage.removeItem('auth_colheita');
             localStorage.removeItem('auth_pesagem'); sessionStorage.removeItem('auth_pesagem');
             localStorage.removeItem('auth_master'); sessionStorage.removeItem('auth_master');
-            isAuthColheita = false; isAuthPesagem = false; isAuthMaster = false; c_hasSynced = false;
+            isAuthColheita = false; isAuthPesagem = false; isAuthMaster = false; c_hasSynced = false; p_hasSynced = false;
             document.getElementById('view-colheita').classList.add('hidden'); document.getElementById('view-colheita').classList.remove('block');
             document.getElementById('view-pesagem').classList.add('hidden'); document.getElementById('view-pesagem').classList.remove('block');
             document.getElementById('loginScreen').classList.remove('hidden'); showLogin('geral');
@@ -558,7 +559,7 @@
                 document.getElementById('nav-logo').src = 'https://i.imgur.com/f7UnnL0.png'; document.getElementById('favicon').href = 'https://i.imgur.com/f7UnnL0.png';
                 document.getElementById('nav-title').innerText = 'SPG SEDE'; document.getElementById('nav-subtitle').innerText = 'Resumo da Pesagem Parceiros SPG SEDE';
 
-                if (!c_hasSynced) { c_syncAppOnLoad(); c_hasSynced = true; }
+                if (!p_hasSynced) { p_syncAppOnLoad(); p_hasSynced = true; }
             }
         }
 
@@ -789,6 +790,18 @@
                 await c_syncForecasts(true);
             } catch (error) { } 
             finally { clearTimeout(forceCloseTimeout); try { loadAllCultures(); } catch(e) {} if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => { modal.classList.add('hidden'); }, 300); } }
+        }
+
+        async function p_syncAppOnLoad() {
+            const modal = document.getElementById('syncModal');
+            if (modal) { modal.classList.remove('hidden'); setTimeout(() => modal.classList.remove('opacity-0'), 10); }
+            const forceCloseTimeout = setTimeout(() => { if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => modal.classList.add('hidden'), 300); } }, 8000);
+            try {
+                const response = await fetch("https://script.google.com/macros/s/AKfycbypGiOpHEYQ9Hc4zzXi9age7jb54lrLaGZXLEGpeoiJZudqMsHjE86xeULpH_hVefTaSg/exec", { method: 'GET', redirect: 'follow' });
+                const data = JSON.parse(await response.text());
+                if (!data.error) { localStorage.setItem('spg_plants_data', JSON.stringify(data)); }
+            } catch (error) { }
+            finally { clearTimeout(forceCloseTimeout); if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => { modal.classList.add('hidden'); }, 300); } }
         }
 
         function c_updateCommercialInput() {
@@ -1026,7 +1039,7 @@
             
             sourceForAggregates.forEach(item => { const blockKey = `${item.talhao}-${item.cycle || ''}`; if(!trueAggregates[blockKey]) trueAggregates[blockKey] = { accum: 0, plants: 0, varieties: {} }; const varKey = `${item.variety}-${item.commercialVariety}`; trueAggregates[blockKey].varieties[varKey] = parseNumber(item.accumulatedUnits); trueAggregates[blockKey].plants = Math.max(trueAggregates[blockKey].plants, parseNumber(item.totalBlockPlants)); });
             for (const b in trueAggregates) { let s = 0; for(const v in trueAggregates[b].varieties) s += trueAggregates[b].varieties[v]; trueAggregates[b].accum = s; }
-            itemsToGroup.forEach(item => { const blockKey = `${item.talhao}-${item.cycle || ''}`; if (!grouped[blockKey]) { grouped[blockKey] = { ...item, boxes: 0, harvestWeight: 0, totalUnits: 0, accumulatedUnits: trueAggregates[blockKey].accum, plantedUnits: 0, totalBlockPlants: trueAggregates[blockKey].plants, commercialVariety: '', variety: 'Agrupado', isGrouped: true, blockEstimatedBoxes: 0, accumulatedKg: 0 }; } grouped[blockKey].boxes += parseNumber(item.boxes); grouped[blockKey].harvestWeight += parseNumber(item.harvestWeight); grouped[blockKey].totalUnits += parseNumber(item.totalUnits); grouped[blockKey].plantedUnits += parseNumber(item.plantedUnits); grouped[blockKey].blockEstimatedBoxes += parseNumber(item.blockEstimatedBoxes); grouped[blockKey].accumulatedKg += parseNumber(item.accumulatedKg); });
+            itemsToGroup.forEach(item => { const blockKey = `${item.talhao}-${item.cycle || ''}`; if (!grouped[blockKey]) { const _pd = localStorage.getItem('spg_plants_data'); const _pl = _pd ? JSON.parse(_pd) : []; const _pm = _pl.find(p => String(p.bloco) == String(item.talhao) && String(p.ciclo) == String(item.cycle)); const _chd = localStorage.getItem('spg_harvestData'); const _chl = _chd ? JSON.parse(_chd) : []; const _chm = _chl.find(h => String(h.talhao) == String(item.talhao) && String(h.cycle) == String(item.cycle) && h.startDate); grouped[blockKey] = { ...item, boxes: 0, harvestWeight: 0, totalUnits: 0, accumulatedUnits: trueAggregates[blockKey].accum, plantedUnits: 0, totalBlockPlants: trueAggregates[blockKey].plants, commercialVariety: '', variety: 'Agrupado', isGrouped: true, blockEstimatedBoxes: 0, accumulatedKg: 0, transplantDate: _pm && _pm.dataPlantio ? formatDateBR(_pm.dataPlantio) : '', harvestStartDate: _chm ? _chm.startDate : '' }; } grouped[blockKey].boxes += parseNumber(item.boxes); grouped[blockKey].harvestWeight += parseNumber(item.harvestWeight); grouped[blockKey].totalUnits += parseNumber(item.totalUnits); grouped[blockKey].plantedUnits += parseNumber(item.plantedUnits); grouped[blockKey].blockEstimatedBoxes += parseNumber(item.blockEstimatedBoxes); grouped[blockKey].accumulatedKg += parseNumber(item.accumulatedKg); });
             return Object.values(grouped).map(group => { let avgValG = 0; if (group.totalUnits > 0) avgValG = group.harvestWeight / group.totalUnits; return { ...group, boxes: group.boxes > 0 ? group.boxes.toLocaleString('pt-BR') : "0", harvestWeight: group.harvestWeight > 0 ? group.harvestWeight.toLocaleString('pt-BR', { maximumFractionDigits: 3 }) : "", totalUnits: group.totalUnits > 0 ? group.totalUnits.toLocaleString('pt-BR') : "0", accumulatedUnits: group.accumulatedUnits > 0 ? group.accumulatedUnits.toLocaleString('pt-BR') : "0", plantedUnits: group.plantedUnits > 0 ? group.plantedUnits.toLocaleString('pt-BR') : "0", totalBlockPlants: group.totalBlockPlants > 0 ? group.totalBlockPlants.toLocaleString('pt-BR') : "0", averageWeight: avgValG > 0 ? avgValG.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) : "", unitsPerBox: group.boxes > 0 ? (group.totalUnits / group.boxes).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 }) : "", blockEstimatedBoxes: group.blockEstimatedBoxes > 0 ? group.blockEstimatedBoxes.toLocaleString('pt-BR') : "", accumulatedKg: group.accumulatedKg > 0 ? group.accumulatedKg.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 }) : "" }; });
         }
 
@@ -1246,7 +1259,7 @@
                     const accentBorder = item.partner === 'SPG Oásis' ? (item.status === 'Finalizado' ? 'border-l-[3px] border-red-400' : 'border-l-[3px] border-emerald-400') : 'border-l-[3px] border-transparent';
                     const baseItemClass = `${accentBorder} hover:bg-slate-50/50 transition-colors flex flex-col`;
                     const finalizedStyle = item.partner === 'SPG Oásis' && item.status === 'Finalizado' ? ' style="box-shadow: inset 0 0 0 2px #fca5a5; background-color: rgba(254,242,242,0.3);"' : '';
-                    const html = `<div class="${baseItemClass}"${finalizedStyle}><div class="px-4 pt-4 pb-3 flex items-start justify-between gap-3">${showPartnerTag ? `<div class="flex flex-col"><div class="flex items-center gap-2 flex-wrap"><span class="text-[17px] font-extrabold text-slate-800 leading-none">${item.variety}</span></div><span class="text-[9px] font-bold text-emerald-500 uppercase tracking-widest mt-1 block">${item.partner}</span></div>` : `<div><div class="flex items-center gap-2 flex-wrap"><span class="text-[17px] font-extrabold text-slate-800 leading-none">Bloco ${item.talhao}</span>${item.cycle ? `<span class="text-[10px] font-bold text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full leading-none">Ciclo ${item.cycle}</span>` : ''}${(item.productionDays || item.estimatedCompletion) && !item.isGrouped ? `<span class="text-[11px] text-slate-500 leading-snug">${item.productionDays ? `está em produção há <span class="font-bold text-teal-600">${item.productionDays} dias</span>` : ''}${item.productionDays && item.estimatedCompletion ? ' e ' : ''}${item.estimatedCompletion ? `está previsto para finalizar no dia <span class="font-bold text-red-500">${formatDateBR(item.estimatedCompletion)}</span>` : ''}</span>` : ''}</div><span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-1 block">${item.variety}</span></div>`}${statusBadge ? `<div class="shrink-0 pt-0.5">${statusBadge}</div>` : ''}</div>${spgHighlightBlock}${statsContent}</div>`;
+                    const html = `<div class="${baseItemClass}"${finalizedStyle}><div class="px-4 pt-4 pb-3 flex items-start justify-between gap-3">${showPartnerTag ? `<div class="flex flex-col"><div class="flex items-center gap-2 flex-wrap"><span class="text-[17px] font-extrabold text-slate-800 leading-none">${item.variety}</span></div><span class="text-[9px] font-bold text-emerald-500 uppercase tracking-widest mt-1 block">${item.partner}</span></div>` : `<div><div class="flex items-center gap-2 flex-wrap"><span class="text-[17px] font-extrabold text-slate-800 leading-none">Bloco ${item.talhao}</span>${item.cycle ? `<span class="text-[10px] font-bold text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full leading-none">Ciclo ${item.cycle}</span>` : ''}${item.isGrouped && (item.transplantDate || item.harvestStartDate) ? `<span class="text-[11px] text-slate-500 leading-snug">${item.transplantDate ? `transplantado em <span class="font-bold text-teal-600">${item.transplantDate}</span>` : ''}${item.transplantDate && item.harvestStartDate ? ` · iniciou a colheita em <span class="font-bold text-blue-500">${item.harvestStartDate}</span>${(() => { const [d1,m1,y1] = item.transplantDate.split('/'); const [d2,m2,y2] = item.harvestStartDate.split('/'); const diff = Math.round((new Date(y2,m2-1,d2) - new Date(y1,m1-1,d1)) / 86400000); return diff > 0 ? ` <span class="text-slate-400">(${diff} dias)</span>` : ''; })()}` : item.harvestStartDate ? `iniciou a colheita em <span class="font-bold text-blue-500">${item.harvestStartDate}</span>` : ''}</span>` : (item.productionDays || item.estimatedCompletion) && !item.isGrouped ? `<span class="text-[11px] text-slate-500 leading-snug">${item.productionDays ? `está em produção há <span class="font-bold text-teal-600">${item.productionDays} dias</span>` : ''}${item.productionDays && item.estimatedCompletion ? ' e ' : ''}${item.estimatedCompletion ? `está previsto para finalizar no dia <span class="font-bold text-red-500">${formatDateBR(item.estimatedCompletion)}</span>` : ''}</span>` : ''}</div><span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-1 block">${item.variety}</span></div>`}${statusBadge ? `<div class="shrink-0 pt-0.5">${statusBadge}</div>` : ''}</div>${spgHighlightBlock}${statsContent}</div>`;
                     container.innerHTML += html;
                 });
             }
