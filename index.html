@@ -792,16 +792,56 @@
             finally { clearTimeout(forceCloseTimeout); try { loadAllCultures(); } catch(e) {} if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => { modal.classList.add('hidden'); }, 300); } }
         }
 
+        function p_enrichWithPlantsDates() {
+            const rawPlants = localStorage.getItem('spg_plants_data');
+            const rawHistory = localStorage.getItem('spg_harvest_history');
+            const plantsData = rawPlants ? JSON.parse(rawPlants) : [];
+            const historyData = rawHistory ? JSON.parse(rawHistory) : [];
+            p_harvestData.forEach(item => {
+                if (item.partner !== 'SPG Oásis') return;
+                let match = plantsData.filter(p => String(p.bloco) == String(item.talhao));
+                if (item.cycle) match = match.filter(p => String(p.ciclo) == String(item.cycle));
+                if (item.variety) match = match.filter(p => p.cultura && p.cultura.toLowerCase() === item.variety.toLowerCase());
+                if (item.commercialVariety) match = match.filter(p => p.variedade && p.variedade.toLowerCase() === item.commercialVariety.toLowerCase());
+                const found = match.find(p => p.dataPlantio && p.dataPlantio.trim() !== '');
+                if (found && found.dataPlantio) item.transplantDate = formatDateBR(found.dataPlantio);
+                // Busca a primeira data de entrega do bloco+ciclo no histórico
+                const histMatch = historyData.find(h => String(h.bloco) == String(item.talhao) && String(h.ciclo) == String(item.cycle) && h.dataInicioColheita);
+                if (histMatch) item.harvestStartDate = histMatch.dataInicioColheita;
+            });
+        }
+
+        async function p_syncAndEnrichDates() {
+            try {
+                const [resPlants, resHist] = await Promise.all([
+                    fetch("https://script.google.com/macros/s/AKfycbypGiOpHEYQ9Hc4zzXi9age7jb54lrLaGZXLEGpeoiJZudqMsHjE86xeULpH_hVefTaSg/exec", { method: 'GET', redirect: 'follow' }),
+                    fetch("https://script.google.com/macros/s/AKfycbxMvA1xEKhZ-BKGUQPcmYcpsTEki2sUwfHT1qBSmzyQRx4ywCFvOAK5tlkrOppcO8QC7A/exec", { method: 'GET', redirect: 'follow' })
+                ]);
+                const dataPlants = JSON.parse(await resPlants.text());
+                const dataHist = JSON.parse(await resHist.text());
+                if (!dataPlants.error) localStorage.setItem('spg_plants_data', JSON.stringify(dataPlants));
+                if (!dataHist.error) localStorage.setItem('spg_harvest_history', JSON.stringify(dataHist));
+            } catch(e) {}
+            p_enrichWithPlantsDates();
+            p_saveToStorage();
+            p_renderReport();
+        }
+
         async function p_syncAppOnLoad() {
             const modal = document.getElementById('syncModal');
             if (modal) { modal.classList.remove('hidden'); setTimeout(() => modal.classList.remove('opacity-0'), 10); }
             const forceCloseTimeout = setTimeout(() => { if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => modal.classList.add('hidden'), 300); } }, 8000);
             try {
-                const response = await fetch("https://script.google.com/macros/s/AKfycbypGiOpHEYQ9Hc4zzXi9age7jb54lrLaGZXLEGpeoiJZudqMsHjE86xeULpH_hVefTaSg/exec", { method: 'GET', redirect: 'follow' });
-                const data = JSON.parse(await response.text());
-                if (!data.error) { localStorage.setItem('spg_plants_data', JSON.stringify(data)); }
+                const [resPlants, resHist] = await Promise.all([
+                    fetch("https://script.google.com/macros/s/AKfycbypGiOpHEYQ9Hc4zzXi9age7jb54lrLaGZXLEGpeoiJZudqMsHjE86xeULpH_hVefTaSg/exec", { method: 'GET', redirect: 'follow' }),
+                    fetch("https://script.google.com/macros/s/AKfycbxMvA1xEKhZ-BKGUQPcmYcpsTEki2sUwfHT1qBSmzyQRx4ywCFvOAK5tlkrOppcO8QC7A/exec", { method: 'GET', redirect: 'follow' })
+                ]);
+                const dataPlants = JSON.parse(await resPlants.text());
+                const dataHist = JSON.parse(await resHist.text());
+                if (!dataPlants.error) localStorage.setItem('spg_plants_data', JSON.stringify(dataPlants));
+                if (!dataHist.error) { localStorage.setItem('spg_harvest_history', JSON.stringify(dataHist)); p_enrichWithPlantsDates(); p_saveToStorage(); }
             } catch (error) { }
-            finally { clearTimeout(forceCloseTimeout); if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => { modal.classList.add('hidden'); }, 300); } }
+            finally { clearTimeout(forceCloseTimeout); if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => { modal.classList.add('hidden'); }, 300); } p_renderReport(); }
         }
 
         function c_updateCommercialInput() {
@@ -1039,7 +1079,7 @@
             
             sourceForAggregates.forEach(item => { const blockKey = `${item.talhao}-${item.cycle || ''}`; if(!trueAggregates[blockKey]) trueAggregates[blockKey] = { accum: 0, plants: 0, varieties: {} }; const varKey = `${item.variety}-${item.commercialVariety}`; trueAggregates[blockKey].varieties[varKey] = parseNumber(item.accumulatedUnits); trueAggregates[blockKey].plants = Math.max(trueAggregates[blockKey].plants, parseNumber(item.totalBlockPlants)); });
             for (const b in trueAggregates) { let s = 0; for(const v in trueAggregates[b].varieties) s += trueAggregates[b].varieties[v]; trueAggregates[b].accum = s; }
-            itemsToGroup.forEach(item => { const blockKey = `${item.talhao}-${item.cycle || ''}`; if (!grouped[blockKey]) { const _pd = localStorage.getItem('spg_plants_data'); const _pl = _pd ? JSON.parse(_pd) : []; const _pm = _pl.find(p => String(p.bloco) == String(item.talhao) && String(p.ciclo) == String(item.cycle)); const _chd = localStorage.getItem('spg_harvestData'); const _chl = _chd ? JSON.parse(_chd) : []; const _chm = _chl.find(h => String(h.talhao) == String(item.talhao) && String(h.cycle) == String(item.cycle) && h.startDate); grouped[blockKey] = { ...item, boxes: 0, harvestWeight: 0, totalUnits: 0, accumulatedUnits: trueAggregates[blockKey].accum, plantedUnits: 0, totalBlockPlants: trueAggregates[blockKey].plants, commercialVariety: '', variety: 'Agrupado', isGrouped: true, blockEstimatedBoxes: 0, accumulatedKg: 0, transplantDate: _pm && _pm.dataPlantio ? formatDateBR(_pm.dataPlantio) : '', harvestStartDate: _chm ? _chm.startDate : '' }; } grouped[blockKey].boxes += parseNumber(item.boxes); grouped[blockKey].harvestWeight += parseNumber(item.harvestWeight); grouped[blockKey].totalUnits += parseNumber(item.totalUnits); grouped[blockKey].plantedUnits += parseNumber(item.plantedUnits); grouped[blockKey].blockEstimatedBoxes += parseNumber(item.blockEstimatedBoxes); grouped[blockKey].accumulatedKg += parseNumber(item.accumulatedKg); });
+            itemsToGroup.forEach(item => { const blockKey = `${item.talhao}-${item.cycle || ''}`; if (!grouped[blockKey]) { const _pd = localStorage.getItem('spg_plants_data'); const _pl = _pd ? JSON.parse(_pd) : []; const _pm = _pl.find(p => String(p.bloco) == String(item.talhao) && String(p.ciclo) == String(item.cycle)); const _hrd = localStorage.getItem('spg_harvest_history'); const _hrl = _hrd ? JSON.parse(_hrd) : []; const _hrm = _hrl.find(h => String(h.bloco) == String(item.talhao) && String(h.ciclo) == String(item.cycle) && h.dataInicioColheita); grouped[blockKey] = { ...item, boxes: 0, harvestWeight: 0, totalUnits: 0, accumulatedUnits: trueAggregates[blockKey].accum, plantedUnits: 0, totalBlockPlants: trueAggregates[blockKey].plants, commercialVariety: '', variety: 'Agrupado', isGrouped: true, blockEstimatedBoxes: 0, accumulatedKg: 0, transplantDate: _pm && _pm.dataPlantio ? formatDateBR(_pm.dataPlantio) : '', harvestStartDate: _hrm ? _hrm.dataInicioColheita : (item.harvestStartDate || '') }; } grouped[blockKey].boxes += parseNumber(item.boxes); grouped[blockKey].harvestWeight += parseNumber(item.harvestWeight); grouped[blockKey].totalUnits += parseNumber(item.totalUnits); grouped[blockKey].plantedUnits += parseNumber(item.plantedUnits); grouped[blockKey].blockEstimatedBoxes += parseNumber(item.blockEstimatedBoxes); grouped[blockKey].accumulatedKg += parseNumber(item.accumulatedKg); });
             return Object.values(grouped).map(group => { let avgValG = 0; if (group.totalUnits > 0) avgValG = group.harvestWeight / group.totalUnits; return { ...group, boxes: group.boxes > 0 ? group.boxes.toLocaleString('pt-BR') : "0", harvestWeight: group.harvestWeight > 0 ? group.harvestWeight.toLocaleString('pt-BR', { maximumFractionDigits: 3 }) : "", totalUnits: group.totalUnits > 0 ? group.totalUnits.toLocaleString('pt-BR') : "0", accumulatedUnits: group.accumulatedUnits > 0 ? group.accumulatedUnits.toLocaleString('pt-BR') : "0", plantedUnits: group.plantedUnits > 0 ? group.plantedUnits.toLocaleString('pt-BR') : "0", totalBlockPlants: group.totalBlockPlants > 0 ? group.totalBlockPlants.toLocaleString('pt-BR') : "0", averageWeight: avgValG > 0 ? avgValG.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) : "", unitsPerBox: group.boxes > 0 ? (group.totalUnits / group.boxes).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 }) : "", blockEstimatedBoxes: group.blockEstimatedBoxes > 0 ? group.blockEstimatedBoxes.toLocaleString('pt-BR') : "", accumulatedKg: group.accumulatedKg > 0 ? group.accumulatedKg.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 }) : "" }; });
         }
 
@@ -1366,11 +1406,11 @@
 
                     const _impTalhao = idxTalhao !== -1 && row[idxTalhao] ? row[idxTalhao] : `Imp-${i}`; const _impCycle = idxCycle !== -1 && row[idxCycle] ? row[idxCycle] : ''; const _impVariety = idxVariety !== -1 && row[idxVariety] ? row[idxVariety] : 'Brócolis'; const _impCommVariety = idxCommVariety !== -1 && row[idxCommVariety] ? row[idxCommVariety] : '';
                     const _impBaseKg = p_lookupKgFromHistory(_impTalhao, _impCycle, _impVariety, _impCommVariety); const _impAccumKg = _impBaseKg > 0 ? _impBaseKg.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 }) : '';
-                    const newItem = { partner: 'SPG Oásis', talhao: _impTalhao, variety: _impVariety, commercialVariety: _impCommVariety, boxes: idxBoxes !== -1 && row[idxBoxes] ? row[idxBoxes] : '', grossWeight: '', unitsPerBox: '', harvestWeight: '', totalUnits: idxTotalUnits !== -1 && row[idxTotalUnits] ? row[idxTotalUnits] : '', averageWeight: '', productionDays: idxProdDays !== -1 && row[idxProdDays] ? row[idxProdDays] : '', cycle: _impCycle, plantedUnits: plantedRawVal, totalBlockPlants: totalBlockRaw, accumulatedUnits: accumRawVal, accumulatedKg: _impAccumKg, percentage: calcPercentage, blockPercentage: calcBlockPercentage, status: idxStatus !== -1 && row[idxStatus] ? row[idxStatus] : 'Em Andamento', estimatedCompletion: formatToISO(idxPrev !== -1 && row[idxPrev] ? row[idxPrev] : ''), blockEstimatedBoxes: estBlocoVal, active: isActive };
+                    const newItem = { partner: 'SPG Oásis', talhao: _impTalhao, variety: _impVariety, commercialVariety: _impCommVariety, boxes: idxBoxes !== -1 && row[idxBoxes] ? row[idxBoxes] : '', grossWeight: '', unitsPerBox: '', harvestWeight: '', totalUnits: idxTotalUnits !== -1 && row[idxTotalUnits] ? row[idxTotalUnits] : '', averageWeight: '', productionDays: idxProdDays !== -1 && row[idxProdDays] ? row[idxProdDays] : '', cycle: _impCycle, plantedUnits: plantedRawVal, totalBlockPlants: totalBlockRaw, accumulatedUnits: accumRawVal, accumulatedKg: _impAccumKg, percentage: calcPercentage, blockPercentage: calcBlockPercentage, status: idxStatus !== -1 && row[idxStatus] ? row[idxStatus] : 'Em Andamento', estimatedCompletion: formatToISO(idxPrev !== -1 && row[idxPrev] ? row[idxPrev] : ''), blockEstimatedBoxes: estBlocoVal, active: isActive, harvestStartDate: idxInicio !== -1 && row[idxInicio] ? row[idxInicio] : '', transplantDate: '' };
                     const b = parseNumber(newItem.boxes); const u = parseNumber(newItem.totalUnits); if (b > 0 && u > 0) { newItem.unitsPerBox = (u / b).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 }); }
                     p_harvestData.push(newItem); importedCount++;
                 }
-                p_saveToStorage(); localStorage.setItem('spg_sede_forecasts', JSON.stringify(p_forecastBlocksData)); localStorage.setItem('spg_sede_shiftParams', JSON.stringify(shiftParams)); p_renderList(); p_renderReport(); event.target.value = '';
+                p_enrichWithPlantsDates(); p_saveToStorage(); localStorage.setItem('spg_sede_forecasts', JSON.stringify(p_forecastBlocksData)); localStorage.setItem('spg_sede_shiftParams', JSON.stringify(shiftParams)); p_renderList(); p_renderReport(); event.target.value = ''; p_syncAndEnrichDates();
                 if (importedCount > 0) { 
                     setTimeout(() => {
                         showAlert('Importação Concluída', [`${importedCount} bloco(s) importado(s) com sucesso!`, 'Os dados foram integrados ao relatório de pesagem.'], 'success');
