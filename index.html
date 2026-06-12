@@ -1257,6 +1257,8 @@
             if (rawHistory) { try { const historyData = JSON.parse(rawHistory); historyData.forEach(h => { const key = `${h.bloco}-${h.ciclo}`; if (!blockAggregates[key]) blockAggregates[key] = { varieties: {}, totalBlockPlants: 0 }; const varKey = `${h.cultura}-${h.variedade}`; blockAggregates[key].varieties[varKey] = h.totalUnidades; }); } catch(e) {} }
             
             rawData.forEach(item => { if (item.partner === 'SPG Oásis' && !item.isGrouped) { const key = `${item.talhao}-${item.cycle || ''}`; if (!blockAggregates[key]) { blockAggregates[key] = { varieties: {}, totalBlockPlants: 0 }; } const varKey = `${item.variety}-${item.commercialVariety}`; blockAggregates[key].varieties[varKey] = parseNumber(item.accumulatedUnits); if(parseNumber(item.totalBlockPlants) > blockAggregates[key].totalBlockPlants) { blockAggregates[key].totalBlockPlants = parseNumber(item.totalBlockPlants); } } });
+            const blockKgTotals = {};
+            displayData.forEach(item => { if (item.partner === 'SPG Oásis' && !item.isGrouped) { const key = `${item.talhao}-${item.cycle || ''}`; if (!blockKgTotals[key]) blockKgTotals[key] = 0; blockKgTotals[key] += parseNumber(item.accumulatedKg); } });
             
             if (displayData.length === 0) {
                 container.className = "divide-y divide-slate-50 flex-1 overflow-y-auto";
@@ -1274,7 +1276,7 @@
                     let avgWeightFormatted = "-"; if (avgValG > 0) { avgWeightFormatted = avgValG.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }); } else if (isMissingWeight && totalUnitsVal > 0) { avgWeightFormatted = '<span class="text-amber-500 text-[9px] font-extrabold bg-amber-50 px-1 py-0.5 rounded border border-amber-200">PENDENTE</span>'; }
                     const displayWeight = isMissingWeight ? '<span class="text-amber-500 text-[10px] font-extrabold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 animate-pulse">PENDENTE</span>' : item.harvestWeight;
                     const accumKgDisplay = item.accumulatedKg ? (() => { const v = parseNumber(item.accumulatedKg); return v > 0 ? v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 }) : ''; })() : '';
-                    const totalBlockKgDisplay = item.totalBlockKg ? (() => { const v = parseNumber(item.totalBlockKg); return v > 0 ? v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 }) : ''; })() : '';
+                    const totalBlockKgDisplay = (() => { const _bk = `${item.talhao}-${item.cycle || ''}`; const v = blockKgTotals[_bk] || 0; return v > 0 ? v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 }) : ''; })();
                     const showPartnerTag = (item.partner !== 'SPG Oásis') ;
                     let spgHighlightBlock = '';
                     if (item.partner === 'SPG Oásis') {
