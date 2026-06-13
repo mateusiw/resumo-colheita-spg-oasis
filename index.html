@@ -124,6 +124,7 @@
                         <div class="border border-slate-200 rounded p-3 bg-slate-50/30">
                             <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-1">
                                 <div class="text-[10px] font-bold text-slate-400 uppercase">PRODUÇÃO</div>
+                                <input type="checkbox" id="c_hasStages" onchange="c_toggleDetailsField()" class="hidden">
                             </div>
                             <div class="grid grid-cols-3 gap-3 mb-3">
                                 <div><label class="text-[10px] font-bold text-slate-500 block uppercase mb-1">TOTAL BLOCO</label><input type="text" id="c_totalBlockPlants" readonly class="w-full p-2 border border-slate-200 rounded text-sm bg-slate-50 font-bold outline-none text-right cursor-not-allowed"></div>
@@ -131,7 +132,10 @@
                                 <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">ACUMULADAS</label><input type="text" id="c_totalUnits" readonly class="w-full p-2 border border-slate-200 rounded text-sm bg-slate-50 font-bold outline-none text-right cursor-not-allowed"></div>
                             </div>
                             <textarea id="c_details" class="hidden"></textarea>
-                            <div id="c_stagesList" class="hidden"></div>
+                            <div id="c_detailsContainer" class="hidden mb-3">
+                                <div class="flex justify-between items-center mb-1"><span class="text-[10px] font-bold text-slate-400 uppercase">Produção por Semana</span><button type="button" onclick="c_addStageRow()" class="text-[10px] bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded font-bold uppercase">+ Semana</button></div>
+                                <div id="c_stagesList" class="space-y-1"></div>
+                            </div>
                             <div class="grid grid-cols-2 gap-3">
                                  <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">CAIXAS</label><input type="text" id="c_boxes" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded text-sm outline-none text-right"></div>
                                  <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">TOTAL DE UNIDADES</label><input type="text" id="c_dailyUnits" oninput="formatNumberInput(this); c_updateAccumulated()" class="w-full p-2 border border-slate-300 rounded text-sm outline-none text-right"></div>
