@@ -656,7 +656,7 @@
             const timeString = `${String(now.getHours() % 12 || 12).padStart(2, '0')}:${minutes}${ampm}`; 
             const daysOfWeek = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
             document.getElementById('c_reportTitle').innerHTML = `Resumo da Colheita de ${daysOfWeek[now.getDay()]}`;
-            document.getElementById('c_headerDateTime').innerText = `Data: ${day}/${month}/${now.getFullYear()} - ${timeString} - Semana ${getWeekNumber(now)}`;
+            document.getElementById('c_headerDateTime').innerText = `${day}/${month}/${now.getFullYear()} - ${timeString} - Semana ${getWeekNumber(now)}`;
         }
 
         function c_saveData() { localStorage.setItem('spg_harvestData', JSON.stringify(c_harvestData)); }
