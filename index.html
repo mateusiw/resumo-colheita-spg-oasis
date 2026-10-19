@@ -565,26 +565,31 @@
                     ['crewCount', 'estimateDay', 'startTime', 'endTime', 'intervalDuration', 'manualTotalEstimate'].forEach(id => { const el = document.getElementById('c_' + id); if (el) el.value = ''; });
                     document.getElementById('c_forecastBlocksContainer').innerHTML = '';
                     c_loadInputs(); c_sortHarvestData(); c_renderList(); c_renderReport();
+                    p_scheduleSyncFromColheita();
                 }
             } catch(e) { console.error(e); } finally { spg_applyingRemote = false; }
             spg_syncMeta[key] = { updatedAt, dirty: false }; spg_saveMeta();
             return true;
         }
 
+        // Quem só tem acesso à Pesagem apenas recebe os dados da Colheita (não envia nada)
+        function spg_userKeys() { return isAuthColheita ? SPG_SYNC_KEYS : (isAuthPesagem ? ['colheita'] : []); }
+
         async function spg_pullAll() {
-            if (!isAuthColheita || !navigator.onLine || spg_isEditing()) { spg_updateSyncBadge(); return; }
+            const keys = spg_userKeys();
+            if (!keys.length || !navigator.onLine || spg_isEditing()) { spg_updateSyncBadge(); return; }
             try {
-                const res = await fetch(`${GAS_URL}?action=syncGet&keys=${SPG_SYNC_KEYS.join(',')}`, { method: 'GET', redirect: 'follow' });
+                const res = await fetch(`${GAS_URL}?action=syncGet&keys=${keys.join(',')}`, { method: 'GET', redirect: 'follow' });
                 const out = JSON.parse(await res.text());
                 if (out && !out.error && !spg_isEditing()) {
                     let applied = false;
-                    SPG_SYNC_KEYS.forEach(key => {
+                    keys.forEach(key => {
                         const remote = out[key]; if (!remote || !remote.updatedAt) return;
                         const local = spg_syncMeta[key] || {};
                         if (remote.updatedAt > (local.updatedAt || 0)) applied = spg_applyRemote(key, remote.data, remote.updatedAt) || applied;
                     });
                     // Os lançamentos do Campo são a fonte das caixas: reaplica na Colheita após receber dados
-                    if (applied && f_data.date === f_todayISO() && f_data.loads.some(l => l.entries.length)) f_syncToColheita();
+                    if (applied && isAuthColheita && f_data.date === f_todayISO() && f_data.loads.some(l => l.entries.length)) f_syncToColheita();
                 }
             } catch(e) {}
             await spg_pushAll();
@@ -619,7 +624,7 @@
 
         function spg_updateSyncBadge() {
             const el = document.getElementById('syncBadge'); if (!el) return;
-            if (!isAuthColheita) { el.className = 'hidden'; return; }
+            if (!isAuthColheita && !isAuthPesagem) { el.className = 'hidden'; return; }
             const pending = SPG_SYNC_KEYS.some(k => spg_syncMeta[k] && spg_syncMeta[k].dirty);
             let icon = 'cloud', text = 'Sincronizado', cls = 'text-emerald-700 bg-emerald-50 border-emerald-200';
             if (spg_syncing) { icon = 'refresh-cw'; text = 'Sincronizando'; cls = 'text-blue-600 bg-blue-50 border-blue-200'; }
@@ -632,7 +637,7 @@
         window.addEventListener('online', () => spg_pullAll());
         window.addEventListener('offline', () => spg_updateSyncBadge());
         document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') spg_pullAll(); });
-        setInterval(() => { if (document.visibilityState === 'visible') spg_pullAll(); }, 60000);
+        setInterval(() => { if (document.visibilityState === 'visible') spg_pullAll(); }, 30000);
 
         function showConfirm(title, msg, type, btnHtml, callback) {
             const modal = document.getElementById('modalConfirm');
@@ -865,7 +870,8 @@
             p_updateDynamicTitle();
             p_toggleInputMode();
             p_loadFromStorage();
-            
+            p_syncFromColheita();
+
             // Atualiza os títulos a cada minuto para manter o horário sincronizado
             setInterval(() => { c_updateDynamicTitle(); p_updateDynamicTitle(); }, 60000);
 
@@ -904,7 +910,7 @@
             document.getElementById('c_headerDateTime').innerText = `${day}/${month}/${now.getFullYear()} - ${timeString} - Semana ${getWeekNumber(now)}`;
         }
 
-        function c_saveData() { const json = JSON.stringify(c_harvestData); if (localStorage.getItem('spg_harvestData') !== json) { localStorage.setItem('spg_harvestData', json); spg_markChanged('colheita'); } }
+        function c_saveData() { const json = JSON.stringify(c_harvestData); if (localStorage.getItem('spg_harvestData') !== json) { localStorage.setItem('spg_harvestData', json); spg_markChanged('colheita'); p_scheduleSyncFromColheita(); } }
 
         function c_getForecastBlocks() {
             const container = document.getElementById('c_forecastBlocksContainer');
@@ -1056,7 +1062,7 @@
         function c_saveInputs() {
             const inputs = { crewCount: document.getElementById('c_crewCount').value, estimateDay: document.getElementById('c_estimateDay').value, startTime: document.getElementById('c_startTime').value, endTime: document.getElementById('c_endTime').value, intervalDuration: document.getElementById('c_intervalDuration').value, manualTotalEstimate: document.getElementById('c_manualTotalEstimate').value, forecastBlocks: c_getForecastBlocks() };
             const json = JSON.stringify(inputs);
-            if (localStorage.getItem('spg_inputs') !== json) { localStorage.setItem('spg_inputs', json); spg_markChanged('colheita'); }
+            if (localStorage.getItem('spg_inputs') !== json) { localStorage.setItem('spg_inputs', json); spg_markChanged('colheita'); p_scheduleSyncFromColheita(); }
         }
 
         function c_loadInputs() {
@@ -1161,6 +1167,8 @@
             if (modal) { lockPageScroll(); modal.classList.remove('hidden'); setTimeout(() => modal.classList.remove('opacity-0'), 10); }
             const forceCloseTimeout = setTimeout(() => { if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => { modal.classList.add('hidden'); unlockPageScroll(); }, 300); } }, 8000);
             try {
+                // Traz os dados da Colheita lançados em outros aparelhos
+                await spg_ensureInitialPull();
                 const [resPlants, resHist] = await Promise.all([
                     fetch(`${GAS_URL}?action=blocosPlantas`, { method: 'GET', redirect: 'follow' }),
                     fetch(`${GAS_URL}?action=historico`, { method: 'GET', redirect: 'follow' })
@@ -1745,6 +1753,63 @@
             loadAllCultures();
         }
 
+        // -------------------------------------------------------------
+        // PESAGEM SPG OÁSIS ALIMENTADA PELA ABA COLHEITA
+        // Cria/atualiza os blocos do SPG Oásis com o que está na Colheita.
+        // O peso (e o que foi editado na Pesagem) é mantido; um bloco só é
+        // atualizado de novo quando os dados dele mudam na Colheita.
+        // -------------------------------------------------------------
+        let p_colheitaSyncTimer = null;
+        function p_scheduleSyncFromColheita() { clearTimeout(p_colheitaSyncTimer); p_colheitaSyncTimer = setTimeout(p_syncFromColheita, 300); }
+
+        function p_syncFromColheita() {
+            if (p_editingIndex >= 0) return; // aplica depois que a edição for salva
+            const lc = s => (s || '').toString().trim().toLowerCase();
+            const keyOf = (t, c, v, cv) => `${t}|${lc(c)}|${lc(v)}|${lc(cv)}`;
+            let changed = false; const srcKeys = new Set();
+
+            c_harvestData.forEach(src => {
+                const k = keyOf(src.talhao, src.cycle, src.variety, src.commercialVariety); srcKeys.add(k);
+                const fields = { talhao: src.talhao, cycle: src.cycle || '', variety: src.variety, commercialVariety: src.commercialVariety || '', boxes: src.boxes || '', totalUnits: src.dailyUnits || '', productionDays: src.days || '', plantedUnits: src.plants || '', totalBlockPlants: src.totalBlockPlants || '', accumulatedUnits: src.totalUnits || '', status: src.status || 'Em Andamento', estimatedCompletion: formatToISO(src.forecastDate || ''), blockEstimatedBoxes: src.blockEstimatedBoxes || '', active: src.active !== false };
+                const hash = JSON.stringify(fields);
+                let item = p_harvestData.find(it => it.partner === 'SPG Oásis' && keyOf(it.talhao, it.cycle, it.variety, it.commercialVariety) === k);
+                if (item && item._colheitaHash === hash) return;
+                if (!item) { item = { partner: 'SPG Oásis', grossWeight: '', harvestWeight: '', averageWeight: '', accumulatedKg: '', transplantDate: '', harvestStartDate: '' }; p_harvestData.push(item); }
+                Object.assign(item, fields); item.fromColheita = true; item._colheitaHash = hash;
+                const b = parseNumber(item.boxes), u = parseNumber(item.totalUnits), w = parseNumber(item.harvestWeight);
+                item.unitsPerBox = b > 0 && u > 0 ? (u / b).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 }) : '';
+                item.averageWeight = u > 0 && w > 0 ? (w / u).toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) : '';
+                const totalKg = p_lookupKgFromHistory(item.talhao, item.cycle, item.variety, item.commercialVariety) + parseNumber(item.grossWeight);
+                item.accumulatedKg = totalKg > 0 ? totalKg.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 }) : '';
+                const pl = parseNumber(item.plantedUnits), tb = parseNumber(item.totalBlockPlants), ac = parseNumber(item.accumulatedUnits);
+                item.percentage = pl > 0 ? Math.round((ac / pl) * 100) : 0; item.blockPercentage = tb > 0 ? Math.round((ac / tb) * 100) : 0;
+                changed = true;
+            });
+
+            // Blocos que vieram da Colheita e foram removidos de lá
+            const before = p_harvestData.length;
+            p_harvestData = p_harvestData.filter(it => !(it.partner === 'SPG Oásis' && it.fromColheita && !srcKeys.has(keyOf(it.talhao, it.cycle, it.variety, it.commercialVariety))));
+            if (p_harvestData.length !== before) changed = true;
+
+            // Parâmetros do turno e próximos blocos (só quando mudam na Colheita, para não apagar ajustes feitos na Pesagem)
+            const rawInputs = localStorage.getItem('spg_inputs');
+            let inputs = {}; try { inputs = JSON.parse(rawInputs || '{}') || {}; } catch(e) {}
+            const inputsHash = JSON.stringify(inputs);
+            if (rawInputs && inputsHash !== localStorage.getItem('spg_p_colheitaInputsHash')) {
+                let params = {}; try { params = JSON.parse(localStorage.getItem('spg_sede_shiftParams') || '{}') || {}; } catch(e) {}
+                Object.assign(params, { crewCount: inputs.crewCount || '', estimateDay: inputs.estimateDay || '', startTime: inputs.startTime || '', endTime: inputs.endTime || '', intervalDuration: inputs.intervalDuration || '', manualTotalEstimate: inputs.manualTotalEstimate || '' });
+                localStorage.setItem('spg_sede_shiftParams', JSON.stringify(params));
+                p_forecastBlocksData = (inputs.forecastBlocks || []).filter(f => f.block || f.date).map(f => ({ block: f.block, date: f.date }));
+                localStorage.setItem('spg_sede_forecasts', JSON.stringify(p_forecastBlocksData));
+                localStorage.setItem('spg_p_colheitaInputsHash', inputsHash);
+                const elManual = document.getElementById('p_manualTotalEstimate'); if (elManual) elManual.value = params.manualTotalEstimate;
+                p_loadShiftPanel(); changed = true;
+            }
+
+            if (!changed) return;
+            p_enrichWithPlantsDates(); p_saveToStorage(); p_renderList(); p_renderReport();
+        }
+
         function p_loadShiftPanel() {
             let params = {}; try { const sp = localStorage.getItem('spg_sede_shiftParams'); if (sp) params = JSON.parse(sp) || {}; } catch(e) {}
             const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
@@ -1942,8 +2007,9 @@
             const plantedRawVal = document.getElementById('p_plantedUnits').value; const accumRawVal = document.getElementById('p_accumulatedUnits').value; const totalBlockRaw = document.getElementById('p_totalBlockPlants').value;
             const calcPercentage = parseNumber(plantedRawVal) > 0 ? Math.round((parseNumber(accumRawVal) / parseNumber(plantedRawVal)) * 100) : 0; const calcBlockPercentage = parseNumber(totalBlockRaw) > 0 ? Math.round((parseNumber(accumRawVal) / parseNumber(totalBlockRaw)) * 100) : 0;
             const newItem = { partner: document.getElementById('p_partner').value, talhao: document.getElementById('p_talhao').value, variety: document.getElementById('p_variety').value, commercialVariety: document.getElementById('p_commercialVariety').value, boxes: document.getElementById('p_boxes').value, grossWeight: document.getElementById('p_grossWeight').value, unitsPerBox: document.getElementById('p_unitsPerBox').value, harvestWeight: document.getElementById('p_harvestWeight').value, totalUnits: document.getElementById('p_totalUnits').value, averageWeight: document.getElementById('p_averageWeight').value, productionDays: document.getElementById('p_productionDays').value, totalBlockPlants: totalBlockRaw, plantedUnits: plantedRawVal, cycle: document.getElementById('p_cycle').value, accumulatedUnits: accumRawVal, accumulatedKg: document.getElementById('p_accumulatedKg').value, totalBlockKg: document.getElementById('p_totalBlockKg').value, percentage: calcPercentage, blockPercentage: calcBlockPercentage, status: document.getElementById('p_harvestStatus').value, estimatedCompletion: document.getElementById('p_estimatedCompletion').value, blockEstimatedBoxes: document.getElementById('p_blockEstimatedBoxes').value };
-            if (p_editingIndex >= 0) { newItem.active = p_harvestData[p_editingIndex].active !== false; p_harvestData[p_editingIndex] = newItem; p_editingIndex = -1; } else { newItem.active = true; p_harvestData.push(newItem); }
+            if (p_editingIndex >= 0) { const old = p_harvestData[p_editingIndex]; newItem.active = old.active !== false; if (old.fromColheita) { newItem.fromColheita = true; newItem._colheitaHash = old._colheitaHash; newItem.transplantDate = old.transplantDate; newItem.harvestStartDate = old.harvestStartDate; } p_harvestData[p_editingIndex] = newItem; p_editingIndex = -1; } else { newItem.active = true; p_harvestData.push(newItem); }
             p_saveToStorage(); p_clearBlockForm(); p_renderReport(); p_renderList();
+            p_scheduleSyncFromColheita();
         }
 
         function p_removeItem(index) { if (p_editingIndex === index) { p_clearBlockForm(); p_editingIndex = -1; } p_harvestData.splice(index, 1); p_saveToStorage(); p_renderReport(); p_renderList(); }
