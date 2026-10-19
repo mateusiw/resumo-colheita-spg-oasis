@@ -55,6 +55,7 @@
         <div id="nav-actions-colheita" class="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
             <button onclick="c_downloadImage()" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-lg transition-all active:scale-95"><i data-lucide="image" class="w-4 h-4"></i><span class="hidden sm:inline">Enviar Imagem</span></button>
             <button onclick="c_downloadCSV()" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-lg transition-all active:scale-95"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i><span class="hidden sm:inline">Enviar CSV</span></button>
+            <button id="c_releaseBtn" onclick="c_onReleaseClick()" title="Conferir os dados e liberar a pesagem do SPG" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold shadow-lg transition-all active:scale-95"><i data-lucide="lock" class="w-4 h-4"></i><span class="hidden sm:inline">Liberar Pesagem</span></button>
         </div>
 
         <div id="nav-actions-pesagem" class="hidden flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
@@ -258,6 +259,8 @@
     <div id="view-pesagem" class="hidden animate-fade-in-down">
         <div class="container mx-auto p-4 flex flex-col lg:flex-row gap-8 mt-2">
             <div class="w-full lg:w-1/3 space-y-4">
+                <!-- Aviso de bloqueio do peso até a Colheita liberar -->
+                <div id="p_lockBanner" class="hidden"></div>
                 <!-- Parametros do Turno (dados vindos do CSV da Colheita) -->
                 <div id="p_shiftPanel" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <h2 class="text-sm font-bold text-slate-700 mb-1 flex items-center gap-2"><i data-lucide="settings" class="w-4 h-4 text-slate-500"></i> PARÂMETROS DO TURNO</h2>
@@ -419,7 +422,7 @@
 
     <div id="modalCsvCheck" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity opacity-0 duration-300">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 transition-transform flex flex-col max-h-[90vh]">
-            <div class="p-5 flex flex-col items-center justify-center text-white bg-emerald-600 shrink-0"><i data-lucide="clipboard-check" class="w-10 h-10 mb-2"></i><h3 class="text-lg font-bold">Conferência antes de enviar</h3><p class="text-[11px] text-white/80 mt-1 text-center">Confira cada item no relatório e marque para liberar o envio do CSV.</p></div>
+            <div class="p-5 flex flex-col items-center justify-center text-white bg-emerald-600 shrink-0"><i data-lucide="clipboard-check" class="w-10 h-10 mb-2"></i><h3 id="csvCheckTitle" class="text-lg font-bold">Conferência antes de enviar</h3><p id="csvCheckSub" class="text-[11px] text-white/80 mt-1 text-center">Confira cada item no relatório e marque para liberar o envio do CSV.</p></div>
             <div class="p-5 overflow-y-auto overscroll-contain"><div id="csvCheckList" class="flex flex-col gap-2"></div></div>
             <div class="px-5 pb-5 pt-1 flex gap-3 shrink-0"><button onclick="c_closeCsvCheck()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl shadow-sm active:scale-95">Voltar e corrigir</button><button id="csvCheckConfirmBtn" onclick="c_confirmCsvCheck()" disabled class="flex-1 text-white font-bold py-3 rounded-xl shadow-md active:scale-95 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:active:scale-100"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Enviar CSV</button></div>
         </div>
@@ -441,6 +444,8 @@
 
         // Estruturas de Dados
         let c_harvestData = JSON.parse(localStorage.getItem('spg_harvestData')) || [];
+        // Liberação da pesagem: só vale para os dados exatamente como estavam na conferência
+        let c_release = null; try { c_release = JSON.parse(localStorage.getItem('spg_release')) || null; } catch(e) { c_release = null; }
         let c_editingIndex = -1;
         let c_hasSynced = false;
         let p_hasSynced = false;
@@ -552,7 +557,7 @@
         function spg_getLocalState(key) {
             if (key === 'campo') return f_data;
             let inputs = {}; try { inputs = JSON.parse(localStorage.getItem('spg_inputs') || '{}'); } catch(e) {}
-            return { harvestData: c_harvestData, inputs };
+            return { harvestData: c_harvestData, inputs, release: c_release };
         }
 
         function spg_isEditing() { return c_editingIndex >= 0 || f_editingEntryIdx >= 0 || f_editingLoadIdx >= 0; }
@@ -569,6 +574,7 @@
                     c_harvestData = Array.isArray(data.harvestData) ? data.harvestData : [];
                     localStorage.setItem('spg_harvestData', JSON.stringify(c_harvestData));
                     localStorage.setItem('spg_inputs', JSON.stringify(data.inputs || {}));
+                    c_release = data.release || null; localStorage.setItem('spg_release', JSON.stringify(c_release));
                     if (c_editingIndex >= 0) c_clearBlockForm();
                     ['crewCount', 'estimateDay', 'startTime', 'endTime', 'intervalDuration', 'manualTotalEstimate'].forEach(id => { const el = document.getElementById('c_' + id); if (el) el.value = ''; });
                     document.getElementById('c_forecastBlocksContainer').innerHTML = '';
@@ -1436,6 +1442,7 @@
             const c_headerParamsEl = document.getElementById('c_headerParams');
             if (c_headerParamsEl) { c_headerParamsEl.innerHTML = `<div class="mt-2 pt-2 border-t border-white/20 flex items-start gap-4 flex-wrap"><div class="flex flex-col gap-0.5 icon-fix"><div class="flex items-center gap-3 flex-wrap"><div class="flex items-center gap-2"><i data-lucide="users" width="13" class="text-white/70"></i><span class="text-[11px] font-bold text-white">${crew}</span></div><div class="flex items-center gap-1.5 text-[11px] font-bold text-white/70 icon-fix"><i data-lucide="play-circle" width="12" class="text-slate-300 shrink-0"></i><span class="text-white">${document.getElementById('c_startTime').value || '--:--'}</span><span class="text-white/30">›</span><i data-lucide="stop-circle" width="12" class="text-red-300 shrink-0"></i><span class="text-red-200">${document.getElementById('c_endTime').value || '--:--'}</span><span class="text-white/20 mx-0.5">|</span><i data-lucide="coffee" width="12" class="text-amber-300 shrink-0"></i><span class="text-amber-200">${document.getElementById('c_intervalDuration').value || '0'} min</span><span class="text-white/20 mx-0.5">|</span><i data-lucide="clock" width="12" class="text-white/70 shrink-0"></i><span class="font-extrabold text-white">${finalHours} h</span></div></div>${(() => { if(!crewValue||sumBoxes<=0) return ''; const _cxP=(sumBoxes/parseInt(crewValue)).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:1}); const _fhp=finalHours.split(':').map(Number); const _fhd=(_fhp[0]||0)+(_fhp[1]||0)/60; const _t=_fhd>0?Math.round(sumBoxes/_fhd).toLocaleString('pt-BR'):null; const _c=_t?Math.round(sumBoxes/_fhd/parseInt(crewValue)).toLocaleString('pt-BR'):null; let _h='<div class="ml-[17px] flex items-center gap-1.5 flex-wrap">'; if(_t) _h+='<span class="inline-flex items-center gap-1 bg-orange-400/20 border border-orange-300/50 rounded-md px-1.5 py-0.5"><span class="text-[13px] font-extrabold text-orange-300 leading-none">'+_t+'</span><span class="text-[11px] font-bold text-orange-300/80 leading-none">cx/h equipe</span></span>'; if(_c) _h+='<span class="inline-flex items-center gap-1 bg-orange-400/20 border border-orange-300/50 rounded-md px-1.5 py-0.5"><span class="text-[13px] font-extrabold text-orange-300 leading-none">'+_c+'</span><span class="text-[11px] font-bold text-orange-300/80 leading-none">cx/h pessoa</span></span>'; _h+='<span class="inline-flex items-center gap-1 bg-orange-400/20 border border-orange-300/50 rounded-md px-1.5 py-0.5"><span class="text-[13px] font-extrabold text-orange-300 leading-none">'+_cxP+'</span><span class="text-[11px] font-bold text-orange-300/80 leading-none">cx/pessoa</span></span>'; _h+='</div>'; return _h; })()}</div>${finalEstimate > 0 ? `<div class="flex items-center gap-2 bg-white/15 border border-white/25 rounded-xl px-3 py-1.5 ml-auto"><span class="text-[10px] font-bold text-white/80">${estDay ? `Estimativa ${estDay}` : 'Estimativa'}</span><span class="text-[20px] font-extrabold text-white leading-none">${finalEstimate.toLocaleString('pt-BR')}</span><span class="text-[12px] font-bold text-white/80">cx</span></div>` : ''}</div>`; }
             footer.innerHTML = displayData.length ? forecastHtml : '';
+            c_updateReleaseBtn();
             lucide.createIcons();
         }
 
@@ -1450,10 +1457,19 @@
             } catch (err) { console.error(err); } finally { if (btnSpan) btnSpan.innerText = originalText; }
         }
 
-        async function c_downloadCSV() {
-            // Garante que o CSV saia com o que foi lançado em outros aparelhos (ex.: celular do campo)
-            if (navigator.onLine) { const btnSpan = document.querySelector('button[onclick="c_downloadCSV()"] span'); const original = btnSpan ? btnSpan.innerText : ''; if (btnSpan) btnSpan.innerText = 'Sincronizando...'; try { await spg_pullAll(); } finally { if (btnSpan) btnSpan.innerText = original; } }
-            if (!c_harvestData.length) { showAlert('Sem dados', ['Adicione ao menos um bloco antes de enviar o CSV.'], 'error'); return; }
+        // Checklist usado pelo "Enviar CSV" e pelo "Liberar Pesagem"
+        let c_checkMode = 'csv';
+        function c_downloadCSV() { return c_openCheckList('csv'); }
+
+        async function c_openCheckList(mode) {
+            c_checkMode = mode;
+            // Garante que a conferência seja feita com o que foi lançado em outros aparelhos (ex.: celular do campo)
+            if (navigator.onLine) { const btnSpan = document.querySelector(mode === 'release' ? '#c_releaseBtn span' : 'button[onclick="c_downloadCSV()"] span'); const original = btnSpan ? btnSpan.innerText : ''; if (btnSpan) btnSpan.innerText = 'Sincronizando...'; try { await spg_pullAll(); } finally { if (btnSpan) btnSpan.innerText = original; } }
+            if (!c_harvestData.length) { showAlert('Sem dados', [mode === 'release' ? 'Adicione ao menos um bloco antes de liberar a pesagem.' : 'Adicione ao menos um bloco antes de enviar o CSV.'], 'error'); return; }
+            const isRelease = mode === 'release';
+            document.getElementById('csvCheckTitle').innerText = isRelease ? 'Conferência para liberar a pesagem' : 'Conferência antes de enviar';
+            document.getElementById('csvCheckSub').innerText = isRelease ? 'Confira cada item no relatório. Ao confirmar, o SPG poderá lançar o peso (kg).' : 'Confira cada item no relatório e marque para liberar o envio do CSV.';
+            document.getElementById('csvCheckConfirmBtn').innerHTML = isRelease ? '<i data-lucide="lock-open" class="w-4 h-4"></i> Liberar Pesagem' : '<i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Enviar CSV';
             const activeData = c_harvestData.filter(item => item.active !== false);
             const crewCount = document.getElementById('c_crewCount').value || ''; const estimateDay = document.getElementById('c_estimateDay').value || '';
             const startTime = document.getElementById('c_startTime').value || '--:--'; const endTime = document.getElementById('c_endTime').value || '--:--'; const intervalDuration = document.getElementById('c_intervalDuration').value || '0';
@@ -1490,7 +1506,64 @@
 
         function c_confirmCsvCheck() {
             if (document.getElementById('csvCheckConfirmBtn').disabled) return;
-            c_closeCsvCheck(); c_generateCSV();
+            c_closeCsvCheck();
+            if (c_checkMode === 'release') c_releasePesagem(); else c_generateCSV();
+        }
+
+        // -------------------------------------------------------------
+        // LIBERAÇÃO DA PESAGEM: o peso (kg) do SPG Oásis fica bloqueado até a
+        // Colheita conferir os dados. Se blocos/caixas/unidades mudarem depois,
+        // ou se virar o dia, a pesagem volta a ficar bloqueada.
+        // -------------------------------------------------------------
+        function c_releaseHash() {
+            const rows = c_harvestData.map(it => [it.talhao, it.cycle, it.variety, it.commercialVariety, it.boxes, it.dailyUnits, it.active !== false].map(v => String(v ?? '').trim().toLowerCase()).join('|')).sort();
+            return f_todayISO() + '#' + rows.join(';');
+        }
+        function c_isReleased() { return !!(c_release && c_harvestData.length && c_release.hash === c_releaseHash()); }
+        function c_releaseChanged() { return !!(c_release && c_release.date === f_todayISO() && !c_isReleased()); }
+
+        function c_updateReleaseBtn() {
+            const btn = document.getElementById('c_releaseBtn'); if (!btn) return;
+            const ok = c_isReleased();
+            btn.className = `flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold shadow-lg transition-all active:scale-95 ${ok ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300' : 'bg-amber-500 hover:bg-amber-600 text-white'}`;
+            btn.innerHTML = `<i data-lucide="${ok ? 'lock-open' : 'lock'}" class="w-4 h-4"></i><span class="hidden sm:inline">${ok ? 'Pesagem Liberada' : (c_releaseChanged() ? 'Liberar de Novo' : 'Liberar Pesagem')}</span>`;
+        }
+
+        function c_onReleaseClick() {
+            if (c_isReleased()) { showConfirm('Bloquear a pesagem?', 'A pesagem já está liberada. Deseja <b>bloquear de novo</b> o lançamento do peso até uma nova conferência?', 'warning', '<i data-lucide="lock" class="w-4 h-4"></i> Bloquear', c_revokeRelease); return; }
+            c_openCheckList('release');
+        }
+
+        function c_saveRelease() {
+            localStorage.setItem('spg_release', JSON.stringify(c_release)); spg_markChanged('colheita');
+            c_updateReleaseBtn(); p_applyWeightLock(); lucide.createIcons();
+        }
+
+        function c_releasePesagem() {
+            c_release = { hash: c_releaseHash(), date: f_todayISO(), at: Date.now(), by: localStorage.getItem('spg_user') || '' };
+            c_saveRelease();
+            showAlert('Pesagem liberada!', ['Os dados foram conferidos e o SPG já pode lançar o peso (kg).', 'Se algum bloco, caixa ou unidade for alterado, a pesagem é bloqueada de novo até uma nova conferência.']);
+        }
+
+        function c_revokeRelease() { c_release = null; c_saveRelease(); }
+
+        // Bloqueia o campo de peso do SPG Oásis enquanto a Colheita não liberar
+        function p_applyWeightLock() {
+            const input = document.getElementById('p_grossWeight'); const banner = document.getElementById('p_lockBanner'); if (!input || !banner) return;
+            const partnerEl = document.getElementById('p_partner'); const isSpg = partnerEl && partnerEl.value === 'SPG Oásis';
+            const locked = isSpg && !c_isReleased();
+            input.disabled = locked; input.placeholder = locked ? 'Aguardando liberação' : '';
+            input.classList.toggle('bg-slate-100', locked); input.classList.toggle('cursor-not-allowed', locked);
+            if (!isSpg) { banner.className = 'hidden'; banner.innerHTML = ''; return; }
+            if (locked) {
+                banner.className = 'bg-amber-50 border border-amber-300 p-4 rounded-2xl flex items-start gap-3';
+                banner.innerHTML = `<i data-lucide="lock" class="w-5 h-5 text-amber-600 shrink-0 mt-0.5"></i><div><p class="text-sm font-bold text-amber-800">Peso (kg) bloqueado</p><p class="text-xs text-amber-700 mt-0.5 leading-relaxed">${c_releaseChanged() ? 'Os dados da Colheita mudaram depois da última conferência. ' : ''}Aguardando o colaborador da Colheita conferir os dados e tocar em <b>Liberar Pesagem</b>. Toque em <b>Atualizar</b> para verificar.</p></div>`;
+            } else {
+                const t = new Date(c_release.at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                banner.className = 'bg-emerald-50 border border-emerald-300 p-4 rounded-2xl flex items-start gap-3';
+                banner.innerHTML = `<i data-lucide="lock-open" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i><div><p class="text-sm font-bold text-emerald-800">Pesagem liberada</p><p class="text-xs text-emerald-700 mt-0.5">Dados conferidos${c_release.by ? ` por <b>${c_release.by}</b>` : ''} às ${t}. Já pode lançar o peso.</p></div>`;
+            }
+            if (window.lucide) lucide.createIcons();
         }
 
         async function c_generateCSV() {
@@ -1872,6 +1945,7 @@
         function p_scheduleSyncFromColheita() { clearTimeout(p_colheitaSyncTimer); p_colheitaSyncTimer = setTimeout(p_syncFromColheita, 300); }
 
         function p_syncFromColheita() {
+            p_applyWeightLock();
             if (p_editingIndex >= 0) return; // aplica depois que a edição for salva
             const lc = s => (s || '').toString().trim().toLowerCase();
             const keyOf = (t, c, v, cv) => `${t}|${lc(c)}|${lc(v)}|${lc(cv)}`;
@@ -2008,6 +2082,7 @@
                 totalUnitsInput.required = false; unitsPerBoxInput.required = true; prodDaysInput.required = false; plantedInput.required = false; accumInput.required = false; infoLabel.innerText = "Informações Adicionais"; unitsPerBoxWrapper.classList.remove('hidden'); unitsPerBoxWrapper.classList.add('col-span-2'); averageWeightWrapper.classList.add('hidden'); totalUnitsWrapper.classList.add('hidden');
             }
             const shiftPanel = document.getElementById('p_shiftPanel'); if (shiftPanel) shiftPanel.classList.toggle('hidden', partner !== 'SPG Oásis');
+            p_applyWeightLock();
             p_calculateValues();
         }
 
