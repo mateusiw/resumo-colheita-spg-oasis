@@ -41,9 +41,11 @@
             <button onclick="logoutSystem()" class="ml-2 p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-lg transition-colors flex items-center justify-center" title="Sair do Sistema">
                 <i data-lucide="log-out" class="w-4 h-4"></i>
             </button>
+            <button type="button" id="syncBadge" onclick="spg_syncNow()" title="Sincronizar agora" class="hidden"></button>
         </div>
 
         <div class="tab-container w-full md:w-auto overflow-x-auto justify-center hidden" id="mainTabContainer">
+            <button id="tab-btn-campo" onclick="switchTab('campo')" class="tab-btn tab-inactive flex-1 md:flex-none"><i data-lucide="truck" class="w-4 h-4 text-emerald-600"></i> Campo</button>
             <button id="tab-btn-colheita" onclick="switchTab('colheita')" class="tab-btn tab-active flex-1 md:flex-none"><i data-lucide="tractor" class="w-4 h-4"></i> Colheita</button>
             <button id="tab-btn-pesagem" onclick="switchTab('pesagem')" class="tab-btn tab-inactive flex-1 md:flex-none"><i data-lucide="scale" class="w-4 h-4 text-orange-500"></i> Pesagem</button>
         </div>
@@ -93,55 +95,52 @@
 
                 <!-- Form Colheita -->
                 <div id="c_formContainer" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 transition-colors">
-                    <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
-                        <h2 id="c_formTitle" class="text-sm font-bold text-slate-700 flex items-center gap-2 uppercase"><i data-lucide="clipboard-list" class="w-4 h-4 text-slate-500"></i> DADOS DO BLOCO</h2>
-                        <button type="button" onclick="showConfirm('Limpar Dados?', 'Os dados serão apagados.', 'warning', 'Limpar', c_clearBlockForm)" class="text-[10px] font-bold text-slate-400 hover:text-amber-500 flex items-center gap-1 uppercase"><i data-lucide="eraser" class="w-3 h-3"></i> LIMPAR</button>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 id="c_formTitle" class="text-lg font-bold text-slate-800 flex items-center gap-2"><i data-lucide="file-plus" class="text-emerald-600"></i> Adicionar Bloco</h2>
+                        <button type="button" onclick="showConfirm('Limpar Dados?', 'Os dados serão apagados.', 'warning', 'Limpar', c_clearBlockForm)" class="text-xs font-semibold text-slate-400 hover:text-red-500 flex items-center gap-1"><i data-lucide="eraser" class="w-3 h-3"></i> Cancelar</button>
                     </div>
                     <form id="c_harvestForm" onsubmit="c_addItem(event)" class="space-y-4">
                         <div class="grid grid-cols-2 gap-3">
-                            <div><label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Nº BLOCO</label><select id="c_talhao" onchange="c_autoFillPlants()" required class="w-full p-2 border border-slate-300 rounded text-sm outline-none"><option value="">Selecione...</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div>
-                            <div><label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">CICLO</label><input type="text" id="c_cycle" oninput="c_autoFillPlants()" class="w-full p-2 border border-slate-300 rounded text-sm outline-none"></div>
+                            <div><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Nº Bloco</label><select id="c_talhao" onchange="c_onBlocoChange()" required class="w-full p-2 border border-slate-300 rounded-lg outline-none text-sm"><option value="">Selecione...</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div>
+                            <div><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Ciclo</label><input type="text" id="c_cycle" inputmode="numeric" oninput="c_refreshCultureOptions(); c_autoFillPlants()" class="w-full p-2 border border-slate-300 rounded-lg outline-none text-sm"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
-                            <div><label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">CULTURA</label><select id="c_variety" onchange="c_updateCommercialInput(); c_autoFillPlants()" required class="w-full p-2 border border-slate-300 rounded text-sm outline-none"><option value="">Selecione...</option></select></div>
-                            <div id="c_commercialVarietyWrapper"><label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">VARIEDADE</label><input type="text" id="c_commercialVariety" class="w-full p-2 border border-slate-300 rounded text-sm outline-none"></div>
+                            <div><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Cultura</label><select id="c_variety" onchange="c_updateCommercialInput(); c_autoFillPlants()" required class="w-full p-2 border border-slate-300 rounded-lg outline-none text-sm"><option value="">Selecione...</option></select></div>
+                            <div id="c_commercialVarietyWrapper"><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Variedade</label><input type="text" id="c_commercialVariety" class="w-full p-2 border border-slate-300 rounded-lg outline-none text-sm"></div>
                         </div>
-                        <div class="border border-slate-200 rounded p-3 bg-slate-50/30">
-                            <div class="text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-wider border-b border-slate-100 pb-1">CRONOGRAMA</div>
+                        <div class="border-t border-slate-100 my-2 pt-2">
+                            <label class="text-xs font-bold text-slate-400 block mb-3">Informações da Colheita de Hoje</label>
                             <div class="grid grid-cols-2 gap-3 mb-3">
-                                <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">DATA PLANTIO</label><input type="date" id="c_date" required readonly class="w-full p-2 border border-slate-200 rounded text-sm bg-slate-50 font-bold outline-none cursor-not-allowed"></div>
-                                <div class="hidden"><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">INÍCIO COLHEITA</label><input type="date" id="c_startDate" class="w-full p-2 border border-slate-300 rounded text-sm outline-none uppercase"></div>
+                                <div><label class="text-[10px] font-bold text-slate-500 mb-1 block">Caixas</label><input type="text" id="c_boxes" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none"></div>
+                                <div><label class="text-[10px] font-bold text-slate-500 mb-1 block">Total de Unidades (Hoje)</label><input type="text" id="c_dailyUnits" oninput="formatNumberInput(this); c_updateAccumulated()" placeholder="Ex: 5000" class="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none"></div>
                             </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">DIAS DE PRODUÇÃO</label><input type="number" id="c_productionDays" class="w-full p-2 border border-slate-300 rounded text-sm outline-none"></div>
-                                <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">STATUS</label><select id="c_status" class="w-full p-2 border border-slate-300 rounded text-sm outline-none"><option value="EM ANDAMENTO">EM ANDAMENTO</option><option value="FINALIZADO">FINALIZADO</option></select></div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3 mt-3">
-                                <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">Previsão Finalizar</label><input type="date" id="c_forecastDate" class="w-full p-2 border border-slate-300 rounded text-sm outline-none"></div>
-                                <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">Est. Caixas</label><input type="text" id="c_blockEstimatedBoxes" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded text-sm outline-none"></div>
-                            </div>
-                        </div>
-                        <div class="border border-slate-200 rounded p-3 bg-slate-50/30">
-                            <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-1">
-                                <div class="text-[10px] font-bold text-slate-400 uppercase">PRODUÇÃO</div>
+
+                            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl mt-4 mb-2">
+                                <label class="text-[10px] font-bold text-slate-500 block mb-3 uppercase tracking-wide">Dados Adicionais do Bloco</label>
                                 <input type="checkbox" id="c_hasStages" onchange="c_toggleDetailsField()" class="hidden">
-                            </div>
-                            <div class="grid grid-cols-3 gap-3 mb-3">
-                                <div><label class="text-[10px] font-bold text-slate-500 block uppercase mb-1">TOTAL BLOCO</label><input type="text" id="c_totalBlockPlants" readonly class="w-full p-2 border border-slate-200 rounded text-sm bg-slate-50 font-bold outline-none text-right cursor-not-allowed"></div>
-                                <div><label class="text-[10px] font-bold text-slate-500 block uppercase mb-1">QTD. VARIEDADE</label><input type="text" id="c_plants" readonly class="w-full p-2 border border-slate-200 rounded text-sm bg-slate-50 font-bold outline-none text-right cursor-not-allowed"></div>
-                                <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">ACUMULADAS</label><input type="text" id="c_totalUnits" readonly class="w-full p-2 border border-slate-200 rounded text-sm bg-slate-50 font-bold outline-none text-right cursor-not-allowed"></div>
-                            </div>
-                            <textarea id="c_details" class="hidden"></textarea>
-                            <div id="c_detailsContainer" class="hidden mb-3">
-                                <div class="flex justify-between items-center mb-1"><span class="text-[10px] font-bold text-slate-400 uppercase">Produção por Semana</span><button type="button" onclick="c_addStageRow()" class="text-[10px] bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded font-bold uppercase">+ Semana</button></div>
-                                <div id="c_stagesList" class="space-y-1"></div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                 <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">CAIXAS</label><input type="text" id="c_boxes" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-300 rounded text-sm outline-none text-right"></div>
-                                 <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">TOTAL DE UNIDADES</label><input type="text" id="c_dailyUnits" oninput="formatNumberInput(this); c_updateAccumulated()" class="w-full p-2 border border-slate-300 rounded text-sm outline-none text-right"></div>
+                                <div class="grid grid-cols-3 gap-2 mb-3">
+                                    <div><label class="text-[10px] font-bold text-slate-500 mb-1 block">Dias Prod.</label><input type="number" id="c_productionDays" class="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none"></div>
+                                    <div><label class="text-[10px] font-bold text-slate-500 mb-1 block">Total Plantas</label><input type="text" id="c_totalBlockPlants" readonly class="w-full p-2 border border-slate-200 bg-slate-100 rounded-lg text-sm font-bold text-slate-600 outline-none cursor-not-allowed"></div>
+                                    <div><label class="text-[10px] font-bold text-slate-500 mb-1 block">Qtd Variedade</label><input type="text" id="c_plants" readonly class="w-full p-2 border border-slate-200 bg-slate-100 rounded-lg text-sm font-bold text-slate-600 outline-none cursor-not-allowed"></div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div><label class="text-[10px] font-bold text-slate-500 mb-1 block">Data Plantio</label><input type="date" id="c_date" required readonly class="w-full p-2 border border-slate-200 bg-slate-100 rounded-lg text-xs font-bold text-slate-600 outline-none cursor-not-allowed"></div>
+                                    <div><label class="text-[10px] font-bold text-emerald-600 mb-1 block">Acumuladas</label><input type="text" id="c_totalUnits" readonly class="w-full p-2 border border-emerald-200 bg-emerald-50 rounded-lg text-sm text-emerald-800 font-bold outline-none cursor-not-allowed"></div>
+                                    <div><label class="text-[10px] font-bold text-slate-500 mb-1 block">Status</label><select id="c_status" class="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none"><option value="EM ANDAMENTO">Em Andamento</option><option value="FINALIZADO">Finalizado</option></select></div>
+                                </div>
+                                <div class="mt-3 grid grid-cols-2 gap-2">
+                                    <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">Previsão Finalizar</label><input type="date" id="c_forecastDate" class="w-full p-2 border border-slate-200 rounded-lg text-sm outline-none"></div>
+                                    <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">Est. Caixas Bloco</label><input type="text" id="c_blockEstimatedBoxes" oninput="formatNumberInput(this)" class="w-full p-2 border border-slate-200 rounded-lg text-sm outline-none"></div>
+                                </div>
+                                <div class="hidden"><input type="date" id="c_startDate"></div>
+                                <textarea id="c_details" class="hidden"></textarea>
+                                <div id="c_detailsContainer" class="hidden mt-3">
+                                    <div class="flex justify-between items-center mb-1"><span class="text-[10px] font-bold text-slate-400 uppercase">Produção por Semana</span><button type="button" onclick="c_addStageRow()" class="text-[10px] bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded font-bold uppercase">+ Semana</button></div>
+                                    <div id="c_stagesList" class="space-y-1"></div>
+                                </div>
                             </div>
                         </div>
-                        <button type="submit" id="c_submitBtn" class="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded uppercase text-xs shadow-lg"><i data-lucide="plus-square" class="w-4 h-4"></i> <span>INSERIR NO RELATÓRIO</span></button>
+                        <button type="submit" id="c_submitBtn" class="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl"><i data-lucide="plus-circle" class="w-4 h-4"></i> <span>Adicionar ao Relatório</span></button>
                     </form>
                 </div>
 
@@ -167,9 +166,80 @@
                     </div>
                     <div id="c_summaryHeader" class="bg-white shrink-0"></div>
                     <div id="c_reportContent" class="divide-y divide-slate-50 flex-1 overflow-y-auto"></div>
-                    <div id="c_operationalFooter" class="bg-white border-t border-slate-200 p-4 shrink-0"></div>
+                    <div id="c_operationalFooter" class="bg-white shrink-0"></div>
                     <div class="bg-slate-100 p-3 text-center border-t border-slate-200 shrink-0 text-[10px] text-slate-400 uppercase font-medium">SPG Oásis • Dados Oficiais</div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ABA CAMPO: PREENCHIMENTO RÁPIDO NO CAMPO (FUNCIONA SEM INTERNET)          -->
+    <!-- ========================================================================= -->
+    <div id="view-campo" class="hidden animate-fade-in-down">
+        <div class="max-w-lg mx-auto p-4 space-y-4 mt-2">
+            <!-- Resumo do dia -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Colheita do dia</p>
+                    <p id="f_dayLabel" class="text-sm font-bold text-slate-800"></p>
+                    <button id="f_newDayBtn" type="button" onclick="f_confirmNewDay()" class="hidden mt-1 text-[11px] font-bold text-red-500 underline">Dados de outro dia · Iniciar novo dia</button>
+                </div>
+                <div class="text-right shrink-0">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total do dia</p>
+                    <p class="text-2xl font-extrabold text-emerald-700 leading-tight"><span id="f_dayTotal">0</span> <span class="text-sm">cx</span></p>
+                </div>
+            </div>
+
+            <!-- Carregamento atual -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i data-lucide="truck" class="text-emerald-600"></i> <span id="f_loadTitle">1º Carregamento</span></h2>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1"><i data-lucide="wifi-off" class="w-3 h-3"></i> Salvo no aparelho</span>
+                </div>
+                <form id="f_entryForm" onsubmit="f_addEntry(event)" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Nº Bloco</label><select id="f_bloco" required onchange="f_onBlocoChange()" class="w-full p-3 border border-slate-300 rounded-lg outline-none text-base bg-white"></select></div>
+                        <div><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Ciclo</label><input type="text" id="f_ciclo" inputmode="numeric" oninput="f_populateCultures()" placeholder="Ex: 2" class="w-full p-3 border border-slate-300 rounded-lg outline-none text-base"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Cultura</label><select id="f_cultura" required onchange="f_updateVarieties()" class="w-full p-3 border border-slate-300 rounded-lg outline-none text-base bg-white"></select></div>
+                        <div id="f_variedadeWrapper"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Qtd. Caixas</label><input type="text" id="f_caixas" required inputmode="numeric" oninput="formatNumberInput(this); f_updateEntryPreview()" placeholder="Ex: 40" class="w-full p-3 border border-slate-300 rounded-lg outline-none text-base"></div>
+                        <div><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Média Unid./Caixa</label><input type="text" id="f_media" required inputmode="decimal" oninput="formatDecimalInput(this); f_updateEntryPreview()" placeholder="Ex: 22" class="w-full p-3 border border-slate-300 rounded-lg outline-none text-base"></div>
+                    </div>
+                    <p id="f_entryPreview" class="text-xs text-slate-500 min-h-[1rem]"></p>
+                    <button type="submit" id="f_submitBtn" class="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl active:scale-95 transition-all"><i data-lucide="plus-circle" class="w-4 h-4"></i> <span>Adicionar ao Carregamento</span></button>
+                    <button type="button" id="f_cancelEntryEditBtn" onclick="f_cancelEntryEdit()" class="hidden w-full text-xs font-bold text-slate-500 underline">Cancelar edição do bloco</button>
+                </form>
+                <ul id="f_entriesList" class="mt-4 space-y-2"></ul>
+            </div>
+
+            <!-- Texto WhatsApp -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2"><i data-lucide="message-circle" class="w-4 h-4 text-emerald-600"></i> Mensagem do Carregamento</h3>
+                <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer mb-3 has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-300">
+                    <input type="checkbox" id="f_finalized" onchange="f_onFinalizedChange()" class="w-5 h-5 accent-emerald-600">
+                    <span class="text-sm font-bold text-slate-700">Colheita finalizada <span class="font-normal text-slate-500">(último carregamento do dia)</span></span>
+                </label>
+                <pre id="f_textPreview" class="whitespace-pre-wrap text-[13px] leading-relaxed text-slate-700 bg-slate-50 border border-slate-200 rounded-xl p-3 font-sans min-h-[3rem]"></pre>
+                <div class="grid grid-cols-2 gap-3 mt-3">
+                    <button type="button" onclick="f_copyCurrentText()" class="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl active:scale-95 transition-all"><i data-lucide="copy" class="w-4 h-4"></i> Copiar</button>
+                    <button type="button" onclick="f_shareCurrentText()" class="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl active:scale-95 transition-all"><i data-lucide="share-2" class="w-4 h-4"></i> Compartilhar</button>
+                </div>
+                <button type="button" id="f_closeBtn" onclick="f_confirmCloseLoad()" class="w-full mt-3 flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl active:scale-95 transition-all"><i data-lucide="check-circle" class="w-4 h-4"></i> Fechar Carregamento</button>
+                <p class="text-[10px] text-slate-400 mt-2 text-center">Ao fechar, o próximo carregamento é iniciado. Os dados já vão para a aba Colheita a cada bloco adicionado.</p>
+            </div>
+
+            <!-- Carregamentos fechados -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-bold text-slate-700">Carregamentos Fechados</h3>
+                    <button type="button" onclick="f_confirmNewDay()" class="text-[11px] font-bold text-red-500 underline">Limpar dia</button>
+                </div>
+                <ul id="f_historyList" class="space-y-2"></ul>
             </div>
         </div>
     </div>
@@ -180,6 +250,25 @@
     <div id="view-pesagem" class="hidden animate-fade-in-down">
         <div class="container mx-auto p-4 flex flex-col lg:flex-row gap-8 mt-2">
             <div class="w-full lg:w-1/3 space-y-4">
+                <!-- Parametros do Turno (dados vindos do CSV da Colheita) -->
+                <div id="p_shiftPanel" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-sm font-bold text-slate-700 mb-1 flex items-center gap-2"><i data-lucide="settings" class="w-4 h-4 text-slate-500"></i> PARÂMETROS DO TURNO</h2>
+                    <p class="text-[10px] text-slate-400 mb-4 border-b border-slate-100 pb-2">Dados importados do CSV da Colheita. Edite aqui se precisar corrigir.</p>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">Efetivo (pessoas)</label><input type="text" id="p_sp_crewCount" oninput="formatNumberInput(this); p_saveShiftPanel()" class="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none"></div>
+                        <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">Ref. Estimativa</label><select id="p_sp_estimateDay" onchange="p_saveShiftPanel()" class="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none"><option value="">(Nenhum)</option><option value="Segunda-feira">Segunda-feira</option><option value="Terça-feira">Terça-feira</option><option value="Quarta-feira">Quarta-feira</option><option value="Quinta-feira">Quinta-feira</option><option value="Sexta-feira">Sexta-feira</option><option value="Sábado">Sábado</option><option value="Domingo">Domingo</option><option value="Amanhã">Amanhã</option></select></div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">Início</label><input type="time" id="p_sp_startTime" oninput="p_saveShiftPanel()" class="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none"></div>
+                        <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">Término</label><input type="time" id="p_sp_endTime" oninput="p_saveShiftPanel()" class="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none"></div>
+                        <div><label class="text-[10px] font-bold text-slate-500 mb-1 block uppercase">Intervalo</label><input type="number" id="p_sp_intervalDuration" oninput="p_saveShiftPanel()" placeholder="Min" class="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none"></div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100">
+                        <div class="flex justify-between items-center mb-2"><label class="text-[10px] font-bold text-slate-500 uppercase">Próximos Blocos</label><button type="button" onclick="p_addForecastRow(); p_saveShiftPanel()" class="text-[10px] bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded font-bold uppercase">+ Bloco</button></div>
+                        <div id="p_forecastBlocksContainer" class="space-y-2"></div>
+                    </div>
+                </div>
+
                 <!-- Form Pesagem -->
                 <div id="p_formContainer" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 transition-colors duration-300">
                     <div class="flex justify-between items-center mb-4">
@@ -320,6 +409,14 @@
         </div>
     </div>
 
+    <div id="modalCsvCheck" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity opacity-0 duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 transition-transform flex flex-col max-h-[90vh]">
+            <div class="p-5 flex flex-col items-center justify-center text-white bg-emerald-600 shrink-0"><i data-lucide="clipboard-check" class="w-10 h-10 mb-2"></i><h3 class="text-lg font-bold">Conferência antes de enviar</h3><p class="text-[11px] text-white/80 mt-1 text-center">Confira cada item no relatório e marque para liberar o envio do CSV.</p></div>
+            <div class="p-5 overflow-y-auto overscroll-contain"><div id="csvCheckList" class="flex flex-col gap-2"></div></div>
+            <div class="px-5 pb-5 pt-1 flex gap-3 shrink-0"><button onclick="c_closeCsvCheck()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl shadow-sm active:scale-95">Voltar e corrigir</button><button id="csvCheckConfirmBtn" onclick="c_confirmCsvCheck()" disabled class="flex-1 text-white font-bold py-3 rounded-xl shadow-md active:scale-95 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:active:scale-100"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Enviar CSV</button></div>
+        </div>
+    </div>
+
     <div id="syncModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300">
         <div class="bg-white rounded-3xl shadow-2xl px-12 py-8 flex flex-col items-center justify-center gap-4"><i data-lucide="loader-2" class="w-10 h-10 text-slate-800 animate-spin"></i><h3 class="text-lg font-bold text-slate-800">Sincronizando Dados</h3></div>
     </div>
@@ -418,6 +515,125 @@
         // -------------------------------------------------------------
         let confirmAction = null;
 
+        // Trava a rolagem da página enquanto um pop-up está aberto
+        function lockPageScroll() { document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden'; }
+        function unlockPageScroll() {
+            const anyOpen = ['syncModal', 'modalCsvCheck'].some(id => { const el = document.getElementById(id); return el && !el.classList.contains('hidden'); });
+            if (anyOpen) return;
+            document.documentElement.style.overflow = ''; document.body.style.overflow = '';
+        }
+
+        // -------------------------------------------------------------
+        // SINCRONIZAÇÃO ENTRE APARELHOS (abas Campo e Colheita)
+        // Cada aparelho guarda tudo localmente e envia para a aba "Sync" da
+        // planilha quando tem internet. Vale a versão mais recente.
+        // -------------------------------------------------------------
+        const SPG_SYNC_KEYS = ['campo', 'colheita'];
+        let spg_syncMeta = {}; try { spg_syncMeta = JSON.parse(localStorage.getItem('spg_sync_meta')) || {}; } catch(e) { spg_syncMeta = {}; }
+        let spg_pushTimer = null; let spg_syncing = false; let spg_applyingRemote = false; let spg_suppressMark = false; let spg_initialPullPromise = null;
+
+        function spg_saveMeta() { try { localStorage.setItem('spg_sync_meta', JSON.stringify(spg_syncMeta)); } catch(e) {} }
+
+        function spg_markChanged(key) {
+            if (spg_applyingRemote || spg_suppressMark) return;
+            spg_syncMeta[key] = { ...(spg_syncMeta[key] || {}), updatedAt: Date.now(), dirty: true };
+            spg_saveMeta(); spg_updateSyncBadge();
+            clearTimeout(spg_pushTimer); spg_pushTimer = setTimeout(spg_pushAll, 1500);
+        }
+
+        function spg_getLocalState(key) {
+            if (key === 'campo') return f_data;
+            let inputs = {}; try { inputs = JSON.parse(localStorage.getItem('spg_inputs') || '{}'); } catch(e) {}
+            return { harvestData: c_harvestData, inputs };
+        }
+
+        function spg_isEditing() { return c_editingIndex >= 0 || f_editingEntryIdx >= 0 || f_editingLoadIdx >= 0; }
+
+        function spg_applyRemote(key, data, updatedAt) {
+            if (data === null || data === undefined) return false;
+            spg_applyingRemote = true;
+            try {
+                if (key === 'campo') {
+                    f_data = data; if (!Array.isArray(f_data.loads)) f_data.loads = [];
+                    f_editingLoadIdx = -1; f_editingEntryIdx = -1;
+                    localStorage.setItem(f_STORAGE_KEY, JSON.stringify(f_data)); f_render();
+                } else if (key === 'colheita') {
+                    c_harvestData = Array.isArray(data.harvestData) ? data.harvestData : [];
+                    localStorage.setItem('spg_harvestData', JSON.stringify(c_harvestData));
+                    localStorage.setItem('spg_inputs', JSON.stringify(data.inputs || {}));
+                    if (c_editingIndex >= 0) c_clearBlockForm();
+                    ['crewCount', 'estimateDay', 'startTime', 'endTime', 'intervalDuration', 'manualTotalEstimate'].forEach(id => { const el = document.getElementById('c_' + id); if (el) el.value = ''; });
+                    document.getElementById('c_forecastBlocksContainer').innerHTML = '';
+                    c_loadInputs(); c_sortHarvestData(); c_renderList(); c_renderReport();
+                }
+            } catch(e) { console.error(e); } finally { spg_applyingRemote = false; }
+            spg_syncMeta[key] = { updatedAt, dirty: false }; spg_saveMeta();
+            return true;
+        }
+
+        async function spg_pullAll() {
+            if (!isAuthColheita || !navigator.onLine || spg_isEditing()) { spg_updateSyncBadge(); return; }
+            try {
+                const res = await fetch(`${GAS_URL}?action=syncGet&keys=${SPG_SYNC_KEYS.join(',')}`, { method: 'GET', redirect: 'follow' });
+                const out = JSON.parse(await res.text());
+                if (out && !out.error && !spg_isEditing()) {
+                    let applied = false;
+                    SPG_SYNC_KEYS.forEach(key => {
+                        const remote = out[key]; if (!remote || !remote.updatedAt) return;
+                        const local = spg_syncMeta[key] || {};
+                        if (remote.updatedAt > (local.updatedAt || 0)) applied = spg_applyRemote(key, remote.data, remote.updatedAt) || applied;
+                    });
+                    // Os lançamentos do Campo são a fonte das caixas: reaplica na Colheita após receber dados
+                    if (applied && f_data.date === f_todayISO() && f_data.loads.some(l => l.entries.length)) f_syncToColheita();
+                }
+            } catch(e) {}
+            await spg_pushAll();
+        }
+
+        async function spg_pushAll() {
+            if (!isAuthColheita || spg_syncing) { spg_updateSyncBadge(); return; }
+            const keys = SPG_SYNC_KEYS.filter(k => spg_syncMeta[k] && spg_syncMeta[k].dirty);
+            if (!keys.length || !navigator.onLine) { spg_updateSyncBadge(); return; }
+            spg_syncing = true; spg_updateSyncBadge();
+            try {
+                for (const key of keys) {
+                    const sentAt = spg_syncMeta[key].updatedAt;
+                    const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow', body: JSON.stringify({ action: 'syncSave', key, updatedAt: sentAt, updatedBy: localStorage.getItem('spg_user') || '', data: spg_getLocalState(key) }) });
+                    const out = JSON.parse(await res.text());
+                    if (out.success) { if (spg_syncMeta[key] && spg_syncMeta[key].updatedAt === sentAt) spg_syncMeta[key].dirty = false; }
+                    else if (out.conflict) { spg_applyRemote(key, out.data, out.updatedAt); }
+                    spg_saveMeta();
+                }
+            } catch(e) {} finally { spg_syncing = false; spg_updateSyncBadge(); }
+            // Se algo mudou enquanto enviava, agenda outro envio
+            if (SPG_SYNC_KEYS.some(k => spg_syncMeta[k] && spg_syncMeta[k].dirty) && navigator.onLine) { clearTimeout(spg_pushTimer); spg_pushTimer = setTimeout(spg_pushAll, 5000); }
+        }
+
+        // Primeira busca depois que a página termina de montar (as outras telas esperam por ela)
+        function spg_ensureInitialPull() {
+            if (!spg_initialPullPromise) spg_initialPullPromise = new Promise(r => setTimeout(r, 0)).then(spg_pullAll);
+            return spg_initialPullPromise;
+        }
+
+        function spg_syncNow() { spg_pullAll(); }
+
+        function spg_updateSyncBadge() {
+            const el = document.getElementById('syncBadge'); if (!el) return;
+            if (!isAuthColheita) { el.className = 'hidden'; return; }
+            const pending = SPG_SYNC_KEYS.some(k => spg_syncMeta[k] && spg_syncMeta[k].dirty);
+            let icon = 'cloud', text = 'Sincronizado', cls = 'text-emerald-700 bg-emerald-50 border-emerald-200';
+            if (spg_syncing) { icon = 'refresh-cw'; text = 'Sincronizando'; cls = 'text-blue-600 bg-blue-50 border-blue-200'; }
+            else if (pending) { icon = 'cloud-off'; text = navigator.onLine ? 'Pendente' : 'Sem internet · pendente'; cls = 'text-amber-700 bg-amber-50 border-amber-200'; }
+            el.className = `ml-1 flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${cls}`;
+            el.innerHTML = `<i data-lucide="${icon}" class="w-3 h-3 ${spg_syncing ? 'animate-spin' : ''}"></i><span>${text}</span>`;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        window.addEventListener('online', () => spg_pullAll());
+        window.addEventListener('offline', () => spg_updateSyncBadge());
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') spg_pullAll(); });
+        setInterval(() => { if (document.visibilityState === 'visible') spg_pullAll(); }, 60000);
+
         function showConfirm(title, msg, type, btnHtml, callback) {
             const modal = document.getElementById('modalConfirm');
             const header = document.getElementById('mcHeader');
@@ -482,9 +698,10 @@
             localStorage.removeItem('auth_colheita'); sessionStorage.removeItem('auth_colheita');
             localStorage.removeItem('auth_pesagem'); sessionStorage.removeItem('auth_pesagem');
             localStorage.removeItem('auth_master'); sessionStorage.removeItem('auth_master');
-            isAuthColheita = false; isAuthPesagem = false; isAuthMaster = false; c_hasSynced = false; p_hasSynced = false;
+            isAuthColheita = false; isAuthPesagem = false; isAuthMaster = false; c_hasSynced = false; p_hasSynced = false; spg_updateSyncBadge();
             document.getElementById('view-colheita').classList.add('hidden'); document.getElementById('view-colheita').classList.remove('block');
             document.getElementById('view-pesagem').classList.add('hidden'); document.getElementById('view-pesagem').classList.remove('block');
+            document.getElementById('view-campo').classList.add('hidden'); document.getElementById('view-campo').classList.remove('block');
             document.getElementById('loginScreen').classList.remove('hidden'); showLogin('geral');
         }
 
@@ -538,10 +755,11 @@
                     else if (loginAs === 'pesagem') { isAuthPesagem = true; }
 
                     if (keepConnected) { localStorage.setItem(`auth_${loginAs}`, 'true'); } else { sessionStorage.setItem(`auth_${loginAs}`, 'true'); }
+                    try { localStorage.setItem('spg_user', user); } catch(e) {}
 
                     const loginScreen = document.getElementById('loginScreen');
                     loginScreen.classList.add('opacity-0');
-                    setTimeout(() => { loginScreen.classList.add('hidden'); switchTab(targetTab); }, 300);
+                    setTimeout(() => { loginScreen.classList.add('hidden'); switchTab(targetTab); spg_updateSyncBadge(); spg_pullAll(); }, 300);
                 } else {
                     errorEl.innerText = data.inactive ? 'Usuário inativo. Contate o administrador.' : 'Usuário ou senha incorretos.';
                     errorEl.classList.remove('hidden');
@@ -558,7 +776,7 @@
         }
 
         function switchTab(tab) {
-            if (tab === 'colheita' && !isAuthColheita) { showLogin('colheita'); return; }
+            if ((tab === 'colheita' || tab === 'campo') && !isAuthColheita) { showLogin('colheita'); return; }
             if (tab === 'pesagem' && !isAuthPesagem) { showLogin('pesagem'); return; }
             executeTabSwitch(tab);
         }
@@ -568,11 +786,26 @@
             const btnPes = document.getElementById('tab-btn-pesagem');
             const tabContainer = document.getElementById('mainTabContainer');
 
-            if (isAuthMaster) { tabContainer.classList.remove('hidden'); tabContainer.classList.add('flex'); } 
+            try { localStorage.setItem('spg_last_tab', tab); } catch(e) {}
+            const btnCampo = document.getElementById('tab-btn-campo');
+            const viewCampo = document.getElementById('view-campo');
+            if (isAuthMaster || isAuthColheita) { tabContainer.classList.remove('hidden'); tabContainer.classList.add('flex'); }
             else { tabContainer.classList.add('hidden'); tabContainer.classList.remove('flex'); }
-            
-            if(tab === 'colheita') {
-                btnCol.className = 'tab-btn tab-active flex-1 md:flex-none'; btnPes.className = 'tab-btn tab-inactive flex-1 md:flex-none';
+            btnPes.classList.toggle('hidden', !isAuthPesagem);
+            btnCampo.classList.toggle('hidden', !isAuthColheita);
+            btnCampo.className = `tab-btn ${tab === 'campo' ? 'tab-active' : 'tab-inactive'} flex-1 md:flex-none${isAuthColheita ? '' : ' hidden'}`;
+            viewCampo.classList.toggle('hidden', tab !== 'campo'); viewCampo.classList.toggle('block', tab === 'campo');
+
+            if (tab === 'campo') {
+                btnCol.className = 'tab-btn tab-inactive flex-1 md:flex-none'; btnPes.className = `tab-btn tab-inactive flex-1 md:flex-none${isAuthPesagem ? '' : ' hidden'}`;
+                document.getElementById('view-colheita').classList.add('hidden'); document.getElementById('view-colheita').classList.remove('block');
+                document.getElementById('view-pesagem').classList.add('hidden'); document.getElementById('view-pesagem').classList.remove('block');
+                document.getElementById('nav-actions-colheita').classList.add('hidden'); document.getElementById('nav-actions-pesagem').classList.add('hidden');
+                document.getElementById('nav-logo').src = 'https://i.imgur.com/wEozr34.png'; document.getElementById('favicon').href = 'https://i.imgur.com/wEozr34.png';
+                document.getElementById('nav-title').innerText = 'SPG Oásis'; document.getElementById('nav-subtitle').innerText = 'Lançamento de Carregamentos no Campo';
+                f_render();
+            } else if(tab === 'colheita') {
+                btnCol.className = 'tab-btn tab-active flex-1 md:flex-none'; btnPes.className = `tab-btn tab-inactive flex-1 md:flex-none${isAuthPesagem ? '' : ' hidden'}`;
                 document.getElementById('view-colheita').classList.remove('hidden'); document.getElementById('view-colheita').classList.add('block');
                 document.getElementById('view-pesagem').classList.add('hidden'); document.getElementById('view-pesagem').classList.remove('block');
                 document.getElementById('nav-actions-colheita').classList.remove('hidden'); document.getElementById('nav-actions-pesagem').classList.add('hidden');
@@ -582,7 +815,7 @@
 
                 if (!c_hasSynced) { c_syncAppOnLoad(); c_hasSynced = true; }
             } else {
-                btnPes.className = 'tab-btn tab-active flex-1 md:flex-none'; btnCol.className = 'tab-btn tab-inactive flex-1 md:flex-none';
+                btnPes.className = 'tab-btn tab-active flex-1 md:flex-none'; btnCol.className = `tab-btn tab-inactive flex-1 md:flex-none${isAuthColheita ? '' : ' hidden'}`;
                 document.getElementById('view-pesagem').classList.remove('hidden'); document.getElementById('view-pesagem').classList.add('block');
                 document.getElementById('view-colheita').classList.add('hidden'); document.getElementById('view-colheita').classList.remove('block');
                 document.getElementById('nav-actions-pesagem').classList.remove('hidden'); document.getElementById('nav-actions-pesagem').classList.add('flex');
@@ -599,10 +832,18 @@
         // CARREGAMENTO INICIAL DE DADOS
         // -------------------------------------------------------------
         document.addEventListener('DOMContentLoaded', () => {
+            // Montagem inicial não conta como alteração para a sincronização
+            spg_suppressMark = true;
+            // Prepara a aba Campo antes de abrir qualquer tela (ela funciona sem internet)
+            f_init();
+            let lastTab = ''; try { lastTab = localStorage.getItem('spg_last_tab') || ''; } catch(e) {}
             if (isAuthMaster) {
                 isAuthColheita = true; isAuthPesagem = true;
                 document.getElementById('loginScreen').classList.add('hidden');
-                switchTab('colheita');
+                switchTab(['campo', 'colheita', 'pesagem'].includes(lastTab) ? lastTab : 'colheita');
+            } else if (isAuthColheita && lastTab === 'campo') {
+                document.getElementById('loginScreen').classList.add('hidden');
+                switchTab('campo');
             } else if (!isAuthColheita && !isAuthPesagem) {
                 document.getElementById('loginScreen').classList.remove('hidden');
                 showLogin('geral');
@@ -627,6 +868,10 @@
             
             // Atualiza os títulos a cada minuto para manter o horário sincronizado
             setInterval(() => { c_updateDynamicTitle(); p_updateDynamicTitle(); }, 60000);
+
+            spg_suppressMark = false;
+            spg_updateSyncBadge();
+            spg_ensureInitialPull();
         });
 
         function loadAllCultures() {
@@ -634,14 +879,7 @@
             try { storedCultures = JSON.parse(localStorage.getItem('spg_cultures')) || ["Brócolis", "Couve-Flor"]; } 
             catch(e) { storedCultures = ["Brócolis", "Couve-Flor"]; }
             
-            const c_varietySelect = document.getElementById('c_variety');
-            if (c_varietySelect) {
-                const c_currentVal = c_varietySelect.value;
-                c_varietySelect.innerHTML = '<option value="">Selecione...</option>';
-                storedCultures.forEach(c => c_varietySelect.innerHTML += `<option value="${c}">${c}</option>`);
-                if (c_currentVal) c_varietySelect.value = c_currentVal;
-                c_updateCommercialInput();
-            }
+            if (document.getElementById('c_variety')) c_refreshCultureOptions();
 
             const p_varietySelect = document.getElementById('p_variety');
             if (p_varietySelect) {
@@ -651,6 +889,8 @@
                 if (p_currentVal) p_varietySelect.value = p_currentVal;
                 p_updateCommercialInput();
             }
+
+            f_populateCultures();
         }
 
         // -------------------------------------------------------------
@@ -664,7 +904,7 @@
             document.getElementById('c_headerDateTime').innerText = `${day}/${month}/${now.getFullYear()} - ${timeString} - Semana ${getWeekNumber(now)}`;
         }
 
-        function c_saveData() { localStorage.setItem('spg_harvestData', JSON.stringify(c_harvestData)); }
+        function c_saveData() { const json = JSON.stringify(c_harvestData); if (localStorage.getItem('spg_harvestData') !== json) { localStorage.setItem('spg_harvestData', json); spg_markChanged('colheita'); } }
 
         function c_getForecastBlocks() {
             const container = document.getElementById('c_forecastBlocksContainer');
@@ -686,6 +926,59 @@
             blockOptions.forEach(b => { optionsHtml += `<option value="${b}" ${block === b ? 'selected' : ''}>${b}</option>`; });
             div.innerHTML = `<div class="w-1/3"><select class="forecast-block w-full p-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-400 outline-none text-slate-700" onchange="c_saveInputs(); c_renderReport()">${optionsHtml}</select></div><div class="flex-1"><input type="date" value="${date}" class="forecast-date w-full p-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-400 outline-none text-slate-700 uppercase" onchange="c_saveInputs(); c_renderReport()"></div><button type="button" onclick="document.getElementById('${rowId}').remove(); c_saveInputs(); c_renderReport()" class="text-red-400 hover:text-red-600 p-1 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>`;
             container.appendChild(div); lucide.createIcons();
+        }
+
+        // -------------------------------------------------------------
+        // CICLO / CULTURA / VARIEDADE POR BLOCO (usado pelas abas Colheita e Campo)
+        // -------------------------------------------------------------
+        function spg_getPlantRows(bloco, ciclo) {
+            if (!bloco) return [];
+            ciclo = String(ciclo || '').trim();
+            try {
+                const data = JSON.parse(localStorage.getItem('spg_plants_data') || '[]');
+                return data.filter(d => String(d.bloco) == String(bloco) && (!ciclo || String(d.ciclo) == ciclo));
+            } catch(e) { return []; }
+        }
+
+        // Ciclo mais recente do bloco, olhando os blocos já lançados e os dados de plantio
+        function spg_latestCycle(bloco) {
+            if (!bloco) return '';
+            const fromColheita = c_harvestData.filter(it => String(it.talhao) == String(bloco) && it.cycle).map(it => it.cycle);
+            const fromPlants = spg_getPlantRows(bloco).map(d => d.ciclo).filter(c => c !== undefined && c !== null && c !== '');
+            const all = [...fromColheita, ...fromPlants];
+            return all.length ? String(all.reduce((a, b) => (parseFloat(b) > parseFloat(a) ? b : a))) : '';
+        }
+
+        // Culturas plantadas no bloco/ciclo; sem dados, usa a lista geral
+        function spg_culturesFor(bloco, ciclo) {
+            let cultures = [...new Set(spg_getPlantRows(bloco, ciclo).map(d => (d.cultura || '').trim()).filter(Boolean))].sort();
+            if (!cultures.length) { try { cultures = JSON.parse(localStorage.getItem('spg_cultures')) || ["Brócolis", "Couve-Flor"]; } catch(e) { cultures = ["Brócolis", "Couve-Flor"]; } }
+            return cultures;
+        }
+
+        // Variedades plantadas no bloco/ciclo para a cultura; sem dados, usa a lista geral
+        function spg_varietiesFor(bloco, ciclo, cultura) {
+            const lc = s => (s || '').trim().toLowerCase();
+            let list = [...new Set(spg_getPlantRows(bloco, ciclo).filter(d => lc(d.cultura) === lc(cultura)).map(d => (d.variedade || '').trim()).filter(Boolean))].sort();
+            if (!list.length) {
+                let stored; try { stored = JSON.parse(localStorage.getItem('spg_varieties')) || {}; } catch(e) { stored = {}; }
+                list = stored[cultura];
+                if (!list) { if (cultura === 'Brócolis') list = ["BRO 68 Syngenta", "Master TSV", "Sakata Jiraya F1", "PHAR LAP"]; else if (cultura === 'Couve-Flor') list = ["Vereda", "Copacabana", "Tirsuli", "SF-1758 F1", "Champagne Snow", "Serena", "Supremo"]; else list = []; }
+            }
+            return list;
+        }
+
+        function c_onBlocoChange() {
+            document.getElementById('c_cycle').value = spg_latestCycle(document.getElementById('c_talhao').value);
+            c_refreshCultureOptions(); c_autoFillPlants();
+        }
+
+        function c_refreshCultureOptions() {
+            const sel = document.getElementById('c_variety'); if (!sel) return; const current = sel.value;
+            const cultures = spg_culturesFor(document.getElementById('c_talhao').value, document.getElementById('c_cycle').value);
+            sel.innerHTML = '<option value="">Selecione...</option>' + cultures.map(c => `<option value="${c}">${c}</option>`).join('');
+            if (current && cultures.includes(current)) sel.value = current; else if (cultures.length === 1) sel.value = cultures[0];
+            c_updateCommercialInput();
         }
 
         function c_autoFillPlants() {
@@ -762,7 +1055,8 @@
 
         function c_saveInputs() {
             const inputs = { crewCount: document.getElementById('c_crewCount').value, estimateDay: document.getElementById('c_estimateDay').value, startTime: document.getElementById('c_startTime').value, endTime: document.getElementById('c_endTime').value, intervalDuration: document.getElementById('c_intervalDuration').value, manualTotalEstimate: document.getElementById('c_manualTotalEstimate').value, forecastBlocks: c_getForecastBlocks() };
-            localStorage.setItem('spg_inputs', JSON.stringify(inputs));
+            const json = JSON.stringify(inputs);
+            if (localStorage.getItem('spg_inputs') !== json) { localStorage.setItem('spg_inputs', json); spg_markChanged('colheita'); }
         }
 
         function c_loadInputs() {
@@ -803,9 +1097,11 @@
 
         async function c_syncAppOnLoad() {
             const modal = document.getElementById('syncModal');
-            if (modal) { modal.classList.remove('hidden'); setTimeout(() => modal.classList.remove('opacity-0'), 10); }
-            const forceCloseTimeout = setTimeout(() => { if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => modal.classList.add('hidden'), 300); } }, 8000);
+            if (modal) { lockPageScroll(); modal.classList.remove('hidden'); setTimeout(() => modal.classList.remove('opacity-0'), 10); }
+            const forceCloseTimeout = setTimeout(() => { if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => { modal.classList.add('hidden'); unlockPageScroll(); }, 300); } }, 8000);
             try {
+                // Primeiro traz o que foi lançado em outros aparelhos
+                await spg_ensureInitialPull();
                 const response = await fetch(`${GAS_URL}?action=blocosPlantas`, { method: 'GET', redirect: 'follow' }); 
                 const data = JSON.parse(await response.text());
                 if (!data.error) {
@@ -821,7 +1117,7 @@
                 if (!dataHist.error) { localStorage.setItem('spg_harvest_history', JSON.stringify(dataHist)); c_refreshAllAccumulated(); }
                 await c_syncForecasts(true);
             } catch (error) { } 
-            finally { clearTimeout(forceCloseTimeout); try { loadAllCultures(); } catch(e) {} if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => { modal.classList.add('hidden'); }, 300); } }
+            finally { clearTimeout(forceCloseTimeout); try { loadAllCultures(); } catch(e) {} if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => { modal.classList.add('hidden'); unlockPageScroll(); }, 300); } }
         }
 
         function p_enrichWithPlantsDates() {
@@ -862,8 +1158,8 @@
 
         async function p_syncAppOnLoad() {
             const modal = document.getElementById('syncModal');
-            if (modal) { modal.classList.remove('hidden'); setTimeout(() => modal.classList.remove('opacity-0'), 10); }
-            const forceCloseTimeout = setTimeout(() => { if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => modal.classList.add('hidden'), 300); } }, 8000);
+            if (modal) { lockPageScroll(); modal.classList.remove('hidden'); setTimeout(() => modal.classList.remove('opacity-0'), 10); }
+            const forceCloseTimeout = setTimeout(() => { if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => { modal.classList.add('hidden'); unlockPageScroll(); }, 300); } }, 8000);
             try {
                 const [resPlants, resHist] = await Promise.all([
                     fetch(`${GAS_URL}?action=blocosPlantas`, { method: 'GET', redirect: 'follow' }),
@@ -874,25 +1170,33 @@
                 if (!dataPlants.error) localStorage.setItem('spg_plants_data', JSON.stringify(dataPlants));
                 if (!dataHist.error) { localStorage.setItem('spg_harvest_history', JSON.stringify(dataHist)); p_enrichWithPlantsDates(); p_saveToStorage(); }
             } catch (error) { }
-            finally { clearTimeout(forceCloseTimeout); if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => { modal.classList.add('hidden'); }, 300); } p_renderReport(); }
+            finally { clearTimeout(forceCloseTimeout); if (modal && !modal.classList.contains('hidden')) { modal.classList.add('opacity-0'); setTimeout(() => { modal.classList.add('hidden'); unlockPageScroll(); }, 300); } p_renderReport(); }
         }
 
         function c_updateCommercialInput() {
             const variety = document.getElementById('c_variety').value; const wrapper = document.getElementById('c_commercialVarietyWrapper');
-            let html = `<label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">VARIEDADE</label>`;
-            let storedVarieties; try { storedVarieties = JSON.parse(localStorage.getItem('spg_varieties')) || {}; } catch(e) { storedVarieties = {}; }
-            let varietyList = storedVarieties[variety];
-            if (!varietyList) { if (variety === 'Brócolis') varietyList = ["BRO 68 Syngenta", "Master TSV", "Sakata Jiraya F1", "PHAR LAP"]; else if (variety === 'Couve-Flor') varietyList = ["Vereda", "Copacabana", "Tirsuli", "SF-1758 F1", "Champagne Snow", "Serena", "Supremo"]; }
-            if (varietyList && varietyList.length > 0) { html += `<select id="c_commercialVariety" onchange="c_autoFillPlants()" class="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-1 focus:ring-slate-400 outline-none text-slate-700"><option value="">Selecione...</option>`; varietyList.forEach(v => { html += `<option value="${v}">${v}</option>`; }); html += `</select>`; } 
-            else { html += `<input type="text" id="c_commercialVariety" oninput="c_autoFillPlants()" placeholder="Nome da variedade" class="w-full p-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-slate-400 outline-none text-slate-700">`; }
+            const prevEl = document.getElementById('c_commercialVariety'); const prev = prevEl ? prevEl.value : '';
+            let html = `<label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Variedade</label>`;
+            const varietyList = spg_varietiesFor(document.getElementById('c_talhao').value, document.getElementById('c_cycle').value, variety);
+            if (varietyList && varietyList.length > 0) { html += `<select id="c_commercialVariety" onchange="c_autoFillPlants()" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white"><option value="">Selecione...</option>`; varietyList.forEach(v => { html += `<option value="${v}">${v}</option>`; }); html += `</select>`; } 
+            else { html += `<input type="text" id="c_commercialVariety" oninput="c_autoFillPlants()" placeholder="Nome da variedade" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm">`; }
             wrapper.innerHTML = html;
+            const sel = document.getElementById('c_commercialVariety');
+            if (prev && (!varietyList.length || varietyList.includes(prev))) sel.value = prev; else if (varietyList.length === 1) sel.value = varietyList[0];
+        }
+
+        // Garante que um valor salvo apareça no select mesmo se não estiver na lista filtrada
+        function c_ensureOption(selectId, value) {
+            const sel = document.getElementById(selectId); if (!sel || sel.tagName !== 'SELECT' || !value) return;
+            if (![...sel.options].some(o => o.value === value)) sel.add(new Option(value, value));
+            sel.value = value;
         }
 
         function c_clearBlockForm() {
             ['talhao','cycle','startDate','date','plants','totalBlockPlants','totalUnits','boxes','dailyUnits','details', 'productionDays', 'status', 'forecastDate', 'blockEstimatedBoxes'].forEach(id => { const el = document.getElementById('c_'+id); if(el) el.value = (id === 'status' ? 'EM ANDAMENTO' : ''); });
-            document.getElementById('c_totalUnits').removeAttribute('data-base-value'); document.getElementById('c_stagesList').innerHTML = ''; document.getElementById('c_hasStages').checked = false; c_toggleDetailsField(); document.getElementById('c_variety').selectedIndex = 0; c_updateCommercialInput(); c_editingIndex = -1;
-            const btn = document.getElementById('c_submitBtn'); btn.innerHTML = '<i data-lucide="plus-square" class="w-4 h-4"></i> <span>INSERIR NO RELATÓRIO</span>'; btn.classList.replace('bg-blue-600', 'bg-slate-800'); btn.classList.replace('hover:bg-blue-700', 'hover:bg-slate-900');
-            document.getElementById('c_formTitle').innerHTML = '<i data-lucide="clipboard-list" class="w-4 h-4 text-slate-500"></i> DADOS DO BLOCO'; document.getElementById('c_formContainer').classList.remove('border-blue-300', 'ring-2', 'ring-blue-100'); lucide.createIcons();
+            document.getElementById('c_totalUnits').removeAttribute('data-base-value'); document.getElementById('c_stagesList').innerHTML = ''; document.getElementById('c_hasStages').checked = false; c_toggleDetailsField(); document.getElementById('c_variety').selectedIndex = 0; c_refreshCultureOptions(); c_editingIndex = -1;
+            const btn = document.getElementById('c_submitBtn'); btn.innerHTML = '<i data-lucide="plus-circle" class="w-4 h-4"></i> <span>Adicionar ao Relatório</span>'; btn.classList.replace('bg-blue-600', 'bg-slate-800'); btn.classList.replace('hover:bg-blue-700', 'hover:bg-slate-900');
+            document.getElementById('c_formTitle').innerHTML = '<i data-lucide="file-plus" class="text-emerald-600"></i> Adicionar Bloco'; document.getElementById('c_formContainer').classList.remove('border-blue-300', 'ring-2', 'ring-blue-100'); lucide.createIcons();
         }
 
         function c_addItem(e) {
@@ -912,7 +1216,7 @@
 
         function c_editItem(index) {
             const item = c_harvestData[index]; c_editingIndex = index;
-            document.getElementById('c_talhao').value = item.talhao; document.getElementById('c_cycle').value = item.cycle || ''; document.getElementById('c_variety').value = item.variety; c_updateCommercialInput(); document.getElementById('c_commercialVariety').value = item.commercialVariety;
+            document.getElementById('c_talhao').value = item.talhao; document.getElementById('c_cycle').value = item.cycle || ''; document.getElementById('c_variety').value = ''; c_refreshCultureOptions(); c_ensureOption('c_variety', item.variety); c_updateCommercialInput(); if (document.getElementById('c_commercialVariety').tagName === 'SELECT') c_ensureOption('c_commercialVariety', item.commercialVariety); else document.getElementById('c_commercialVariety').value = item.commercialVariety || '';
             if(item.date) document.getElementById('c_date').value = item.date.split('/').reverse().join('-'); if(item.startDate) document.getElementById('c_startDate').value = item.startDate.split('/').reverse().join('-'); if(item.forecastDate) document.getElementById('c_forecastDate').value = item.forecastDate.split('/').reverse().join('-');
             ['plants','totalBlockPlants','boxes','dailyUnits'].forEach(k => { const el = document.getElementById('c_'+k); if (el) el.value = item[k] || ''; });
             document.getElementById('c_status').value = item.status === 'Finalizado' ? 'FINALIZADO' : 'EM ANDAMENTO'; document.getElementById('c_productionDays').value = item.days || ''; document.getElementById('c_details').value = item.details || ''; document.getElementById('c_blockEstimatedBoxes').value = item.blockEstimatedBoxes || '';
@@ -923,8 +1227,8 @@
             const stagesList = document.getElementById('c_stagesList'); stagesList.innerHTML = '';
             if (item.details && item.details.trim()) { document.getElementById('c_hasStages').checked = true; item.details.split('\n').forEach(line => { const [l, v] = line.split(':'); c_addStageRow(l?.trim(), v?.trim()); }); } else { document.getElementById('c_hasStages').checked = false; }
             c_toggleDetailsField();
-            const btn = document.getElementById('c_submitBtn'); btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> <span>SALVAR ALTERAÇÕES</span>'; btn.classList.replace('bg-slate-800', 'bg-blue-600'); btn.classList.replace('hover:bg-slate-900', 'hover:bg-blue-700');
-            document.getElementById('c_formTitle').innerHTML = '<i data-lucide="pencil" class="w-4 h-4 text-blue-600"></i> EDITANDO BLOCO'; document.getElementById('c_formContainer').classList.add('border-blue-300', 'ring-2', 'ring-blue-100'); document.getElementById('c_formContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const btn = document.getElementById('c_submitBtn'); btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Alterações</span>'; btn.classList.replace('bg-slate-800', 'bg-blue-600'); btn.classList.replace('hover:bg-slate-900', 'hover:bg-blue-700');
+            document.getElementById('c_formTitle').innerHTML = '<i data-lucide="pencil" class="text-blue-600"></i> Editando Bloco'; document.getElementById('c_formContainer').classList.add('border-blue-300', 'ring-2', 'ring-blue-100'); document.getElementById('c_formContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
             c_renderList(); lucide.createIcons();
         }
 
@@ -951,7 +1255,8 @@
             if (!c_harvestData.length) { container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs italic">Adicione dados no formulário ao lado.</div>`; } 
             else if (!displayData.length) { container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs italic flex flex-col items-center justify-center min-h-[200px]"><i data-lucide="eye-off" class="mb-2 w-8 h-8 opacity-20"></i><span>Todos os blocos estão ocultos no momento.</span></div>`; } 
             else {
-                const wrapperClass = "p-3 flex flex-col gap-3"; let itemsHtml = '';
+                const wrapperClass = "flex flex-col divide-y divide-slate-50"; let itemsHtml = '';
+                const estDayLabel = document.getElementById('c_estimateDay') ? (document.getElementById('c_estimateDay').value || '') : '';
                 const shiftStartTime = document.getElementById('c_startTime') ? (document.getElementById('c_startTime').value || '-') : '-';
                 const shiftEndTime = document.getElementById('c_endTime') ? (document.getElementById('c_endTime').value || '-') : '-';
                 const seenBlockCycles = new Set();
@@ -963,8 +1268,19 @@
                     const key = `${item.talhao}-${item.cycle || ''}`; let itemBlockPercentage = 0; let totalUnitsSumGeral = 0; let pendenteGeral = 0;
                     if (blockAggregates[key] && blockAggregates[key].totalBlockPlants > 0) { for (const v in blockAggregates[key].varieties) { totalUnitsSumGeral += blockAggregates[key].varieties[v]; } let totalBlockPlantsGeral = blockAggregates[key].totalBlockPlants; itemBlockPercentage = Math.round((totalUnitsSumGeral / totalBlockPlantsGeral) * 100); pendenteGeral = Math.max(0, totalBlockPlantsGeral - totalUnitsSumGeral); }
                     itemBlockPercentage = Math.min(100, Math.max(0, itemBlockPercentage)); const isFinalized = item.status === 'Finalizado';
-                    const itemClass = `border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm`;
-                    itemsHtml += `<div class="${itemClass}"><div class="${isFinalized ? 'bg-red-50 border-b border-red-200' : 'bg-slate-50 border-b border-slate-200'} px-4 py-2.5 flex items-center justify-between gap-2"><div class="flex items-center gap-2 flex-wrap min-w-0"><span class="${isFinalized ? 'text-red-800' : 'text-slate-800'} font-extrabold text-[15px] leading-none tracking-wide">BLOCO ${item.talhao}</span>${item.cycle ? `<span class="${isFinalized ? 'text-red-400' : 'text-slate-400'} text-[10px] font-bold uppercase tracking-widest">· CICLO ${item.cycle}</span>` : ''}<span class="text-slate-300 text-[10px]">|</span><span class="text-[10px] font-semibold ${isFinalized ? 'text-red-400' : 'text-slate-500'} uppercase tracking-wide">${item.commercialVariety ? `${item.variety} · ${item.commercialVariety}` : item.variety}</span></div><span class="text-[9px] font-extrabold ${isFinalized ? 'text-red-500' : 'text-emerald-600'} uppercase tracking-widest whitespace-nowrap">${item.status || 'Em Andamento'}</span></div><div class="grid grid-cols-3 divide-x divide-slate-100"><div class="px-3 py-3 text-center flex flex-col items-center gap-1"><div class="icon-fix text-slate-400"><i data-lucide="layers" width="14"></i></div><div class="text-[7px] font-extrabold text-slate-400 uppercase tracking-widest">Unidades</div><div class="text-[22px] font-extrabold text-slate-800 leading-none mt-0.5">${parseNumber(item.dailyUnits).toLocaleString('pt-BR') || '0'}</div></div><div class="px-3 py-3 text-center flex flex-col items-center gap-1"><div class="icon-fix text-slate-400"><i data-lucide="package" width="14"></i></div><div class="text-[7px] font-extrabold text-slate-400 uppercase tracking-widest">Caixas</div><div class="text-[22px] font-extrabold text-slate-800 leading-none mt-0.5">${parseNumber(item.boxes).toLocaleString('pt-BR') || '0'}</div></div><div class="px-3 py-3 text-center flex flex-col items-center gap-1"><div class="icon-fix text-slate-400"><i data-lucide="trending-up" width="14"></i></div><div class="text-[7px] font-extrabold text-slate-400 uppercase tracking-widest">Est. Caixas</div><div class="text-[22px] font-extrabold text-slate-800 leading-none mt-0.5">${item.blockEstimatedBoxes || '-'}</div></div></div></div>`;
+                    const blockRemaining = Math.max(0, 100 - itemBlockPercentage); const blockTotalPlantsVal = (blockAggregates[key] && blockAggregates[key].totalBlockPlants) || parseNumber(item.totalBlockPlants);
+                    const blockProgressColor = itemBlockPercentage >= 90 ? 'bg-emerald-500' : itemBlockPercentage >= 70 ? 'bg-blue-500' : 'bg-yellow-500'; const blockTextColor = itemBlockPercentage >= 90 ? 'text-emerald-600' : 'text-slate-600';
+                    const varPlantsVal = parseNumber(item.plants); const varAccumVal = parseNumber(item.totalUnits); const varPercentage = varPlantsVal > 0 ? Math.min(100, Math.round((varAccumVal / varPlantsVal) * 100)) : 0; const varRemaining = Math.max(0, 100 - varPercentage);
+                    const showBlockSection = !seenBlockCycles.has(key) && blockTotalPlantsVal > 0; if (showBlockSection) seenBlockCycles.add(key);
+                    const showVariedadeSection = (varietyCountPerBlock[key] || 1) > 1 && varPlantsVal > 0;
+                    const progressHtml = (showVariedadeSection || showBlockSection) ? `<div class="px-4 pt-3 pb-2 border-t border-slate-100 space-y-3">${showVariedadeSection ? `<div><div class="flex items-center gap-1 icon-fix mb-1"><i data-lucide="sprout" width="10" class="text-orange-400"></i><span class="text-[9px] font-extrabold text-orange-400 uppercase tracking-widest leading-none">Variedade</span><span class="text-[9px] font-semibold text-slate-600 ml-1 leading-none">· ${item.commercialVariety || item.variety}</span></div><p class="text-[13px] text-slate-600 leading-snug mb-1.5">De <span class="font-bold">${varPlantsVal.toLocaleString('pt-BR')} plantas</span>, foram colhidas <span class="font-bold ${textColor}">${varAccumVal.toLocaleString('pt-BR')} unidades</span> <span class="text-slate-400">(${varPercentage}%)</span>, ainda restam <span class="font-bold text-red-400">${Math.max(0, varPlantsVal - varAccumVal).toLocaleString('pt-BR')} unidades pendentes</span> <span class="text-slate-400">(${varRemaining}%)</span></p><div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full ${progressColor}" style="width:${varPercentage}%"></div></div></div>` : ''}${showBlockSection ? `<div><div class="flex items-center gap-1 icon-fix mb-1"><i data-lucide="layout-grid" width="10" class="text-slate-400"></i><span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">Bloco</span><span class="text-[9px] font-semibold text-slate-400 ml-1 leading-none">${(varietyCountPerBlock[key] || 1) === 1 ? `· ${item.commercialVariety || item.variety}` : '· Todas as variedades'}</span></div><p class="text-[13px] text-slate-600 leading-snug mb-1.5">De <span class="font-bold">${blockTotalPlantsVal.toLocaleString('pt-BR')} plantas</span>, foram colhidas <span class="font-bold ${blockTextColor}">${totalUnitsSumGeral.toLocaleString('pt-BR')} unidades</span> <span class="text-slate-400">(${itemBlockPercentage}%)</span>, ainda restam <span class="font-bold text-red-500">${pendenteGeral.toLocaleString('pt-BR')} unidades pendentes</span> <span class="text-slate-400">(${blockRemaining}%)</span></p><div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full ${blockProgressColor}" style="width:${itemBlockPercentage}%"></div></div></div>` : ''}</div>` : '';
+                    const dailyVal = parseNumber(item.dailyUnits); const boxesVal = parseNumber(item.boxes); const unitsPerBoxStr = dailyVal > 0 && boxesVal > 0 ? Math.round(dailyVal / boxesVal).toLocaleString('pt-BR') : '-';
+                    const statsHtml = `<div class="px-4 pb-4 border-t border-slate-100"><div class="flex items-center gap-1.5 py-2 mb-1 icon-fix"><i data-lucide="sun" width="11" class="text-orange-400"></i><span class="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest">Colheita de Hoje</span></div><div class="grid grid-cols-3 gap-2">${createStatCard('hash', dailyVal.toLocaleString('pt-BR'), 'UNIDADES', 'orange')}${createStatCard('box', boxesVal.toLocaleString('pt-BR'), 'CAIXAS', 'orange')}${createStatCard('layers', unitsPerBoxStr, 'UNID. POR CAIXA', 'orange')}</div>${item.blockEstimatedBoxes ? `<div class="flex items-center gap-1 icon-fix mt-2 pt-2 border-t border-slate-100"><i data-lucide="package" width="10" class="text-blue-400 shrink-0"></i><span class="text-[13px] text-slate-600">Estimativa de caixas${estDayLabel ? ` para <span class="font-semibold text-slate-700">${estDayLabel}</span>` : ''}: <span class="font-bold text-blue-600">${item.blockEstimatedBoxes} cx</span></span></div>` : ''}</div>`;
+                    const statusBadge = isFinalized ? `<span class="text-[9px] font-extrabold bg-red-50 text-red-500 border border-red-200 px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap">Finalizado</span>` : `<span class="text-[9px] font-extrabold bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap">Em Andamento</span>`;
+                    const prodInfo = (item.days || item.forecastDate) ? `<span class="text-[13px] text-slate-500 leading-snug">${item.days ? `está em produção há <span class="font-bold text-teal-600">${item.days} dias</span>` : ''}${item.days && item.forecastDate ? ' e ' : ''}${item.forecastDate ? `está previsto para finalizar no dia <span class="font-bold text-red-500">${item.forecastDate}</span>` : ''}</span>` : '';
+                    const accentBorder = isFinalized ? 'border-l-[3px] border-red-400' : 'border-l-[3px] border-emerald-400';
+                    const finalizedStyle = isFinalized ? ' style="box-shadow: inset 0 0 0 2px #fca5a5; background-color: rgba(254,242,242,0.3);"' : '';
+                    itemsHtml += `<div class="${accentBorder} flex flex-col"${finalizedStyle}><div class="px-4 pt-4 pb-3 flex items-start justify-between gap-3"><div><div class="flex items-center gap-2 flex-wrap"><span class="text-[17px] font-extrabold text-slate-800 leading-none">Bloco ${item.talhao}</span>${item.cycle ? `<span class="text-[10px] font-bold text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full leading-none">Ciclo ${item.cycle}</span>` : ''}${prodInfo}</div><span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-1 block">${item.commercialVariety ? `${item.variety} · ${item.commercialVariety}` : item.variety}</span></div><div class="shrink-0 pt-0.5">${statusBadge}</div></div>${progressHtml}${statsHtml}</div>`;
                 });
                 container.innerHTML = `<div class="${wrapperClass}">${itemsHtml}</div>`;
             }
@@ -991,7 +1307,7 @@
                     if (diffDays >= 7) { const weeks = Math.floor(diffDays / 7); const rDays = diffDays % 7; let weekStr = weeks === 1 ? '1 sem.' : `${weeks} sem.`; subtitleHtml = `<span class="text-[8px] text-slate-400 font-medium">${weekStr}${rDays > 0 ? ` e ${rDays}d` : ''}</span>`; }
                     return `<div class="overflow-hidden rounded-xl border ${cardBg} flex flex-col min-w-[88px] shadow-sm"><div class="h-[3px] w-full ${accentBg}"></div><div class="px-3 py-2 flex flex-col items-center gap-0.5"><span class="text-[10px] font-extrabold text-slate-700 tracking-wide">Bloco ${f.block}</span><span class="text-[9px] text-slate-400 font-medium">${formatDateBR(f.date)}</span><span class="text-[14px] font-extrabold ${daysClass} leading-none mt-1.5">${daysText}</span>${subtitleHtml}</div></div>`;
                 }).join('');
-                forecastHtml = `<div class="mt-4 pt-4 border-t border-slate-100 border-dashed w-full"><div class="flex items-center gap-1.5 mb-3 icon-fix"><i data-lucide="calendar-clock" width="11" class="text-blue-400"></i><span class="text-[10px] font-bold uppercase tracking-widest text-blue-500">Próximos Blocos</span></div><div class="flex flex-wrap gap-2">${listHtml}</div></div>`;
+                forecastHtml = `<div class="border-t border-slate-100 px-4 pt-3 pb-4"><div class="flex items-center gap-1.5 mb-2.5 icon-fix"><i data-lucide="calendar-clock" width="10" class="text-slate-400"></i><p class="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest">Próximos Blocos</p></div><div class="flex flex-wrap gap-2">${listHtml}</div></div>`;
             }
             
             const finalHours = calcTimeDiff(document.getElementById('c_startTime').value, document.getElementById('c_endTime').value, document.getElementById('c_intervalDuration').value);
@@ -1002,7 +1318,7 @@
             const estimateSourceNote = '';
             const c_headerParamsEl = document.getElementById('c_headerParams');
             if (c_headerParamsEl) { c_headerParamsEl.innerHTML = `<div class="mt-2 pt-2 border-t border-white/20 flex items-start gap-4 flex-wrap"><div class="flex flex-col gap-0.5 icon-fix"><div class="flex items-center gap-3 flex-wrap"><div class="flex items-center gap-2"><i data-lucide="users" width="13" class="text-white/70"></i><span class="text-[11px] font-bold text-white">${crew}</span></div><div class="flex items-center gap-1.5 text-[11px] font-bold text-white/70 icon-fix"><i data-lucide="play-circle" width="12" class="text-slate-300 shrink-0"></i><span class="text-white">${document.getElementById('c_startTime').value || '--:--'}</span><span class="text-white/30">›</span><i data-lucide="stop-circle" width="12" class="text-red-300 shrink-0"></i><span class="text-red-200">${document.getElementById('c_endTime').value || '--:--'}</span><span class="text-white/20 mx-0.5">|</span><i data-lucide="coffee" width="12" class="text-amber-300 shrink-0"></i><span class="text-amber-200">${document.getElementById('c_intervalDuration').value || '0'} min</span><span class="text-white/20 mx-0.5">|</span><i data-lucide="clock" width="12" class="text-white/70 shrink-0"></i><span class="font-extrabold text-white">${finalHours} h</span></div></div>${(() => { if(!crewValue||sumBoxes<=0) return ''; const _cxP=(sumBoxes/parseInt(crewValue)).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:1}); const _fhp=finalHours.split(':').map(Number); const _fhd=(_fhp[0]||0)+(_fhp[1]||0)/60; const _t=_fhd>0?Math.round(sumBoxes/_fhd).toLocaleString('pt-BR'):null; const _c=_t?Math.round(sumBoxes/_fhd/parseInt(crewValue)).toLocaleString('pt-BR'):null; let _h='<div class="ml-[17px] flex items-center gap-1.5 flex-wrap">'; if(_t) _h+='<span class="inline-flex items-center gap-1 bg-orange-400/20 border border-orange-300/50 rounded-md px-1.5 py-0.5"><span class="text-[13px] font-extrabold text-orange-300 leading-none">'+_t+'</span><span class="text-[11px] font-bold text-orange-300/80 leading-none">cx/h equipe</span></span>'; if(_c) _h+='<span class="inline-flex items-center gap-1 bg-orange-400/20 border border-orange-300/50 rounded-md px-1.5 py-0.5"><span class="text-[13px] font-extrabold text-orange-300 leading-none">'+_c+'</span><span class="text-[11px] font-bold text-orange-300/80 leading-none">cx/h pessoa</span></span>'; _h+='<span class="inline-flex items-center gap-1 bg-orange-400/20 border border-orange-300/50 rounded-md px-1.5 py-0.5"><span class="text-[13px] font-extrabold text-orange-300 leading-none">'+_cxP+'</span><span class="text-[11px] font-bold text-orange-300/80 leading-none">cx/pessoa</span></span>'; _h+='</div>'; return _h; })()}</div>${finalEstimate > 0 ? `<div class="flex items-center gap-2 bg-white/15 border border-white/25 rounded-xl px-3 py-1.5 ml-auto"><span class="text-[10px] font-bold text-white/80">${estDay ? `Estimativa ${estDay}` : 'Estimativa'}</span><span class="text-[20px] font-extrabold text-white leading-none">${finalEstimate.toLocaleString('pt-BR')}</span><span class="text-[12px] font-bold text-white/80">cx</span></div>` : ''}</div>`; }
-            footer.innerHTML = '';
+            footer.innerHTML = displayData.length ? forecastHtml : '';
             lucide.createIcons();
         }
 
@@ -1018,6 +1334,49 @@
         }
 
         async function c_downloadCSV() {
+            // Garante que o CSV saia com o que foi lançado em outros aparelhos (ex.: celular do campo)
+            if (navigator.onLine) { const btnSpan = document.querySelector('button[onclick="c_downloadCSV()"] span'); const original = btnSpan ? btnSpan.innerText : ''; if (btnSpan) btnSpan.innerText = 'Sincronizando...'; try { await spg_pullAll(); } finally { if (btnSpan) btnSpan.innerText = original; } }
+            if (!c_harvestData.length) { showAlert('Sem dados', ['Adicione ao menos um bloco antes de enviar o CSV.'], 'error'); return; }
+            const activeData = c_harvestData.filter(item => item.active !== false);
+            const crewCount = document.getElementById('c_crewCount').value || ''; const estimateDay = document.getElementById('c_estimateDay').value || '';
+            const startTime = document.getElementById('c_startTime').value || '--:--'; const endTime = document.getElementById('c_endTime').value || '--:--'; const intervalDuration = document.getElementById('c_intervalDuration').value || '0';
+            const sumUnits = activeData.reduce((s, i) => s + parseNumber(i.dailyUnits), 0); const sumBoxes = activeData.reduce((s, i) => s + parseNumber(i.boxes), 0);
+            const finalEstimate = activeData.reduce((s, i) => s + parseNumber(i.blockEstimatedBoxes), 0) + parseNumber(document.getElementById('c_manualTotalEstimate').value);
+            const forecasts = c_getForecastBlocks().filter(f => f.block && f.date).sort((a, b) => new Date(a.date) - new Date(b.date));
+            const hiddenCount = c_harvestData.length - activeData.length;
+            const blocksDetail = activeData.map(i => `<li><b>Bloco ${i.talhao}${i.cycle ? ` C${i.cycle}` : ''}</b> · ${i.commercialVariety || i.variety}: ${parseNumber(i.dailyUnits).toLocaleString('pt-BR')} un · ${parseNumber(i.boxes).toLocaleString('pt-BR')} cx · <span class="${i.status === 'Finalizado' ? 'text-red-500' : 'text-emerald-600'} font-semibold">${i.status || 'Em Andamento'}</span>${i.blockEstimatedBoxes ? ` · est. ${i.blockEstimatedBoxes} cx` : ''}</li>`).join('');
+            const items = [
+                { icon: 'layers', title: 'Unidades e caixas de cada bloco', detail: `Total: <b>${sumUnits.toLocaleString('pt-BR')} unidades</b> e <b>${sumBoxes.toLocaleString('pt-BR')} caixas</b><ul class="mt-1 space-y-0.5">${blocksDetail || '<li class="italic">Nenhum bloco visível</li>'}</ul>` },
+                { icon: 'flag', title: 'Status dos blocos (Finalizado / Em Andamento)', detail: hiddenCount > 0 ? `<span class="text-amber-600 font-semibold">${hiddenCount} bloco(s) oculto(s)</span> — confira se deveriam estar ocultos.` : 'Confira se os blocos finalizados hoje estão marcados como Finalizado.' },
+                { icon: 'trending-up', title: 'Estimativa de caixas', detail: finalEstimate > 0 ? `<b>${finalEstimate.toLocaleString('pt-BR')} cx</b>${estimateDay ? ` para <b>${estimateDay}</b>` : ' <span class="text-amber-600 font-semibold">(dia da estimativa não preenchido)</span>'}` : '<span class="text-amber-600 font-semibold">Nenhuma estimativa preenchida</span>' },
+                { icon: 'calendar-clock', title: 'Próximos blocos', detail: forecasts.length ? forecasts.map(f => `Bloco ${f.block} (${formatDateBR(f.date)})`).join(' · ') : '<span class="text-amber-600 font-semibold">Nenhum próximo bloco preenchido</span>' },
+                { icon: 'users', title: 'Efetivo e horários', detail: `${crewCount ? `<b>${crewCount}</b> colaboradores` : '<span class="text-amber-600 font-semibold">Efetivo não preenchido</span>'} · ${startTime} › ${endTime} · intervalo ${intervalDuration} min` }
+            ];
+            document.getElementById('csvCheckList').innerHTML = items.map((it, idx) => `<label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-300"><input type="checkbox" class="csv-check-item mt-0.5 w-4 h-4 accent-emerald-600 shrink-0" onchange="c_updateCsvCheckBtn()"><div class="min-w-0"><div class="flex items-center gap-1.5 icon-fix"><i data-lucide="${it.icon}" width="13" class="text-slate-500 shrink-0"></i><span class="text-[13px] font-bold text-slate-700">${idx + 1}. Conferiu ${it.title.charAt(0).toLowerCase() + it.title.slice(1)}?</span></div><div class="text-[11px] text-slate-500 mt-1 leading-relaxed">${it.detail}</div></div></label>`).join('');
+            c_updateCsvCheckBtn(); lucide.createIcons();
+            const modal = document.getElementById('modalCsvCheck');
+            lockPageScroll();
+            modal.classList.remove('hidden'); void modal.offsetWidth;
+            modal.classList.remove('opacity-0'); modal.querySelector('div.bg-white').classList.remove('scale-95');
+        }
+
+        function c_updateCsvCheckBtn() {
+            const checks = document.querySelectorAll('#csvCheckList .csv-check-item');
+            document.getElementById('csvCheckConfirmBtn').disabled = !checks.length || ![...checks].every(c => c.checked);
+        }
+
+        function c_closeCsvCheck() {
+            const modal = document.getElementById('modalCsvCheck');
+            modal.classList.add('opacity-0'); modal.querySelector('div.bg-white').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); unlockPageScroll(); }, 300);
+        }
+
+        function c_confirmCsvCheck() {
+            if (document.getElementById('csvCheckConfirmBtn').disabled) return;
+            c_closeCsvCheck(); c_generateCSV();
+        }
+
+        async function c_generateCSV() {
             const btnSpan = document.querySelector('button[onclick="c_downloadCSV()"] span'); let originalText = btnSpan ? btnSpan.innerText : ""; if (btnSpan) btnSpan.innerText = "Gerando CSV...";
             try {
                 let csvContent = "\uFEFFBloco;Ciclo;Cultura;Variedade;Data Plantio;Início Colheita;Caixas;Unidades Acumuladas;Total Acumulado Bloco;Total Bloco;Qtd Variedade Plantada;Total de Unidades (Hoje);Previsão Finalizar;Status;Dias de Produção;Ocultos;Estimativa Caixas Bloco;Efetivo Pessoas;Ref Estimativa;Hora Inicio;Hora Termino;Intervalo Min;Est Total Manual\n";
@@ -1092,6 +1451,286 @@
         }
 
         // =========================================================================
+        // ABA CAMPO: CARREGAMENTOS LANÇADOS NO CAMPO (SALVOS SÓ NO APARELHO)
+        // =========================================================================
+        const f_STORAGE_KEY = 'spg_campo_data';
+        let f_data = { date: '', loads: [] };
+
+        function f_todayISO() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+        function f_save() { try { const json = JSON.stringify(f_data); if (localStorage.getItem(f_STORAGE_KEY) !== json) { localStorage.setItem(f_STORAGE_KEY, json); spg_markChanged('campo'); } } catch(e) {} }
+        function f_currentLoad() { let load = f_data.loads[f_data.loads.length - 1]; if (!load || load.closed) { load = { entries: [], closed: false, finalized: false, closedAt: '' }; f_data.loads.push(load); } return load; }
+        function f_ordinal(n) { const names = ['Primeira', 'Segunda', 'Terceira', 'Quarta', 'Quinta', 'Sexta', 'Sétima', 'Oitava', 'Nona', 'Décima']; return names[n - 1] || `${n}ª`; }
+        function f_padBloco(b) { return /^\d$/.test(String(b)) ? `0${b}` : String(b); }
+        function f_fmt(n) { return (Number(n) || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 }); }
+
+        function f_init() {
+            try { const raw = localStorage.getItem(f_STORAGE_KEY); if (raw) f_data = JSON.parse(raw) || f_data; } catch(e) {}
+            if (!f_data.date) { f_data.date = f_todayISO(); f_save(); }
+            if (!Array.isArray(f_data.loads)) f_data.loads = [];
+            const blocoSel = document.getElementById('f_bloco');
+            blocoSel.innerHTML = '<option value="">Selecione...</option>' + ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','A','B','C','D','E'].map(b => `<option value="${b}">${b}</option>`).join('');
+            f_populateCultures(); f_render();
+        }
+
+        // Ao escolher o bloco, sugere o ciclo mais recente dele (pode ser alterado)
+        function f_onBlocoChange() {
+            document.getElementById('f_ciclo').value = spg_latestCycle(document.getElementById('f_bloco').value);
+            f_populateCultures();
+        }
+
+        function f_populateCultures() {
+            const sel = document.getElementById('f_cultura'); if (!sel) return; const current = sel.value;
+            const cultures = spg_culturesFor(document.getElementById('f_bloco').value, document.getElementById('f_ciclo').value);
+            sel.innerHTML = '<option value="">Selecione...</option>' + cultures.map(c => `<option value="${c}">${c}</option>`).join('');
+            if (current && cultures.includes(current)) sel.value = current; else if (cultures.length === 1) sel.value = cultures[0];
+            f_updateVarieties();
+        }
+
+        function f_updateVarieties() {
+            const cultura = document.getElementById('f_cultura').value; const wrapper = document.getElementById('f_variedadeWrapper');
+            const prev = document.getElementById('f_variedade') ? document.getElementById('f_variedade').value : '';
+            const list = spg_varietiesFor(document.getElementById('f_bloco').value, document.getElementById('f_ciclo').value, cultura);
+            let html = `<label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Variedade</label>`;
+            if (list && list.length) { html += `<select id="f_variedade" required class="w-full p-3 border border-slate-300 rounded-lg outline-none text-base bg-white"><option value="">Selecione...</option>${list.map(v => `<option value="${v}">${v}</option>`).join('')}</select>`; }
+            else { html += `<input type="text" id="f_variedade" placeholder="Nome da variedade" class="w-full p-3 border border-slate-300 rounded-lg outline-none text-base">`; }
+            wrapper.innerHTML = html;
+            const sel = document.getElementById('f_variedade');
+            if (prev && list && list.includes(prev)) sel.value = prev; else if (list && list.length === 1) sel.value = list[0]; else if (!(list && list.length)) sel.value = prev;
+        }
+
+        function f_updateEntryPreview() {
+            const cx = parseNumber(document.getElementById('f_caixas').value); const media = parseNumber(document.getElementById('f_media').value);
+            document.getElementById('f_entryPreview').innerHTML = cx > 0 && media > 0 ? `= <b>${Math.round(cx * media).toLocaleString('pt-BR')} unidades</b>` : '';
+        }
+
+        function f_addEntry(e) {
+            e.preventDefault();
+            const bloco = document.getElementById('f_bloco').value; const ciclo = document.getElementById('f_ciclo').value.trim(); const cultura = document.getElementById('f_cultura').value; const variedade = (document.getElementById('f_variedade').value || '').trim();
+            const caixas = parseNumber(document.getElementById('f_caixas').value); const media = parseNumber(document.getElementById('f_media').value);
+            if (!bloco || !ciclo || !cultura || caixas <= 0 || media <= 0) { showAlert('Dados incompletos', ['Preencha bloco, ciclo, cultura, caixas e média de unidades por caixa.'], 'error'); return; }
+            if (f_data.date !== f_todayISO() && f_data.loads.some(l => l.entries.length)) { showAlert('Dados de outro dia', ['Há carregamentos salvos de outro dia. Toque em <b>Iniciar novo dia</b> antes de lançar a colheita de hoje.'], 'error'); return; }
+            f_data.date = f_todayISO();
+            const entry = { bloco, ciclo, cultura, variedade, caixas, media }; const load = f_activeLoad();
+            if (f_editingEntryIdx >= 0 && load.entries[f_editingEntryIdx]) load.entries[f_editingEntryIdx] = entry; else load.entries.push(entry);
+            f_editingEntryIdx = -1;
+            f_save(); f_syncToColheita();
+            document.getElementById('f_caixas').value = ''; document.getElementById('f_media').value = ''; f_updateEntryPreview();
+            f_render();
+        }
+
+        // Carregamento sendo editado (fechado reaberto) ou o atual
+        let f_editingLoadIdx = -1; let f_editingEntryIdx = -1;
+        function f_activeLoadIdx() { if (f_editingLoadIdx >= 0 && f_data.loads[f_editingLoadIdx]) return f_editingLoadIdx; f_editingLoadIdx = -1; f_currentLoad(); return f_data.loads.length - 1; }
+        function f_activeLoad() { return f_data.loads[f_activeLoadIdx()]; }
+
+        function f_editEntry(entryIdx) {
+            const e = f_activeLoad().entries[entryIdx]; if (!e) return;
+            f_editingEntryIdx = entryIdx;
+            document.getElementById('f_bloco').value = e.bloco; document.getElementById('f_ciclo').value = e.ciclo || '';
+            document.getElementById('f_cultura').value = ''; f_populateCultures(); c_ensureOption('f_cultura', e.cultura); f_updateVarieties();
+            if (document.getElementById('f_variedade').tagName === 'SELECT') c_ensureOption('f_variedade', e.variedade); else document.getElementById('f_variedade').value = e.variedade || '';
+            document.getElementById('f_caixas').value = f_fmt(e.caixas); document.getElementById('f_media').value = String(e.media).replace('.', ',');
+            f_updateEntryPreview(); f_render();
+            document.getElementById('f_entryForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function f_cancelEntryEdit() {
+            f_editingEntryIdx = -1; document.getElementById('f_caixas').value = ''; document.getElementById('f_media').value = ''; f_updateEntryPreview(); f_render();
+        }
+
+        function f_removeEntry(loadIdx, entryIdx) {
+            const load = f_data.loads[loadIdx]; if (!load) return;
+            load.entries.splice(entryIdx, 1);
+            if (f_editingEntryIdx === entryIdx) f_cancelEntryEdit(); else if (f_editingEntryIdx > entryIdx) f_editingEntryIdx--;
+            if (load.closed && load.entries.length === 0) { f_data.loads.splice(loadIdx, 1); if (f_editingLoadIdx === loadIdx) { f_editingLoadIdx = -1; document.getElementById('f_finalized').checked = false; } else if (f_editingLoadIdx > loadIdx) f_editingLoadIdx--; }
+            f_save(); f_syncToColheita(); f_render();
+        }
+
+        function f_startEditLoad(loadIdx) {
+            const load = f_data.loads[loadIdx]; if (!load) return;
+            f_editingLoadIdx = loadIdx; f_editingEntryIdx = -1;
+            document.getElementById('f_finalized').checked = !!load.finalized;
+            f_render();
+            document.getElementById('f_entryForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function f_finishEditLoad() {
+            f_editingLoadIdx = -1; f_editingEntryIdx = -1;
+            document.getElementById('f_finalized').checked = false; document.getElementById('f_caixas').value = ''; document.getElementById('f_media').value = ''; f_updateEntryPreview();
+            f_render();
+        }
+
+        function f_onFinalizedChange() {
+            if (f_editingLoadIdx >= 0 && f_data.loads[f_editingLoadIdx]) { f_data.loads[f_editingLoadIdx].finalized = document.getElementById('f_finalized').checked; f_save(); f_render(); return; }
+            f_renderPreview();
+        }
+
+        function f_confirmDeleteLoad(loadIdx) {
+            const load = f_data.loads[loadIdx]; if (!load) return;
+            showConfirm('Excluir carregamento?', `O <b>${loadIdx + 1}º carregamento</b> (${f_fmt(load.entries.reduce((s, e) => s + e.caixas, 0))} caixas) será excluído e as caixas dele saem da aba Colheita.`, 'danger', '<i data-lucide="trash-2" class="w-4 h-4"></i> Excluir', () => f_deleteLoad(loadIdx));
+        }
+
+        function f_deleteLoad(loadIdx) {
+            if (!f_data.loads[loadIdx]) return;
+            f_data.loads.splice(loadIdx, 1);
+            if (f_editingLoadIdx === loadIdx) { f_editingLoadIdx = -1; f_editingEntryIdx = -1; document.getElementById('f_finalized').checked = false; } else if (f_editingLoadIdx > loadIdx) f_editingLoadIdx--;
+            f_save(); f_syncToColheita(); f_render();
+        }
+
+        function f_buildText(load, number) {
+            const finalized = load.closed ? load.finalized : document.getElementById('f_finalized').checked;
+            if (!load.entries.length) return '';
+            const total = load.entries.reduce((s, e) => s + e.caixas, 0);
+            let txt = `*${f_ordinal(number)} Colheita a Caminho:*\n`;
+            load.entries.forEach(e => { txt += `*Bloco ${f_padBloco(e.bloco)}*: ${f_fmt(e.caixas)} Caixas de [${e.variedade || e.cultura}], Sendo ${f_fmt(e.media)} Média Por Caixa.\n`; });
+            txt += `\n*Total de Caixas* ${f_fmt(total)}`;
+            if (finalized) {
+                const dayTotal = f_data.loads.slice(0, number).reduce((s, l) => s + l.entries.reduce((a, e) => a + e.caixas, 0), 0);
+                txt += `\nColheita Concluída ✅`;
+                if (number > 1) txt += `\n*Total do Dia* ${f_fmt(dayTotal)} Caixas`;
+            }
+            return txt;
+        }
+
+        function f_render() {
+            const activeIdx = f_activeLoadIdx(); const load = f_data.loads[activeIdx]; const number = activeIdx + 1; const isEditingLoad = f_editingLoadIdx >= 0;
+            const [y, m, d] = (f_data.date || f_todayISO()).split('-');
+            document.getElementById('f_dayLabel').innerText = `${d}/${m}/${y}`;
+            const hasOldData = f_data.date !== f_todayISO() && f_data.loads.some(l => l.entries.length);
+            document.getElementById('f_newDayBtn').classList.toggle('hidden', !hasOldData);
+            document.getElementById('f_dayTotal').innerText = f_fmt(f_data.loads.reduce((s, l) => s + l.entries.reduce((a, e) => a + e.caixas, 0), 0));
+            document.getElementById('f_loadTitle').innerText = isEditingLoad ? `Editando ${number}º Carregamento` : `${number}º Carregamento`;
+            const submitBtn = document.getElementById('f_submitBtn');
+            submitBtn.innerHTML = f_editingEntryIdx >= 0 ? '<i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Bloco</span>' : '<i data-lucide="plus-circle" class="w-4 h-4"></i> <span>Adicionar ao Carregamento</span>';
+            submitBtn.classList.toggle('bg-blue-600', f_editingEntryIdx >= 0); submitBtn.classList.toggle('hover:bg-blue-700', f_editingEntryIdx >= 0); submitBtn.classList.toggle('bg-slate-800', f_editingEntryIdx < 0); submitBtn.classList.toggle('hover:bg-slate-900', f_editingEntryIdx < 0);
+            document.getElementById('f_cancelEntryEditBtn').classList.toggle('hidden', f_editingEntryIdx < 0);
+            const closeBtn = document.getElementById('f_closeBtn');
+            closeBtn.innerHTML = isEditingLoad ? '<i data-lucide="check" class="w-4 h-4"></i> Concluir Edição' : '<i data-lucide="check-circle" class="w-4 h-4"></i> Fechar Carregamento';
+            closeBtn.classList.toggle('bg-blue-600', isEditingLoad); closeBtn.classList.toggle('hover:bg-blue-700', isEditingLoad); closeBtn.classList.toggle('bg-emerald-700', !isEditingLoad); closeBtn.classList.toggle('hover:bg-emerald-800', !isEditingLoad);
+            document.getElementById('f_entryForm').closest('.bg-white').classList.toggle('ring-2', isEditingLoad); document.getElementById('f_entryForm').closest('.bg-white').classList.toggle('ring-blue-200', isEditingLoad);
+
+            const list = document.getElementById('f_entriesList');
+            if (!load.entries.length) { list.innerHTML = '<li class="text-center text-slate-400 italic text-sm py-2">Nenhum bloco neste carregamento.</li>'; }
+            else {
+                list.innerHTML = load.entries.map((e, i) => `<li class="flex justify-between items-center p-3 rounded-xl border ${i === f_editingEntryIdx ? 'border-blue-400 bg-blue-50 ring-1 ring-blue-200' : 'border-slate-100 bg-slate-50'}"><div class="min-w-0"><p class="text-sm font-bold text-slate-800">Bloco ${e.bloco}${e.ciclo ? ` <span class="text-[10px] font-bold text-slate-600 bg-slate-200 px-1.5 py-0.5 rounded-full">C${e.ciclo}</span>` : ''} <span class="font-semibold text-slate-500">· ${e.variedade || e.cultura}</span></p><p class="text-xs text-slate-500">${f_fmt(e.caixas)} cx × ${f_fmt(e.media)} un/cx = <b>${Math.round(e.caixas * e.media).toLocaleString('pt-BR')} un</b></p></div><div class="flex items-center shrink-0"><button type="button" onclick="f_editEntry(${i})" title="Editar" class="text-blue-500 hover:bg-blue-100 p-2 rounded-md"><i data-lucide="pencil" width="16"></i></button><button type="button" onclick="f_removeEntry(${activeIdx}, ${i})" title="Excluir" class="text-red-500 hover:bg-red-100 p-2 rounded-md"><i data-lucide="trash-2" width="16"></i></button></div></li>`).join('');
+            }
+
+            const history = document.getElementById('f_historyList'); const closed = f_data.loads.map((l, i) => ({ l, i })).filter(x => x.l.closed);
+            if (!closed.length) { history.innerHTML = '<li class="text-center text-slate-400 italic text-sm py-2">Nenhum carregamento fechado ainda.</li>'; }
+            else {
+                history.innerHTML = closed.map(({ l, i }) => `<li class="p-3 rounded-xl border ${i === f_editingLoadIdx ? 'border-blue-400 bg-blue-50 ring-1 ring-blue-200' : (l.finalized ? 'border-emerald-200 bg-emerald-50' : 'border-slate-100 bg-slate-50')}"><div class="flex justify-between items-center gap-2"><div class="min-w-0"><p class="text-sm font-bold text-slate-800">${i + 1}º Carregamento ${l.finalized ? '<span class="text-[10px] font-extrabold text-emerald-600 uppercase ml-1">✅ Finalizado</span>' : ''}${i === f_editingLoadIdx ? '<span class="text-[10px] text-blue-600 font-bold ml-1">(Editando)</span>' : ''}</p><p class="text-xs text-slate-500">${l.closedAt ? `Fechado às ${l.closedAt} · ` : ''}${f_fmt(l.entries.reduce((s, e) => s + e.caixas, 0))} caixas · ${l.entries.map(e => `B${e.bloco}`).join(', ')}</p></div><div class="flex items-center shrink-0"><button type="button" onclick="f_copyText(${i})" title="Copiar texto" class="text-emerald-600 hover:bg-emerald-100 p-2 rounded-md"><i data-lucide="copy" width="16"></i></button><button type="button" onclick="f_startEditLoad(${i})" title="Editar" class="text-blue-500 hover:bg-blue-100 p-2 rounded-md"><i data-lucide="pencil" width="16"></i></button><button type="button" onclick="f_confirmDeleteLoad(${i})" title="Excluir" class="text-red-500 hover:bg-red-100 p-2 rounded-md"><i data-lucide="trash-2" width="16"></i></button></div></div></li>`).join('');
+            }
+            f_renderPreview(); lucide.createIcons();
+        }
+
+        function f_renderPreview() {
+            const idx = f_activeLoadIdx(); const load = f_data.loads[idx];
+            document.getElementById('f_textPreview').innerText = load.entries.length ? f_buildText(load, idx + 1) : 'Adicione blocos ao carregamento para gerar a mensagem.';
+        }
+
+        async function f_copyToClipboard(text) {
+            try { await navigator.clipboard.writeText(text); return true; } catch(e) {}
+            try { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok; } catch(e) { return false; }
+        }
+
+        async function f_copyText(loadIdx) {
+            const text = f_buildText(f_data.loads[loadIdx], loadIdx + 1); if (!text) return;
+            const ok = await f_copyToClipboard(text);
+            showAlert(ok ? 'Texto copiado' : 'Não foi possível copiar', [ok ? 'Cole a mensagem no grupo do WhatsApp.' : 'Selecione o texto da mensagem e copie manualmente.'], ok ? 'success' : 'error');
+        }
+
+        function f_copyCurrentText() {
+            const idx = f_activeLoadIdx();
+            if (!f_data.loads[idx].entries.length) { showAlert('Carregamento vazio', ['Adicione ao menos um bloco antes de gerar a mensagem.'], 'error'); return; }
+            f_copyText(idx);
+        }
+
+        async function f_shareCurrentText() {
+            const idx = f_activeLoadIdx(); const load = f_data.loads[idx]; if (!load.entries.length) { showAlert('Carregamento vazio', ['Adicione ao menos um bloco antes de gerar a mensagem.'], 'error'); return; }
+            const text = f_buildText(load, idx + 1);
+            if (navigator.share) { try { await navigator.share({ text }); return; } catch(e) { if (e && e.name === 'AbortError') return; } }
+            f_copyText(idx);
+        }
+
+        function f_confirmCloseLoad() {
+            if (f_editingLoadIdx >= 0) { f_finishEditLoad(); return; }
+            const load = f_currentLoad(); if (!load.entries.length) { showAlert('Carregamento vazio', ['Adicione ao menos um bloco antes de fechar o carregamento.'], 'error'); return; }
+            const finalized = document.getElementById('f_finalized').checked;
+            showConfirm('Fechar carregamento?', `O <b>${f_data.loads.length}º carregamento</b> será fechado${finalized ? ' e marcado como <b>colheita finalizada</b>' : ''}. Envie a mensagem no WhatsApp antes, se ainda não enviou.`, 'warning', '<i data-lucide="check-circle" class="w-4 h-4"></i> Fechar', f_closeLoad);
+        }
+
+        function f_closeLoad() {
+            const load = f_currentLoad(); if (!load.entries.length) return;
+            const now = new Date(); load.closed = true; load.finalized = document.getElementById('f_finalized').checked; load.closedAt = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            document.getElementById('f_finalized').checked = false;
+            f_save(); f_render();
+        }
+
+        function f_confirmNewDay() {
+            showConfirm('Iniciar novo dia?', 'Todos os carregamentos lançados na aba Campo serão apagados deste aparelho. Os blocos que já foram para a aba Colheita continuam lá.', 'danger', '<i data-lucide="trash-2" class="w-4 h-4"></i> Limpar', f_newDay);
+        }
+
+        function f_newDay() {
+            c_harvestData.forEach(item => { delete item.fromCampo; delete item.campoCreated; }); c_saveData();
+            f_data = { date: f_todayISO(), loads: [] }; f_editingLoadIdx = -1; f_editingEntryIdx = -1; document.getElementById('f_finalized').checked = false;
+            f_save(); f_render();
+        }
+
+        // Busca ciclo, plantas e acumulado do bloco nos dados sincronizados (ficam salvos no aparelho)
+        function f_lookupPlantInfo(bloco, ciclo, cultura, variedade) {
+            const info = { cycle: ciclo ? String(ciclo) : '', plants: '', totalBlockPlants: '', date: '', base: 0 };
+            try {
+                const data = JSON.parse(localStorage.getItem('spg_plants_data') || '[]');
+                const lc = s => (s || '').trim().toLowerCase();
+                const blocoRows = data.filter(d => String(d.bloco) == String(bloco));
+                let varRows = blocoRows.filter(d => lc(d.cultura) === lc(cultura) && (!variedade || lc(d.variedade) === lc(variedade)));
+                if (!info.cycle) { const cycles = (varRows.length ? varRows : blocoRows).map(d => d.ciclo).filter(c => c !== undefined && c !== null && c !== ''); if (cycles.length) info.cycle = String(cycles.reduce((a, b) => (parseFloat(b) > parseFloat(a) ? b : a))); }
+                const blocoCycleRows = info.cycle ? blocoRows.filter(d => String(d.ciclo) == info.cycle) : blocoRows;
+                if (info.cycle) varRows = varRows.filter(d => String(d.ciclo) == info.cycle);
+                const somaBloco = blocoCycleRows.reduce((s, d) => s + (d.totalPlantas || 0), 0); if (somaBloco > 0) info.totalBlockPlants = somaBloco.toLocaleString('pt-BR');
+                const somaVar = varRows.reduce((s, d) => s + (d.totalPlantas || 0), 0); if (somaVar > 0) info.plants = somaVar.toLocaleString('pt-BR');
+                const withDate = varRows.find(d => d.dataPlantio && String(d.dataPlantio).trim() !== ''); if (withDate) info.date = formatDateBR(String(withDate.dataPlantio).substring(0, 10));
+                const hist = JSON.parse(localStorage.getItem('spg_harvest_history') || '[]');
+                const h = hist.find(x => String(x.bloco) == String(bloco) && String(x.ciclo) == info.cycle && lc(x.cultura) === lc(cultura) && lc(x.variedade) === lc(variedade));
+                if (h) info.base = parseFloat(h.totalUnidades) || 0;
+            } catch(e) {}
+            return info;
+        }
+
+        // Soma todos os carregamentos do dia por bloco/variedade e atualiza (ou cria) os blocos na aba Colheita
+        function f_syncToColheita() {
+            const lc = s => (s || '').trim().toLowerCase();
+            const keyOf = it => `${it.talhao}|${lc(String(it.cycle || ''))}|${lc(it.variety)}|${lc(it.commercialVariety)}`;
+            const agg = {};
+            f_data.loads.forEach(l => l.entries.forEach(e => { const k = `${e.bloco}|${lc(String(e.ciclo || ''))}|${lc(e.cultura)}|${lc(e.variedade)}`; if (!agg[k]) agg[k] = { bloco: e.bloco, ciclo: e.ciclo || '', cultura: e.cultura, variedade: e.variedade || '', caixas: 0, unidades: 0 }; agg[k].caixas += e.caixas; agg[k].unidades += Math.round(e.caixas * e.media); }));
+
+            const updateItem = (item, caixas, unidades) => {
+                const base = Math.max(0, parseNumber(item.totalUnits) - parseNumber(item.dailyUnits)); const total = base + unidades;
+                item.boxes = caixas > 0 ? caixas.toLocaleString('pt-BR') : ''; item.dailyUnits = unidades > 0 ? unidades.toLocaleString('pt-BR') : '';
+                item.totalUnits = total > 0 ? total.toLocaleString('pt-BR') : '';
+                const p = parseNumber(item.plants); const bp = parseNumber(item.totalBlockPlants);
+                item.percentage = p > 0 ? Math.round((total / p) * 100) : 0; item.blockPercentage = bp > 0 ? Math.round((total / bp) * 100) : 0;
+            };
+
+            // Blocos que vieram do Campo e não estão mais nos carregamentos
+            c_harvestData = c_harvestData.filter(it => !(it.campoCreated && !agg[keyOf(it)]));
+            c_harvestData.forEach(it => { if (it.fromCampo && !agg[keyOf(it)]) { updateItem(it, 0, 0); delete it.fromCampo; } });
+
+            Object.entries(agg).forEach(([k, a]) => {
+                let item = c_harvestData.find(it => keyOf(it) === k);
+                if (!item) {
+                    const info = f_lookupPlantInfo(a.bloco, a.ciclo, a.cultura, a.variedade);
+                    item = { talhao: a.bloco, cycle: info.cycle, variety: a.cultura, commercialVariety: a.variedade, percentage: 0, blockPercentage: 0, startDate: '', date: info.date, forecastDate: '', plants: info.plants, totalBlockPlants: info.totalBlockPlants, dailyUnits: '', boxes: '', totalUnits: info.base > 0 ? info.base.toLocaleString('pt-BR') : '', days: '', status: 'Em Andamento', details: '', blockEstimatedBoxes: '', active: true, campoCreated: true };
+                    c_harvestData.push(item);
+                }
+                item.fromCampo = true; updateItem(item, a.caixas, a.unidades);
+            });
+
+            if (c_editingIndex >= 0) c_clearBlockForm();
+            c_sortHarvestData(); c_saveData(); c_renderList(); c_renderReport();
+        }
+
+        // =========================================================================
         // APP 2: PESAGEM (SPG SEDE)
         // =========================================================================
         function p_saveToStorage() { try { const spgItems = p_harvestData.filter(item => item.partner === 'SPG Oásis'); localStorage.setItem(p_STORAGE_KEY, JSON.stringify(spgItems)); } catch (e) { } }
@@ -1102,7 +1741,40 @@
                 if (storedData) { p_harvestData = JSON.parse(storedData); if (p_harvestData.length > 0) { const lastItem = p_harvestData[p_harvestData.length - 1]; if(lastItem.partner) { const partnerSelect = document.getElementById('p_partner'); if(partnerSelect) { partnerSelect.value = lastItem.partner; p_toggleInputMode(); p_updateDynamicTitle(); } } } const storedForecasts = localStorage.getItem('spg_sede_forecasts'); if (storedForecasts) { p_forecastBlocksData = JSON.parse(storedForecasts); } p_renderList(); p_renderReport(); }
             } catch (e) { }
             try { const sp = localStorage.getItem('spg_sede_shiftParams'); if (sp) { const p = JSON.parse(sp); const el = document.getElementById('p_manualTotalEstimate'); if (el && p.manualTotalEstimate) el.value = p.manualTotalEstimate; } } catch(e) {}
+            p_loadShiftPanel();
             loadAllCultures();
+        }
+
+        function p_loadShiftPanel() {
+            let params = {}; try { const sp = localStorage.getItem('spg_sede_shiftParams'); if (sp) params = JSON.parse(sp) || {}; } catch(e) {}
+            const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+            set('p_sp_crewCount', params.crewCount); set('p_sp_estimateDay', params.estimateDay); set('p_sp_startTime', params.startTime); set('p_sp_endTime', params.endTime); set('p_sp_intervalDuration', params.intervalDuration);
+            const container = document.getElementById('p_forecastBlocksContainer'); if (!container) return; container.innerHTML = '';
+            (p_forecastBlocksData || []).forEach(f => p_addForecastRow(f.block, f.date));
+        }
+
+        function p_addForecastRow(block = '', date = '') {
+            const container = document.getElementById('p_forecastBlocksContainer');
+            const rowId = 'p-forecast-' + Date.now() + Math.random().toString(36).substr(2, 5);
+            const div = document.createElement('div'); div.className = "p-forecast-row flex gap-2 items-center"; div.id = rowId;
+            const blockOptions = ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','A','B','C','D','E'];
+            let optionsHtml = '<option value="">Selecione...</option>';
+            blockOptions.forEach(b => { optionsHtml += `<option value="${b}" ${String(block) === b ? 'selected' : ''}>${b}</option>`; });
+            div.innerHTML = `<div class="w-1/3"><select class="forecast-block w-full p-2 border border-slate-300 rounded-lg text-xs outline-none text-slate-700" onchange="p_saveShiftPanel()">${optionsHtml}</select></div><div class="flex-1"><input type="date" value="${date}" class="forecast-date w-full p-2 border border-slate-300 rounded-lg text-xs outline-none text-slate-700 uppercase" onchange="p_saveShiftPanel()"></div><button type="button" onclick="document.getElementById('${rowId}').remove(); p_saveShiftPanel()" class="text-red-400 hover:text-red-600 p-1 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>`;
+            container.appendChild(div); lucide.createIcons();
+        }
+
+        function p_saveShiftPanel() {
+            try {
+                const sp = localStorage.getItem('spg_sede_shiftParams'); const params = sp ? JSON.parse(sp) : {};
+                params.crewCount = document.getElementById('p_sp_crewCount').value; params.estimateDay = document.getElementById('p_sp_estimateDay').value;
+                params.startTime = document.getElementById('p_sp_startTime').value; params.endTime = document.getElementById('p_sp_endTime').value; params.intervalDuration = document.getElementById('p_sp_intervalDuration').value;
+                localStorage.setItem('spg_sede_shiftParams', JSON.stringify(params));
+                p_forecastBlocksData = [];
+                document.querySelectorAll('#p_forecastBlocksContainer .p-forecast-row').forEach(row => { const block = row.querySelector('.forecast-block').value; const date = row.querySelector('.forecast-date').value; if (block || date) p_forecastBlocksData.push({ block, date }); });
+                localStorage.setItem('spg_sede_forecasts', JSON.stringify(p_forecastBlocksData));
+            } catch(e) {}
+            p_renderReport();
         }
 
         function p_saveManualEstimate() {
@@ -1161,6 +1833,7 @@
                 unitsPerBoxInput.removeAttribute('readonly'); unitsPerBoxInput.classList.remove('bg-emerald-50', 'border-emerald-200', 'text-emerald-800'); unitsPerBoxInput.classList.add('bg-white', 'border-slate-300'); unitsPerBoxInput.setAttribute('oninput', 'formatNumberInput(this); p_calculateValues()'); unitsPerBoxInput.placeholder = "Ex: 18"; labelUnitsPerBox.classList.remove('text-emerald-600'); labelUnitsPerBox.classList.add('text-slate-500'); labelUnitsPerBox.innerText = "Média Unid. p/ Caixa";
                 totalUnitsInput.required = false; unitsPerBoxInput.required = true; prodDaysInput.required = false; plantedInput.required = false; accumInput.required = false; infoLabel.innerText = "Informações Adicionais"; unitsPerBoxWrapper.classList.remove('hidden'); unitsPerBoxWrapper.classList.add('col-span-2'); averageWeightWrapper.classList.add('hidden'); totalUnitsWrapper.classList.add('hidden');
             }
+            const shiftPanel = document.getElementById('p_shiftPanel'); if (shiftPanel) shiftPanel.classList.toggle('hidden', partner !== 'SPG Oásis');
             p_calculateValues();
         }
 
@@ -1277,7 +1950,7 @@
         function p_toggleItemActive(index) { if (p_harvestData[index]) { p_harvestData[index].active = p_harvestData[index].active === false ? true : false; p_saveToStorage(); p_renderReport(); p_renderList(); } }
         let p_partnerToClear = '';
         function p_clearAll() { const partnerSelect = document.getElementById('p_partner'); const currentPartner = partnerSelect ? partnerSelect.value : ''; if(!currentPartner) return; p_partnerToClear = currentPartner; showConfirm('Atenção!', `Tem certeza que deseja limpar <b>todos os blocos</b> de <span class="text-red-600 font-bold">${currentPartner}</span>?<br><br><span class="text-[10px] text-slate-400 uppercase tracking-wide font-bold">Esta ação não pode ser desfeita.</span>`, 'danger', '<i data-lucide="trash-2" class="w-4 h-4"></i> Limpar', p_confirmClearAll); }
-        function p_confirmClearAll() { if(!p_partnerToClear) return; p_harvestData = p_harvestData.filter(item => item.partner !== p_partnerToClear); p_saveToStorage(); if (p_partnerToClear === 'SPG Oásis') { p_forecastBlocksData = []; localStorage.setItem('spg_sede_forecasts', JSON.stringify(p_forecastBlocksData)); } p_clearBlockForm(); p_renderReport(); p_renderList(); p_partnerToClear = ''; }
+        function p_confirmClearAll() { if(!p_partnerToClear) return; p_harvestData = p_harvestData.filter(item => item.partner !== p_partnerToClear); p_saveToStorage(); if (p_partnerToClear === 'SPG Oásis') { p_forecastBlocksData = []; localStorage.setItem('spg_sede_forecasts', JSON.stringify(p_forecastBlocksData)); p_loadShiftPanel(); } p_clearBlockForm(); p_renderReport(); p_renderList(); p_partnerToClear = ''; }
 
         function p_renderList() {
             const list = document.getElementById('p_itemsList'); list.innerHTML = '';
@@ -1472,7 +2145,7 @@
                     const b = parseNumber(newItem.boxes); const u = parseNumber(newItem.totalUnits); if (b > 0 && u > 0) { newItem.unitsPerBox = (u / b).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 }); }
                     p_harvestData.push(newItem); importedCount++;
                 }
-                p_enrichWithPlantsDates(); p_saveToStorage(); localStorage.setItem('spg_sede_forecasts', JSON.stringify(p_forecastBlocksData)); localStorage.setItem('spg_sede_shiftParams', JSON.stringify(shiftParams)); p_renderList(); p_renderReport(); event.target.value = ''; p_syncAndEnrichDates();
+                p_enrichWithPlantsDates(); p_saveToStorage(); localStorage.setItem('spg_sede_forecasts', JSON.stringify(p_forecastBlocksData)); localStorage.setItem('spg_sede_shiftParams', JSON.stringify(shiftParams)); p_loadShiftPanel(); p_renderList(); p_renderReport(); event.target.value = ''; p_syncAndEnrichDates();
                 if (importedCount > 0) { 
                     setTimeout(() => {
                         showAlert('Importação Concluída', [`${importedCount} bloco(s) importado(s) com sucesso!`, 'Os dados foram integrados ao relatório de pesagem.'], 'success');
