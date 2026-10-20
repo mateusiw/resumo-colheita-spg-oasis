@@ -186,6 +186,11 @@
                 <div class="min-w-0">
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Colheita do dia</p>
                     <p id="f_dayLabel" class="text-sm font-bold text-slate-800"></p>
+                    <div class="flex items-center gap-1 mt-1.5">
+                        <button type="button" id="f_dateModeAuto" onclick="f_setDateMode('auto')" class="text-[10px] font-bold px-2 py-1 rounded-md border">Automática</button>
+                        <button type="button" id="f_dateModeManual" onclick="f_setDateMode('manual')" class="text-[10px] font-bold px-2 py-1 rounded-md border">Manual</button>
+                    </div>
+                    <input type="date" id="f_manualDate" onchange="f_setManualDate(this.value)" class="hidden mt-1.5 p-1.5 border border-slate-300 rounded-lg text-sm outline-none">
                     <button id="f_newDayBtn" type="button" onclick="f_confirmNewDay()" class="hidden mt-1 text-[11px] font-bold text-red-500 underline">Dados de outro dia · Iniciar novo dia</button>
                 </div>
                 <div class="text-right shrink-0">
@@ -603,7 +608,7 @@
                         if (remote.updatedAt > (local.updatedAt || 0)) applied = spg_applyRemote(key, remote.data, remote.updatedAt) || applied;
                     });
                     // Os lançamentos do Campo são a fonte das caixas: reaplica na Colheita após receber dados
-                    if (applied && isAuthColheita && f_data.date === f_todayISO() && f_data.loads.some(l => l.entries.length)) f_syncToColheita();
+                    if (applied && isAuthColheita && f_data.date === f_workDate() && f_data.loads.some(l => l.entries.length)) f_syncToColheita();
                 }
             } catch(e) {}
             await spg_pushAll();
@@ -1647,6 +1652,23 @@
         let f_data = { date: '', loads: [] };
 
         function f_todayISO() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+        // Data do dia: automática (hoje) ou manual (escolhida pelo usuário)
+        function f_isManualDate() { return f_data.dateMode === 'manual'; }
+        function f_workDate() { return f_isManualDate() && f_data.date ? f_data.date : f_todayISO(); }
+        function f_hasOldData() { return !f_isManualDate() && f_data.date !== f_todayISO() && f_data.loads.some(l => l.entries.length); }
+
+        function f_setDateMode(mode) {
+            if (mode === 'manual') { f_data.dateMode = 'manual'; if (!f_data.date) f_data.date = f_todayISO(); }
+            else { f_data.dateMode = 'auto'; if (!f_data.loads.some(l => l.entries.length)) f_data.date = f_todayISO(); }
+            f_save(); f_render();
+        }
+
+        function f_setManualDate(value) {
+            if (!value) return;
+            f_data.dateMode = 'manual'; f_data.date = value;
+            f_save(); f_render();
+        }
+
         function f_save() { try { const json = JSON.stringify(f_data); if (localStorage.getItem(f_STORAGE_KEY) !== json) { localStorage.setItem(f_STORAGE_KEY, json); spg_markChanged('campo'); } } catch(e) {} }
         function f_currentLoad() { let load = f_data.loads[f_data.loads.length - 1]; if (!load || load.closed) { load = { entries: [], closed: false, finalized: false, closedAt: '' }; f_data.loads.push(load); } return load; }
         function f_ordinal(n) { const names = ['Primeira', 'Segunda', 'Terceira', 'Quarta', 'Quinta', 'Sexta', 'Sétima', 'Oitava', 'Nona', 'Décima']; return names[n - 1] || `${n}ª`; }
@@ -1698,8 +1720,8 @@
             const bloco = document.getElementById('f_bloco').value; const ciclo = document.getElementById('f_ciclo').value.trim(); const cultura = document.getElementById('f_cultura').value; const variedade = (document.getElementById('f_variedade').value || '').trim();
             const caixas = parseNumber(document.getElementById('f_caixas').value); const media = parseNumber(document.getElementById('f_media').value);
             if (!bloco || !ciclo || !cultura || caixas <= 0 || media <= 0) { showAlert('Dados incompletos', ['Preencha bloco, ciclo, cultura, caixas e média de unidades por caixa.'], 'error'); return; }
-            if (f_data.date !== f_todayISO() && f_data.loads.some(l => l.entries.length)) { showAlert('Dados de outro dia', ['Há carregamentos salvos de outro dia. Toque em <b>Iniciar novo dia</b> antes de lançar a colheita de hoje.'], 'error'); return; }
-            f_data.date = f_todayISO();
+            if (f_hasOldData()) { showAlert('Dados de outro dia', ['Há carregamentos salvos de outro dia. Toque em <b>Iniciar novo dia</b> antes de lançar a colheita de hoje, ou escolha a data <b>Manual</b>.'], 'error'); return; }
+            f_data.date = f_workDate();
             const entry = { bloco, ciclo, cultura, variedade, caixas, media }; const load = f_activeLoad();
             if (f_editingEntryIdx >= 0 && load.entries[f_editingEntryIdx]) load.entries[f_editingEntryIdx] = entry; else load.entries.push(entry);
             f_editingEntryIdx = -1;
@@ -1786,8 +1808,12 @@
             const activeIdx = f_activeLoadIdx(); const load = f_data.loads[activeIdx]; const number = activeIdx + 1; const isEditingLoad = f_editingLoadIdx >= 0;
             const [y, m, d] = (f_data.date || f_todayISO()).split('-');
             document.getElementById('f_dayLabel').innerText = `${d}/${m}/${y}`;
-            const hasOldData = f_data.date !== f_todayISO() && f_data.loads.some(l => l.entries.length);
-            document.getElementById('f_newDayBtn').classList.toggle('hidden', !hasOldData);
+            document.getElementById('f_newDayBtn').classList.toggle('hidden', !f_hasOldData());
+            const isManual = f_isManualDate(); const on = 'bg-emerald-600 text-white border-emerald-600'; const off = 'bg-white text-slate-500 border-slate-300';
+            document.getElementById('f_dateModeAuto').className = `text-[10px] font-bold px-2 py-1 rounded-md border ${isManual ? off : on}`;
+            document.getElementById('f_dateModeManual').className = `text-[10px] font-bold px-2 py-1 rounded-md border ${isManual ? on : off}`;
+            const manualInput = document.getElementById('f_manualDate'); manualInput.classList.toggle('hidden', !isManual);
+            if (isManual && document.activeElement !== manualInput) manualInput.value = f_data.date || f_todayISO();
             document.getElementById('f_dayTotal').innerText = f_fmt(f_data.loads.reduce((s, l) => s + l.entries.reduce((a, e) => a + e.caixas, 0), 0));
             document.getElementById('f_loadTitle').innerText = isEditingLoad ? `Editando ${number}º Carregamento` : `${number}º Carregamento`;
             const submitBtn = document.getElementById('f_submitBtn');
@@ -1862,7 +1888,7 @@
 
         function f_newDay() {
             c_harvestData.forEach(item => { delete item.fromCampo; delete item.campoCreated; }); c_saveData();
-            f_data = { date: f_todayISO(), loads: [] }; f_editingLoadIdx = -1; f_editingEntryIdx = -1; document.getElementById('f_finalized').checked = false;
+            f_data = { date: f_workDate(), dateMode: f_data.dateMode || 'auto', loads: [] }; f_editingLoadIdx = -1; f_editingEntryIdx = -1; document.getElementById('f_finalized').checked = false;
             f_save(); f_render();
         }
 
