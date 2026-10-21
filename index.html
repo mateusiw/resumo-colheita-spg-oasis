@@ -574,7 +574,7 @@
                 if (key === 'campo') {
                     f_data = data; if (!Array.isArray(f_data.loads)) f_data.loads = [];
                     f_editingLoadIdx = -1; f_editingEntryIdx = -1;
-                    localStorage.setItem(f_STORAGE_KEY, JSON.stringify(f_data)); f_render();
+                    localStorage.setItem(f_STORAGE_KEY, JSON.stringify(f_data)); f_render(); setTimeout(f_checkNewDay, 0);
                 } else if (key === 'colheita') {
                     c_harvestData = Array.isArray(data.harvestData) ? data.harvestData : [];
                     localStorage.setItem('spg_harvestData', JSON.stringify(c_harvestData));
@@ -756,7 +756,7 @@
 
         window.addEventListener('online', () => spg_pullAll());
         window.addEventListener('offline', () => spg_updateSyncBadge());
-        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') spg_pullAll(); });
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { f_checkNewDay(); spg_pullAll(); } });
         setInterval(() => { if (document.visibilityState === 'visible') spg_pullAll(); }, 30000);
 
         function showConfirm(title, msg, type, btnHtml, callback) {
@@ -1659,14 +1659,34 @@
 
         function f_setDateMode(mode) {
             if (mode === 'manual') { f_data.dateMode = 'manual'; if (!f_data.date) f_data.date = f_todayISO(); }
-            else { f_data.dateMode = 'auto'; if (!f_data.loads.some(l => l.entries.length)) f_data.date = f_todayISO(); }
+            else { f_data.dateMode = 'auto'; if (f_data.date !== f_todayISO()) { f_switchDay(f_todayISO()); return; } }
             f_save(); f_render();
         }
 
-        function f_setManualDate(value) {
-            if (!value) return;
-            f_data.dateMode = 'manual'; f_data.date = value;
+        // Troca o dia sem apagar nada: os carregamentos do dia atual ficam guardados e os do novo dia (se houver) voltam
+        function f_switchDay(date) {
+            if (!date || date === f_data.date) return;
+            c_harvestData.forEach(item => { delete item.fromCampo; delete item.campoCreated; }); c_saveData();
+            const archive = f_data.archive || {};
+            if (f_data.date && f_data.loads.some(l => l.entries.length)) archive[f_data.date] = f_data.loads; else delete archive[f_data.date];
+            const loads = archive[date] || []; delete archive[date];
+            const days = Object.keys(archive).sort(); while (days.length > 60) delete archive[days.shift()]; // guarda os últimos 60 dias
+            f_data = { date, dateMode: f_data.dateMode || 'auto', loads, archive }; f_editingLoadIdx = -1; f_editingEntryIdx = -1; document.getElementById('f_finalized').checked = false;
             f_save(); f_render();
+        }
+
+        // Modo automático: ao virar o dia, passa sozinho para a data de hoje (o dia anterior fica guardado; a aba Colheita continua igual)
+        // Não marca como alteração: cada aparelho vira o dia por conta própria, sem sobrescrever a base
+        function f_checkNewDay() {
+            if (f_isManualDate() || f_data.date === f_todayISO() || spg_isEditing()) return;
+            const prev = spg_suppressMark; spg_suppressMark = true;
+            try { f_switchDay(f_todayISO()); }
+            finally { spg_suppressMark = prev; }
+        }
+
+        function f_setManualDate(value) {
+            if (!value || value === f_data.date) return;
+            f_data.dateMode = 'manual'; f_switchDay(value);
         }
 
         function f_save() { try { const json = JSON.stringify(f_data); if (localStorage.getItem(f_STORAGE_KEY) !== json) { localStorage.setItem(f_STORAGE_KEY, json); spg_markChanged('campo'); } } catch(e) {} }
@@ -1681,7 +1701,8 @@
             if (!Array.isArray(f_data.loads)) f_data.loads = [];
             const blocoSel = document.getElementById('f_bloco');
             blocoSel.innerHTML = '<option value="">Selecione...</option>' + ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','A','B','C','D','E'].map(b => `<option value="${b}">${b}</option>`).join('');
-            f_populateCultures(); f_render();
+            f_populateCultures(); f_render(); f_checkNewDay();
+            setInterval(f_checkNewDay, 60000);
         }
 
         // Ao escolher o bloco, sugere o ciclo mais recente dele (pode ser alterado)
@@ -1720,6 +1741,7 @@
             const bloco = document.getElementById('f_bloco').value; const ciclo = document.getElementById('f_ciclo').value.trim(); const cultura = document.getElementById('f_cultura').value; const variedade = (document.getElementById('f_variedade').value || '').trim();
             const caixas = parseNumber(document.getElementById('f_caixas').value); const media = parseNumber(document.getElementById('f_media').value);
             if (!bloco || !ciclo || !cultura || caixas <= 0 || media <= 0) { showAlert('Dados incompletos', ['Preencha bloco, ciclo, cultura, caixas e média de unidades por caixa.'], 'error'); return; }
+            f_checkNewDay();
             if (f_hasOldData()) { showAlert('Dados de outro dia', ['Há carregamentos salvos de outro dia. Toque em <b>Iniciar novo dia</b> antes de lançar a colheita de hoje, ou escolha a data <b>Manual</b>.'], 'error'); return; }
             f_data.date = f_workDate();
             const entry = { bloco, ciclo, cultura, variedade, caixas, media }; const load = f_activeLoad();
@@ -1888,7 +1910,7 @@
 
         function f_newDay() {
             c_harvestData.forEach(item => { delete item.fromCampo; delete item.campoCreated; }); c_saveData();
-            f_data = { date: f_workDate(), dateMode: f_data.dateMode || 'auto', loads: [] }; f_editingLoadIdx = -1; f_editingEntryIdx = -1; document.getElementById('f_finalized').checked = false;
+            f_data = { date: f_workDate(), dateMode: f_data.dateMode || 'auto', loads: [], archive: f_data.archive || {} }; f_editingLoadIdx = -1; f_editingEntryIdx = -1; document.getElementById('f_finalized').checked = false;
             f_save(); f_render();
         }
 
