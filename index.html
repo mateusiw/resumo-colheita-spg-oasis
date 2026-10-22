@@ -756,7 +756,12 @@
 
         window.addEventListener('online', () => spg_pullAll());
         window.addEventListener('offline', () => spg_updateSyncBadge());
-        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { f_checkNewDay(); spg_pullAll(); } });
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { f_checkNewDay(); p_checkNewDayWeights(); spg_pullAll(); } });
+
+        // Cache local: permite abrir o site sem internet (precisa estar hospedado em https ou localhost)
+        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+            window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
+        }
         setInterval(() => { if (document.visibilityState === 'visible') spg_pullAll(); }, 30000);
 
         function showConfirm(title, msg, type, btnHtml, callback) {
@@ -990,10 +995,11 @@
             p_updateDynamicTitle();
             p_toggleInputMode();
             p_loadFromStorage();
+            p_checkNewDayWeights();
             p_syncFromColheita();
 
-            // Atualiza os títulos a cada minuto para manter o horário sincronizado
-            setInterval(() => { c_updateDynamicTitle(); p_updateDynamicTitle(); }, 60000);
+            // Atualiza os títulos a cada minuto para manter o horário sincronizado (e limpa o peso ao virar o dia)
+            setInterval(() => { c_updateDynamicTitle(); p_updateDynamicTitle(); p_checkNewDayWeights(); }, 60000);
 
             spg_suppressMark = false;
             spg_updateSyncBadge();
@@ -2039,6 +2045,25 @@
 
             if (!changed) return;
             p_enrichWithPlantsDates(); p_saveToStorage(); p_renderList(); p_renderReport();
+        }
+
+        // Ao virar o dia, apaga o peso (kg) lançado nos blocos do SPG Oásis na Pesagem
+        function p_checkNewDayWeights() {
+            const today = f_todayISO(); let last = ''; try { last = localStorage.getItem('spg_sede_weightDate') || ''; } catch(e) {}
+            if (last === today) return;
+            if (p_editingIndex >= 0) return; // tenta de novo depois que a edição for salva ou cancelada
+            if (last) {
+                let changed = false;
+                p_harvestData.forEach(item => {
+                    if (item.partner !== 'SPG Oásis' || !(item.grossWeight || item.harvestWeight || item.averageWeight)) return;
+                    item.grossWeight = ''; item.harvestWeight = ''; item.averageWeight = ''; item.totalBlockKg = '';
+                    const histKg = p_lookupKgFromHistory(item.talhao, item.cycle, item.variety, item.commercialVariety);
+                    item.accumulatedKg = histKg > 0 ? histKg.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 }) : '';
+                    changed = true;
+                });
+                if (changed) { p_saveToStorage(); p_renderList(); p_renderReport(); }
+            }
+            try { localStorage.setItem('spg_sede_weightDate', today); } catch(e) {}
         }
 
         function p_loadShiftPanel() {
