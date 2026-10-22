@@ -546,14 +546,16 @@
         // Cada aparelho guarda tudo localmente e envia para a aba "Sync" da
         // planilha quando tem internet. Vale a versão mais recente.
         // -------------------------------------------------------------
-        const SPG_SYNC_KEYS = ['campo', 'colheita'];
+        const SPG_SYNC_KEYS = ['campo', 'colheita', 'pesagem'];
+        // Campo e Colheita são enviados por quem tem acesso à Colheita; o peso (kg) por quem tem acesso à Pesagem
+        function spg_canPush(key) { return key === 'pesagem' ? isAuthPesagem : isAuthColheita; }
         let spg_syncMeta = {}; try { spg_syncMeta = JSON.parse(localStorage.getItem('spg_sync_meta')) || {}; } catch(e) { spg_syncMeta = {}; }
         let spg_pushTimer = null; let spg_syncing = false; let spg_applyingRemote = false; let spg_suppressMark = false; let spg_initialPullPromise = null;
 
         function spg_saveMeta() { try { localStorage.setItem('spg_sync_meta', JSON.stringify(spg_syncMeta)); } catch(e) {} }
 
         function spg_markChanged(key) {
-            if (spg_applyingRemote || spg_suppressMark) return;
+            if (spg_applyingRemote || spg_suppressMark || !spg_canPush(key)) return;
             spg_syncMeta[key] = { ...(spg_syncMeta[key] || {}), updatedAt: Date.now(), dirty: true };
             spg_saveMeta(); spg_updateSyncBadge();
             clearTimeout(spg_pushTimer); spg_pushTimer = setTimeout(spg_pushAll, 1500);
@@ -561,11 +563,12 @@
 
         function spg_getLocalState(key) {
             if (key === 'campo') return f_data;
+            if (key === 'pesagem') return p_getWeightsState();
             let inputs = {}; try { inputs = JSON.parse(localStorage.getItem('spg_inputs') || '{}'); } catch(e) {}
             return { harvestData: c_harvestData, inputs, release: c_release };
         }
 
-        function spg_isEditing() { return c_editingIndex >= 0 || f_editingEntryIdx >= 0 || f_editingLoadIdx >= 0; }
+        function spg_isEditing() { return c_editingIndex >= 0 || f_editingEntryIdx >= 0 || f_editingLoadIdx >= 0 || p_editingIndex >= 0; }
 
         function spg_applyRemote(key, data, updatedAt) {
             if (data === null || data === undefined) return false;
@@ -585,14 +588,20 @@
                     document.getElementById('c_forecastBlocksContainer').innerHTML = '';
                     c_loadInputs(); c_sortHarvestData(); c_renderList(); c_renderReport();
                     p_scheduleSyncFromColheita();
+                } else if (key === 'pesagem') {
+                    // Peso de outro dia não vale para hoje
+                    const state = data.date === f_todayISO() && data.weights ? { date: data.date, weights: data.weights } : { date: f_todayISO(), weights: {} };
+                    p_applyRemoteWeights(state.weights);
+                    // Grava por último: guarda também o peso de blocos que ainda não chegaram da Colheita neste aparelho
+                    localStorage.setItem('spg_p_weights', JSON.stringify(state));
                 }
             } catch(e) { console.error(e); } finally { spg_applyingRemote = false; }
             spg_syncMeta[key] = { updatedAt, dirty: false }; spg_saveMeta();
             return true;
         }
 
-        // Quem só tem acesso à Pesagem apenas recebe os dados da Colheita (não envia nada)
-        function spg_userKeys() { return isAuthColheita ? SPG_SYNC_KEYS : (isAuthPesagem ? ['colheita'] : []); }
+        // Quem só tem acesso à Pesagem recebe os dados da Colheita e troca apenas o peso (kg)
+        function spg_userKeys() { return SPG_SYNC_KEYS.filter(k => k === 'colheita' ? (isAuthColheita || isAuthPesagem) : spg_canPush(k)); }
 
         async function spg_pullAll() {
             const keys = spg_userKeys();
@@ -617,9 +626,9 @@
         // Envia o que está pendente. Retorna { sent: [...], conflicts: [...], error } para quem precisar do resultado
         async function spg_pushAll() {
             const result = { sent: [], conflicts: [], error: '' };
-            if (!isAuthColheita) { spg_updateSyncBadge(); return result; }
+            if (!isAuthColheita && !isAuthPesagem) { spg_updateSyncBadge(); return result; }
             if (spg_syncing) { result.error = 'Já existe um envio em andamento. Tente de novo em alguns segundos.'; return result; }
-            const keys = SPG_SYNC_KEYS.filter(k => spg_syncMeta[k] && spg_syncMeta[k].dirty);
+            const keys = SPG_SYNC_KEYS.filter(k => spg_canPush(k) && spg_syncMeta[k] && spg_syncMeta[k].dirty);
             if (!keys.length) { spg_updateSyncBadge(); return result; }
             if (!navigator.onLine) { result.error = 'Sem internet.'; spg_updateSyncBadge(); return result; }
             spg_syncing = true; spg_updateSyncBadge();
@@ -636,25 +645,26 @@
             } catch(e) { result.error = 'Não foi possível falar com a planilha (' + (e && e.message ? e.message : 'erro de conexão') + ').'; }
             finally { spg_syncing = false; spg_updateSyncBadge(); }
             // Se algo mudou enquanto enviava, agenda outro envio
-            if (SPG_SYNC_KEYS.some(k => spg_syncMeta[k] && spg_syncMeta[k].dirty) && navigator.onLine) { clearTimeout(spg_pushTimer); spg_pushTimer = setTimeout(spg_pushAll, 5000); }
+            if (SPG_SYNC_KEYS.some(k => spg_canPush(k) && spg_syncMeta[k] && spg_syncMeta[k].dirty) && navigator.onLine) { clearTimeout(spg_pushTimer); spg_pushTimer = setTimeout(spg_pushAll, 5000); }
             return result;
         }
 
         // Botão "Enviar dados": força o envio manual do que está neste aparelho para a planilha
-        const SPG_KEY_LABELS = { campo: 'Campo', colheita: 'Colheita' };
+        const SPG_KEY_LABELS = { campo: 'Campo', colheita: 'Colheita', pesagem: 'Pesagem (peso kg)' };
         async function spg_manualSend(force = false) {
-            if (!isAuthColheita) return;
+            if (!isAuthColheita && !isAuthPesagem) return;
             if (!navigator.onLine) { showAlert('Sem internet', ['Os dados continuam salvos neste aparelho.', 'Conecte-se à internet e toque em <b>Sincronizar Dados</b> de novo.'], 'error'); return; }
-            const pending = SPG_SYNC_KEYS.filter(k => spg_syncMeta[k] && spg_syncMeta[k].dirty);
+            const myKeys = SPG_SYNC_KEYS.filter(spg_canPush);
+            const pending = myKeys.filter(k => spg_syncMeta[k] && spg_syncMeta[k].dirty);
             if (!pending.length && !force) {
-                showConfirm('Nada pendente', 'Não há alterações pendentes neste aparelho. Deseja <b>reenviar mesmo assim</b>?<br><br><span class="text-xs text-slate-500">Os dados da base serão substituídos pelos deste aparelho (abas Campo e Colheita).</span>', 'warning', '<i data-lucide="upload-cloud" class="w-4 h-4"></i> Reenviar', () => spg_manualSend(true));
+                showConfirm('Nada pendente', `Não há alterações pendentes neste aparelho. Deseja <b>reenviar mesmo assim</b>?<br><br><span class="text-xs text-slate-500">Os dados da base serão substituídos pelos deste aparelho (${myKeys.map(k => SPG_KEY_LABELS[k]).join(', ')}).</span>`, 'warning', '<i data-lucide="upload-cloud" class="w-4 h-4"></i> Reenviar', () => spg_manualSend(true));
                 return;
             }
             if (force) {
                 // Só reenvia o que este aparelho realmente tem, para não apagar dados de outro aparelho com uma aba vazia
-                const hasData = { campo: f_data.loads.some(l => l.entries.length), colheita: c_harvestData.length > 0 };
-                const toSend = SPG_SYNC_KEYS.filter(k => hasData[k]);
-                if (!toSend.length) { showAlert('Nada para enviar', ['Este aparelho não tem lançamentos nas abas Campo ou Colheita.'], 'error'); return; }
+                const hasData = { campo: f_data.loads.some(l => l.entries.length), colheita: c_harvestData.length > 0, pesagem: Object.keys(p_getWeightsState().weights).length > 0 };
+                const toSend = myKeys.filter(k => hasData[k]);
+                if (!toSend.length) { showAlert('Nada para enviar', ['Este aparelho não tem dados para enviar.'], 'error'); return; }
                 const now = Date.now(); toSend.forEach(k => { spg_syncMeta[k] = { ...(spg_syncMeta[k] || {}), updatedAt: now, dirty: true }; }); spg_saveMeta();
             }
             const btns = document.querySelectorAll('.spg-send-btn'); btns.forEach(b => { b.disabled = true; const ic = b.querySelector('svg, i'); if (ic) ic.classList.add('animate-pulse'); });
@@ -665,7 +675,7 @@
                 for (let i = 0; i < 40 && spg_syncing; i++) await new Promise(r => setTimeout(r, 250));
                 result = await spg_pushAll();
             } finally { btns.forEach(b => { b.disabled = false; const ic = b.querySelector('svg, i'); if (ic) ic.classList.remove('animate-pulse'); }); spg_renderSendStatus(); }
-            const stillPending = SPG_SYNC_KEYS.filter(k => spg_syncMeta[k] && spg_syncMeta[k].dirty);
+            const stillPending = myKeys.filter(k => spg_syncMeta[k] && spg_syncMeta[k].dirty);
             if (result.error || stillPending.length) {
                 showAlert('Envio não concluído', [result.error || 'Alguns dados não foram enviados.', `Pendente: <b>${stillPending.map(k => SPG_KEY_LABELS[k]).join(', ') || '-'}</b>. Os dados continuam salvos neste aparelho; tente de novo.`], 'error');
             } else if (result.conflicts.length) {
@@ -741,7 +751,7 @@
             const refreshBtn = document.getElementById('refreshBtn');
             if (refreshBtn) { const show = isAuthColheita || isAuthPesagem; refreshBtn.classList.toggle('hidden', !show); refreshBtn.classList.toggle('flex', show); }
             const sendBtn = document.getElementById('sendBtn');
-            if (sendBtn) { sendBtn.classList.toggle('hidden', !isAuthColheita); sendBtn.classList.toggle('flex', isAuthColheita); }
+            if (sendBtn) { const show = isAuthColheita || isAuthPesagem; sendBtn.classList.toggle('hidden', !show); sendBtn.classList.toggle('flex', show); }
             spg_renderSendStatus();
             const el = document.getElementById('syncBadge'); if (!el) return;
             if (!isAuthColheita && !isAuthPesagem) { el.className = 'hidden'; return; }
@@ -1977,7 +1987,58 @@
         // =========================================================================
         // APP 2: PESAGEM (SPG SEDE)
         // =========================================================================
-        function p_saveToStorage() { try { const spgItems = p_harvestData.filter(item => item.partner === 'SPG Oásis'); localStorage.setItem(p_STORAGE_KEY, JSON.stringify(spgItems)); } catch (e) { } }
+        function p_saveToStorage() {
+            try { const spgItems = p_harvestData.filter(item => item.partner === 'SPG Oásis'); localStorage.setItem(p_STORAGE_KEY, JSON.stringify(spgItems)); } catch (e) { }
+            // Só o peso (kg) do dia é compartilhado com os outros aparelhos
+            try {
+                const state = p_getWeightsState(); const json = JSON.stringify(state); const old = localStorage.getItem('spg_p_weights');
+                if (old !== json) {
+                    localStorage.setItem('spg_p_weights', json);
+                    // Só a troca de data (sem peso lançado) não conta como alteração: não apaga o peso enviado por outro aparelho
+                    let oldDate = ''; try { oldDate = (JSON.parse(old || 'null') || {}).date || ''; } catch (e) { }
+                    if (Object.keys(state.weights).length || oldDate === state.date) spg_markChanged('pesagem');
+                }
+            } catch (e) { }
+        }
+
+        // -------------------------------------------------------------
+        // PESO (KG) COMPARTILHADO ENTRE APARELHOS
+        // Cada bloco/ciclo/cultura/variedade do SPG Oásis guarda o peso de hoje.
+        // -------------------------------------------------------------
+        function p_weightKey(it) { const lc = s => (s || '').toString().trim().toLowerCase(); return `${it.talhao}|${lc(it.cycle)}|${lc(it.variety)}|${lc(it.commercialVariety)}`; }
+
+        function p_savedWeights() {
+            try { const s = JSON.parse(localStorage.getItem('spg_p_weights') || 'null'); if (s && s.date === f_todayISO() && s.weights) return s.weights; } catch (e) { }
+            return {};
+        }
+
+        function p_getWeightsState() {
+            const prev = p_savedWeights(); const weights = {}; const localKeys = new Set();
+            p_harvestData.forEach(it => { if (it.partner !== 'SPG Oásis') return; const k = p_weightKey(it); localKeys.add(k); if (it.grossWeight) weights[k] = it.grossWeight; });
+            // Mantém o peso de blocos que ainda não existem neste aparelho (vieram de outro)
+            Object.keys(prev).forEach(k => { if (!localKeys.has(k) && prev[k]) weights[k] = prev[k]; });
+            const sorted = {}; Object.keys(weights).sort().forEach(k => { sorted[k] = weights[k]; });
+            return { date: f_todayISO(), weights: sorted };
+        }
+
+        function p_setItemWeight(item, gross) {
+            item.grossWeight = gross || '';
+            const w = parseNumber(item.grossWeight); const u = parseNumber(item.totalUnits);
+            item.harvestWeight = w > 0 ? w.toLocaleString('pt-BR', { maximumFractionDigits: 3 }) : '';
+            item.averageWeight = u > 0 && w > 0 ? (w / u).toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) : '';
+            const totalKg = p_lookupKgFromHistory(item.talhao, item.cycle, item.variety, item.commercialVariety) + w;
+            item.accumulatedKg = totalKg > 0 ? totalKg.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 }) : '';
+        }
+
+        function p_applyRemoteWeights(weights) {
+            let changed = false;
+            p_harvestData.forEach(item => {
+                if (item.partner !== 'SPG Oásis') return;
+                const gross = weights[p_weightKey(item)] || '';
+                if ((item.grossWeight || '') !== gross) { p_setItemWeight(item, gross); changed = true; }
+            });
+            if (changed) { p_saveToStorage(); p_renderList(); p_renderReport(); }
+        }
         
         function p_loadFromStorage() {
             try {
@@ -2011,7 +2072,11 @@
                 const hash = JSON.stringify(fields);
                 let item = p_harvestData.find(it => it.partner === 'SPG Oásis' && keyOf(it.talhao, it.cycle, it.variety, it.commercialVariety) === k);
                 if (item && item._colheitaHash === hash) return;
-                if (!item) { item = { partner: 'SPG Oásis', grossWeight: '', harvestWeight: '', averageWeight: '', accumulatedKg: '', transplantDate: '', harvestStartDate: '' }; p_harvestData.push(item); }
+                if (!item) {
+                    // Se outro aparelho já lançou o peso deste bloco hoje, ele já entra aqui
+                    const sharedKg = p_savedWeights()[k] || '';
+                    item = { partner: 'SPG Oásis', grossWeight: sharedKg, harvestWeight: sharedKg ? parseNumber(sharedKg).toLocaleString('pt-BR', { maximumFractionDigits: 3 }) : '', averageWeight: '', accumulatedKg: '', transplantDate: '', harvestStartDate: '' }; p_harvestData.push(item);
+                }
                 Object.assign(item, fields); item.fromColheita = true; item._colheitaHash = hash;
                 const b = parseNumber(item.boxes), u = parseNumber(item.totalUnits), w = parseNumber(item.harvestWeight);
                 item.unitsPerBox = b > 0 && u > 0 ? (u / b).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 }) : '';
@@ -2061,7 +2126,10 @@
                     item.accumulatedKg = histKg > 0 ? histKg.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 }) : '';
                     changed = true;
                 });
-                if (changed) { p_saveToStorage(); p_renderList(); p_renderReport(); }
+                // Cada aparelho limpa o próprio peso ao virar o dia, sem sobrescrever o que já foi lançado hoje em outro
+                const prev = spg_suppressMark; spg_suppressMark = true;
+                try { if (changed) { p_saveToStorage(); p_renderList(); p_renderReport(); } }
+                finally { spg_suppressMark = prev; }
             }
             try { localStorage.setItem('spg_sede_weightDate', today); } catch(e) {}
         }
