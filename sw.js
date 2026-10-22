@@ -2,7 +2,7 @@
 // - Página (index.html): tenta a rede primeiro (pega atualizações) e usa o cache se estiver offline.
 // - Bibliotecas e imagens (Tailwind, Lucide, html-to-image, logos): usa o cache e atualiza em segundo plano.
 // - Planilha (Apps Script): nunca vai para o cache; o próprio app guarda os dados no aparelho.
-const CACHE_NAME = 'spg-cache-v1';
+const CACHE_NAME = 'spg-cache-v2';
 const PRECACHE = [
     './',
     './index.html',
