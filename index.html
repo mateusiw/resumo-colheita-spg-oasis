@@ -1560,10 +1560,18 @@
             c_updateReleaseBtn(); p_applyWeightLock(); lucide.createIcons();
         }
 
-        function c_releasePesagem() {
+        async function c_releasePesagem() {
             c_release = { hash: c_releaseHash(), date: f_todayISO(), at: Date.now(), by: localStorage.getItem('spg_user') || '' };
             c_saveRelease();
-            showAlert('Pesagem liberada!', ['Os dados foram conferidos e o SPG já pode lançar o peso (kg).', 'Se algum bloco, caixa ou unidade for alterado, a pesagem é bloqueada de novo até uma nova conferência.']);
+            const copied = await f_copyToClipboard(c_buildReleaseText());
+            showAlert('Pesagem liberada!', ['Os dados foram conferidos e o SPG já pode lançar o peso (kg).', copied ? '<span class="font-bold text-slate-800">Mensagem copiada!</span> Basta colar no grupo do WhatsApp para avisar a pesagem.' : 'Não foi possível copiar a mensagem do WhatsApp automaticamente.', 'Se algum bloco, caixa ou unidade for alterado, a pesagem é bloqueada de novo até uma nova conferência.']);
+        }
+
+        // Mensagem do WhatsApp avisando que a pesagem foi liberada
+        function c_buildReleaseText() {
+            const hour = new Date(c_release.at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            const by = c_release.by ? ` por *${c_release.by.charAt(0).toUpperCase() + c_release.by.slice(1)}*` : '';
+            return `*${getGreeting()}, Pessoal!*\n\nOs dados da colheita foram conferidos${by} às ${hour} e estão ok. ✅ A pesagem já foi liberada.`;
         }
 
         function c_revokeRelease() { c_release = null; c_saveRelease(); }
