@@ -2,15 +2,19 @@
 // - Página (index.html): tenta a rede primeiro (pega atualizações) e usa o cache se estiver offline.
 // - Bibliotecas e imagens (Tailwind, Lucide, html-to-image, logos): usa o cache e atualiza em segundo plano.
 // - Planilha (Apps Script): nunca vai para o cache; o próprio app guarda os dados no aparelho.
-const CACHE_NAME = 'spg-cache-v2';
+const CACHE_NAME = 'spg-cache-v4';
 const PRECACHE = [
     './',
     './index.html',
+    './manifest.webmanifest',
+    './icon.svg',
+    './icon-192.png',
+    './icon-512.png',
+    './logo-spg-oasis.png',
+    './logo-spg-sede.png',
     'https://cdn.tailwindcss.com',
     'https://unpkg.com/lucide@latest',
-    'https://unpkg.com/html-to-image@1.11.11/dist/html-to-image.js',
-    'https://i.imgur.com/wEozr34.png',
-    'https://i.imgur.com/f7UnnL0.png'
+    'https://unpkg.com/html-to-image@1.11.11/dist/html-to-image.js'
 ];
 
 self.addEventListener('install', event => {
