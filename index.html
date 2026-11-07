@@ -25,48 +25,158 @@
         input, select, textarea { line-height: 1.5; }
         .animate-fade-in-down { animation: fadeInDown 0.3s ease-out forwards; }
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .tab-container { background-color: #f1f5f9; padding: 6px; border-radius: 12px; display: inline-flex; gap: 4px; border: 1px solid #e2e8f0; }
-        .tab-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 24px; border-radius: 8px; font-size: 14px; font-weight: 700; transition: all 0.2s ease; }
-        .tab-active { background-color: #ffffff; color: #0284c7; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .tab-inactive { color: #64748b; background-color: transparent; font-weight: 600; }
-        .tab-inactive:hover { color: #334155; }
+        /* ===== CABEÇALHO: vidro claro com um fio de cor no topo ===== */
+        #navbar {
+            background: rgba(255,255,255,0.78);
+            -webkit-backdrop-filter: blur(18px) saturate(180%);
+            backdrop-filter: blur(18px) saturate(180%);
+            border-bottom: 1px solid rgba(226,232,240,0.9);
+            box-shadow: 0 6px 24px -18px rgba(15,23,42,0.35);
+        }
+        #navbar::before {
+            content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; pointer-events: none;
+            background: linear-gradient(90deg, #10b981, #14b8a6 35%, #0ea5e9 70%, #6366f1);
+        }
+        #mainTabContainer > button { -webkit-tap-highlight-color: transparent; }
+        #tabBarTopo { display: none; }
+        @media (hover: hover) and (min-width: 1024px) {
+            #mainTabContainer > button:not(.aba-ativa):hover { color: #1e293b; background-color: rgba(255,255,255,0.6); }
+        }
+
+        /* ===== BARRA DE ABAS NO CELULAR (estilo "liquid glass" do iOS) =====
+           Fica flutuando no rodapé; ao rolar a página para baixo ela recolhe
+           num botão redondo que leva de volta ao topo. */
+        @media (max-width: 1023px) {
+            body { padding-bottom: calc(110px + env(safe-area-inset-bottom)) !important; }
+
+            #mainTabContainer {
+                position: fixed; z-index: 45;
+                left: max(12px, calc((100% - 420px) / 2));
+                bottom: calc(12px + env(safe-area-inset-bottom));
+                width: min(calc(100% - 24px), 420px); height: 64px;
+                padding: 5px; gap: 2px; overflow: hidden;
+                border-radius: 999px;
+                background: linear-gradient(180deg, rgba(255,255,255,0.62), rgba(255,255,255,0.42));
+                -webkit-backdrop-filter: blur(22px) saturate(190%);
+                backdrop-filter: blur(22px) saturate(190%);
+                border: 1px solid rgba(255,255,255,0.65);
+                box-shadow: 0 10px 30px rgba(15,23,42,0.18), 0 2px 6px rgba(15,23,42,0.08),
+                            inset 0 1px 1px rgba(255,255,255,0.9), inset 0 -1px 1px rgba(255,255,255,0.35);
+                transition: width 0.42s cubic-bezier(0.32, 0.72, 0, 1), height 0.42s cubic-bezier(0.32, 0.72, 0, 1),
+                            transform 0.3s ease, opacity 0.3s ease;
+            }
+            /* Reflexo de vidro no topo da barra */
+            #mainTabContainer::before {
+                content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+                background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 45%);
+                opacity: 0.6;
+            }
+            #mainTabContainer > button:not(#tabBarTopo) {
+                position: relative; flex: 1 1 auto; min-width: 0; padding: 4px 6px;
+                flex-direction: column; gap: 3px;
+                border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: -0.02em;
+                white-space: nowrap; color: #475569;
+                background: transparent; box-shadow: none;
+                transition: opacity 0.18s ease, transform 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+            }
+            #mainTabContainer > button:not(#tabBarTopo):active { transform: scale(0.92); }
+            #mainTabContainer > button svg { width: 21px; height: 21px; }
+
+            /* Aba ativa: pílula translúcida tingida com a cor da aba */
+            #mainTabContainer > #tab-btn-campo    { --cor: 5, 150, 105; }
+            #mainTabContainer > #tab-btn-colheita { --cor: 2, 132, 199; }
+            #mainTabContainer > #tab-btn-pesagem  { --cor: 234, 88, 12; }
+            #mainTabContainer > button.aba-ativa:not(#tabBarTopo) {
+                color: rgb(var(--cor));
+                font-weight: 800;
+                background: rgba(var(--cor), 0.14);
+                box-shadow: inset 0 0 0 1px rgba(var(--cor), 0.22), inset 0 1px 0 rgba(255,255,255,0.7),
+                            0 3px 10px rgba(var(--cor), 0.18);
+            }
+            #mainTabContainer > button.aba-ativa:not(#tabBarTopo) svg { stroke-width: 2.4; }
+
+            /* Botão "voltar ao topo" (só aparece com a barra recolhida) */
+            #tabBarTopo {
+                display: flex; align-items: center; justify-content: center;
+                position: absolute; left: 0; top: 0; width: 52px; height: 52px;
+                border-radius: 999px; color: #0f172a;
+                opacity: 0; pointer-events: none; transform: scale(0.6);
+                transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+            }
+            #tabBarTopo svg { width: 22px; height: 22px; }
+
+            #mainTabContainer.recolhida { width: 52px; height: 52px; }
+            #mainTabContainer.recolhida > button:not(#tabBarTopo) { opacity: 0; transform: scale(0.7); pointer-events: none; }
+            #mainTabContainer.recolhida #tabBarTopo { opacity: 1; pointer-events: auto; transform: scale(1); transition-delay: 0.08s; }
+            #mainTabContainer.recolhida #tabBarTopo:active { transform: scale(0.9); }
+
+            /* Teclado aberto: a barra sai da frente dos campos */
+            #mainTabContainer.teclado { transform: translateY(160%); opacity: 0; pointer-events: none; }
+        }
+
+        /* ===== COMPUTADOR: abas à esquerda, usuário e status à direita, presos abaixo da barra ===== */
+        @media (min-width: 1024px) {
+            #navTabs {
+                display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;
+                position: sticky; top: var(--altura-navbar, 56px); z-index: 35; padding-bottom: 0.75rem;
+                background: #f8fafc; box-shadow: 0 0 0 100vmax #f8fafc; clip-path: inset(0 -100vmax);
+            }
+            #mainTabContainer { width: 480px; flex: none; }
+            #statusBar { margin-top: 0; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen pb-20 select-none relative">
 
-    <!-- NAVBAR UNIFICADA -->
-    <div class="bg-white border-b border-slate-200 px-4 py-3 flex flex-col md:flex-row justify-between items-center shadow-sm sticky top-0 z-40 gap-3">
-        <div class="flex items-center gap-3 w-full md:w-auto">
-            <img src="logo-spg-oasis.png" id="nav-logo" class="w-8 h-8 rounded-lg shadow-sm border border-slate-100 transition-all">
-            <div>
-                <h1 id="nav-title" class="text-sm font-bold text-slate-800 leading-tight">SPG Oásis</h1>
-                <p id="nav-subtitle" class="text-[10px] text-slate-500 font-medium">Resumo de Colheita SPG Oásis</p>
+    <!-- NAVBAR (vidro claro com um fio de cor no topo) -->
+    <div id="navbar" class="text-slate-900 px-4 py-2.5 flex flex-wrap justify-between items-center gap-x-3 gap-y-2 sticky top-0 z-40">
+        <div class="flex items-center gap-2.5 min-w-0">
+            <img src="logo-spg-oasis.png" id="nav-logo" alt="" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl shadow-sm ring-1 ring-black/5 shrink-0 bg-white object-contain">
+            <div class="min-w-0">
+                <h1 id="nav-title" class="text-sm sm:text-[15px] font-extrabold leading-tight tracking-tight text-slate-900 truncate">SPG Oásis</h1>
+                <p id="nav-subtitle" class="text-[10px] font-semibold text-slate-400 tracking-wide truncate">Resumo de Colheita SPG Oásis</p>
             </div>
-            <button onclick="logoutSystem()" class="ml-2 p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-lg transition-colors flex items-center justify-center" title="Sair do Sistema">
-                <i data-lucide="log-out" class="w-4 h-4"></i>
-            </button>
-            <button type="button" id="refreshBtn" onclick="spg_refreshNow()" title="Atualizar dados" class="hidden ml-1 items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg transition-colors active:scale-95"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i><span>Atualizar</span></button>
-            <button type="button" id="sendBtn" onclick="spg_manualSend()" title="Enviar dados deste aparelho para a base" class="spg-send-btn hidden ml-1 items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors active:scale-95"><i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i><span>Enviar</span></button>
-            <button type="button" id="syncBadge" onclick="spg_refreshNow()" title="Sincronizar agora" class="hidden"></button>
         </div>
 
-        <div class="tab-container w-full md:w-auto overflow-x-auto justify-center hidden" id="mainTabContainer">
-            <button id="tab-btn-campo" onclick="switchTab('campo')" class="tab-btn tab-inactive flex-1 md:flex-none"><i data-lucide="truck" class="w-4 h-4 text-emerald-600"></i> Campo</button>
-            <button id="tab-btn-colheita" onclick="switchTab('colheita')" class="tab-btn tab-active flex-1 md:flex-none"><i data-lucide="tractor" class="w-4 h-4"></i> Colheita</button>
-            <button id="tab-btn-pesagem" onclick="switchTab('pesagem')" class="tab-btn tab-inactive flex-1 md:flex-none"><i data-lucide="scale" class="w-4 h-4 text-orange-500"></i> Pesagem</button>
+        <div id="nav-actions-colheita" class="flex gap-2 w-full sm:w-auto">
+            <button onclick="c_downloadImage()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-600/20 ring-1 ring-blue-700/20 transition-all active:scale-95"><i data-lucide="image" class="w-4 h-4"></i><span class="hidden sm:inline">Enviar Imagem</span></button>
+            <button onclick="c_downloadCSV()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 ring-1 ring-emerald-700/20 transition-all active:scale-95"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i><span class="hidden sm:inline">Enviar CSV</span></button>
+            <button id="c_releaseBtn" onclick="c_onReleaseClick()" title="Conferir os dados e liberar a pesagem do SPG" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold shadow-lg transition-all active:scale-95"><i data-lucide="lock" class="w-4 h-4"></i><span class="hidden sm:inline">Liberar Pesagem</span></button>
         </div>
 
-        <div id="nav-actions-colheita" class="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-            <button onclick="c_downloadImage()" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-lg transition-all active:scale-95"><i data-lucide="image" class="w-4 h-4"></i><span class="hidden sm:inline">Enviar Imagem</span></button>
-            <button onclick="c_downloadCSV()" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-lg transition-all active:scale-95"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i><span class="hidden sm:inline">Enviar CSV</span></button>
-            <button id="c_releaseBtn" onclick="c_onReleaseClick()" title="Conferir os dados e liberar a pesagem do SPG" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold shadow-lg transition-all active:scale-95"><i data-lucide="lock" class="w-4 h-4"></i><span class="hidden sm:inline">Liberar Pesagem</span></button>
+        <div id="nav-actions-pesagem" class="hidden flex gap-2 w-full sm:w-auto">
+            <button id="p_btnZap" onclick="p_copyToWhatsApp()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2.5 bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 ring-1 ring-emerald-700/20 transition-all active:scale-95"><i data-lucide="message-circle" class="w-4 h-4"></i><span>Texto Zap</span></button>
+            <button id="p_btnImageDefault" onclick="p_downloadImage('default')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2.5 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-600/20 ring-1 ring-blue-700/20 transition-all active:scale-95"><i data-lucide="share-2" class="w-4 h-4"></i><span>Compart. Imagem</span></button>
+            <button id="p_btnImageTecnico" onclick="p_downloadImage('tecnico')" style="display:none;" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2.5 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-600/20 ring-1 ring-blue-700/20 transition-all active:scale-95"><i data-lucide="share-2" class="w-4 h-4"></i><span>Resumo Técnico</span></button>
+            <button id="p_btnImageGrupo" onclick="p_downloadImage('grupo')" style="display:none;" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2.5 bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 ring-1 ring-indigo-700/20 transition-all active:scale-95"><i data-lucide="share-2" class="w-4 h-4"></i><span>Resumo Grupo</span></button>
+        </div>
+    </div>
+
+    <!-- ABAS + USUÁRIO E STATUS -->
+    <div id="navTabs" class="container mx-auto px-4 pt-4">
+        <!-- No celular vira a barra flutuante no rodapé (ver CSS) -->
+        <div id="mainTabContainer" class="hidden bg-slate-100/80 rounded-2xl ring-1 ring-slate-200/70 p-1 gap-1">
+            <button type="button" id="tab-btn-campo" onclick="switchTab('campo')" class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-500"><i data-lucide="truck" class="w-3.5 h-3.5"></i> Campo</button>
+            <button type="button" id="tab-btn-colheita" onclick="switchTab('colheita')" class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-500"><i data-lucide="tractor" class="w-3.5 h-3.5"></i> Colheita</button>
+            <button type="button" id="tab-btn-pesagem" onclick="switchTab('pesagem')" class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-500"><i data-lucide="scale" class="w-3.5 h-3.5"></i> Pesagem</button>
+            <!-- Celular: com a barra recolhida, sobra só este botão para voltar ao topo -->
+            <button type="button" id="tabBarTopo" onclick="window.voltarAoTopo()" title="Voltar ao topo" aria-label="Voltar ao topo"><i data-lucide="arrow-up"></i></button>
         </div>
 
-        <div id="nav-actions-pesagem" class="hidden flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-            <button id="p_btnZap" onclick="p_copyToWhatsApp()" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-lg transition-all active:scale-95"><i data-lucide="message-circle" class="w-4 h-4"></i><span>Texto Zap</span></button>
-            <button id="p_btnImageDefault" onclick="p_downloadImage('default')" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-lg transition-all active:scale-95"><i data-lucide="share-2" class="w-4 h-4"></i><span>Compart. Imagem</span></button>
-            <button id="p_btnImageTecnico" onclick="p_downloadImage('tecnico')" style="display:none;" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-lg transition-all active:scale-95"><i data-lucide="share-2" class="w-4 h-4"></i><span>Resumo Técnico</span></button>
-            <button id="p_btnImageGrupo" onclick="p_downloadImage('grupo')" style="display:none;" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-lg transition-all active:scale-95"><i data-lucide="share-2" class="w-4 h-4"></i><span>Resumo Grupo</span></button>
+        <div id="statusBar" class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 mt-2 px-1">
+            <div class="flex items-center gap-1.5 min-w-0 max-w-full shrink-0">
+                <i data-lucide="user-circle" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                <span id="userNameLabel" class="text-xs font-bold text-slate-600 truncate"></span>
+                <span id="userRoleBadge" class="hidden text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 shrink-0"></span>
+            </div>
+            <div class="flex flex-wrap items-center justify-end gap-1.5 min-w-0 ml-auto">
+                <button type="button" id="syncBadge" onclick="spg_refreshNow()" title="Sincronizar agora" class="hidden"></button>
+                <button type="button" id="refreshBtn" onclick="spg_refreshNow()" title="Atualizar dados" class="hidden items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 rounded-full transition-colors active:scale-95"><i data-lucide="refresh-cw" class="w-3 h-3"></i><span>Atualizar</span></button>
+                <button type="button" id="sendBtn" onclick="spg_manualSend()" title="Enviar dados deste aparelho para a base" class="spg-send-btn hidden items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-full transition-colors active:scale-95"><i data-lucide="upload-cloud" class="w-3 h-3"></i><span>Enviar</span></button>
+                <!-- Aparece só quando o navegador permite instalar -->
+                <button type="button" id="installAppBtn" onclick="spg_installApp()" title="Instalar aplicativo" class="hidden items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full bg-emerald-600 text-white hover:bg-emerald-700"><i data-lucide="download" class="w-3 h-3"></i> Instalar</button>
+                <button type="button" onclick="logoutSystem()" title="Sair do Sistema" class="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50"><i data-lucide="log-out" class="w-4 h-4"></i></button>
+            </div>
         </div>
     </div>
 
@@ -441,11 +551,6 @@
         <div class="bg-white rounded-3xl shadow-2xl px-12 py-8 flex flex-col items-center justify-center gap-4"><i data-lucide="loader-2" class="w-10 h-10 text-slate-800 animate-spin"></i><h3 id="syncModalTitle" class="text-lg font-bold text-slate-800">Sincronizando Dados</h3><p id="syncModalSub" class="hidden text-xs text-slate-500 -mt-2 text-center"></p></div>
     </div>
 
-    <!-- Botão "Instalar app" (aparece só quando o navegador permite instalar) -->
-    <button id="installAppBtn" type="button" onclick="spg_installApp()" class="hidden fixed bottom-4 right-4 z-[120] items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm px-4 py-3 rounded-full shadow-lg active:scale-95 transition-all">
-        <i data-lucide="download" class="w-4 h-4"></i><span>Instalar app</span>
-    </button>
-
     <!-- SCRIPT PRINCIPAL UNIFICADO E ESTRUTURADO -->
     <script>
         lucide.createIcons();
@@ -762,6 +867,7 @@
             const sendBtn = document.getElementById('sendBtn');
             if (sendBtn) { const show = isAuthColheita || isAuthPesagem; sendBtn.classList.toggle('hidden', !show); sendBtn.classList.toggle('flex', show); }
             spg_renderSendStatus();
+            spg_renderUsuario();
             const el = document.getElementById('syncBadge'); if (!el) return;
             if (!isAuthColheita && !isAuthPesagem) { el.className = 'hidden'; return; }
             const pending = SPG_SYNC_KEYS.some(k => spg_syncMeta[k] && spg_syncMeta[k].dirty);
@@ -987,7 +1093,69 @@
 
                 if (!p_hasSynced) { p_syncAppOnLoad(); p_hasSynced = true; }
             }
+            spg_estiloAbas(tab);
+            spg_renderUsuario();
+            if (window.lucide) lucide.createIcons();
         }
+
+        // Aba ativa: cartão branco com o texto na cor da aba (.aba-ativa é usada também pela barra do celular)
+        const SPG_ABAS = {
+            campo:    { botao: 'tab-btn-campo',    cor: 'text-emerald-700' },
+            colheita: { botao: 'tab-btn-colheita', cor: 'text-sky-700' },
+            pesagem:  { botao: 'tab-btn-pesagem',  cor: 'text-orange-600' }
+        };
+        const SPG_CLASSE_ABA = 'flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all';
+        function spg_estiloAbas(tab) {
+            Object.entries(SPG_ABAS).forEach(([nome, a]) => {
+                const btn = document.getElementById(a.botao); if (!btn) return;
+                const visivel = nome === 'pesagem' ? isAuthPesagem : isAuthColheita;
+                btn.className = `${SPG_CLASSE_ABA} ${nome === tab ? 'aba-ativa bg-white shadow-sm ring-1 ring-slate-200/80 ' + a.cor : 'text-slate-500'}${visivel ? '' : ' hidden'}`;
+            });
+        }
+
+        // Usuário logado e o tipo de acesso, na barra de status
+        function spg_renderUsuario() {
+            const nomeEl = document.getElementById('userNameLabel'); const badge = document.getElementById('userRoleBadge');
+            if (!nomeEl || !badge) return;
+            const logado = isAuthColheita || isAuthPesagem;
+            const user = logado ? (localStorage.getItem('spg_user') || '') : '';
+            nomeEl.innerText = user ? user.charAt(0).toUpperCase() + user.slice(1) : '';
+            if (!logado) { badge.classList.add('hidden'); return; }
+            const papel = isAuthMaster ? 'Master' : (isAuthColheita && isAuthPesagem) ? 'Colheita + Pesagem' : isAuthColheita ? 'Colheita' : 'Pesagem';
+            badge.innerText = papel;
+            badge.className = `text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0 ${isAuthMaster ? 'bg-sky-100 text-sky-700' : isAuthPesagem && !isAuthColheita ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`;
+        }
+
+        // Barra de abas no celular: recolhe ao rolar para baixo, volta ao rolar para cima; some com o teclado aberto
+        (function () {
+            const barra = document.getElementById('mainTabContainer');
+            const celular = window.matchMedia('(max-width: 1023px)');
+            let ultimoY = window.scrollY, agendado = false;
+            const recolher = sim => barra.classList.toggle('recolhida', sim && celular.matches);
+            window.addEventListener('scroll', () => {
+                if (agendado) return;
+                agendado = true;
+                requestAnimationFrame(() => {
+                    agendado = false;
+                    const y = window.scrollY, delta = y - ultimoY;
+                    if (y < 80) recolher(false);
+                    else if (delta > 8) recolher(true);
+                    else if (delta < -8) recolher(false);
+                    if (Math.abs(delta) > 8 || y < 80) ultimoY = y;
+                });
+            }, { passive: true });
+            window.voltarAoTopo = function () { recolher(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+            const ehCampo = el => el && el.matches && el.matches('input:not([type=checkbox]):not([type=radio]):not([type=file]), textarea, select');
+            document.addEventListener('focusin', e => { if (ehCampo(e.target)) barra.classList.add('teclado'); });
+            document.addEventListener('focusout', e => { if (ehCampo(e.target)) barra.classList.remove('teclado'); });
+            celular.addEventListener('change', () => { if (!celular.matches) barra.classList.remove('recolhida', 'teclado'); });
+
+            // Computador: as abas grudam logo abaixo da barra de cima; guarda a altura dela
+            const navbar = document.getElementById('navbar');
+            const medir = () => document.documentElement.style.setProperty('--altura-navbar', navbar.offsetHeight + 'px');
+            medir();
+            if (window.ResizeObserver) new ResizeObserver(medir).observe(navbar);
+        })();
 
         // -------------------------------------------------------------
         // CARREGAMENTO INICIAL DE DADOS
