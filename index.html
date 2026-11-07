@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Colheita SPG</title>
     
-    <link rel="icon" type="image/png" href="https://i.imgur.com/wEozr34.png" id="favicon">
+    <link rel="icon" type="image/png" href="icon-192.png" id="favicon">
+    <!-- Configurações PWA (instalar como aplicativo) -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-title" content="Colheita SPG">
     <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -33,7 +37,7 @@
     <!-- NAVBAR UNIFICADA -->
     <div class="bg-white border-b border-slate-200 px-4 py-3 flex flex-col md:flex-row justify-between items-center shadow-sm sticky top-0 z-40 gap-3">
         <div class="flex items-center gap-3 w-full md:w-auto">
-            <img src="https://i.imgur.com/wEozr34.png" id="nav-logo" class="w-8 h-8 rounded-lg shadow-sm border border-slate-100 transition-all">
+            <img src="logo-spg-oasis.png" id="nav-logo" class="w-8 h-8 rounded-lg shadow-sm border border-slate-100 transition-all">
             <div>
                 <h1 id="nav-title" class="text-sm font-bold text-slate-800 leading-tight">SPG Oásis</h1>
                 <p id="nav-subtitle" class="text-[10px] text-slate-500 font-medium">Resumo de Colheita SPG Oásis</p>
@@ -381,7 +385,7 @@
     <!-- ========================================================================= -->
     <div id="loginScreen" class="fixed inset-0 z-[100] bg-slate-50 flex flex-col items-center justify-center p-4 transition-opacity duration-300">
         <div class="flex flex-col items-center mb-8 text-center animate-fade-in-down">
-            <img id="loginLogo" src="https://i.imgur.com/wEozr34.png" class="w-16 h-16 rounded-full shadow-sm border border-slate-200 mb-4 bg-white p-1">
+            <img id="loginLogo" src="logo-spg-oasis.png" class="w-16 h-16 rounded-full shadow-sm border border-slate-200 mb-4 bg-white p-1">
             <h1 id="loginTitle" class="text-3xl font-extrabold text-slate-800 mb-1">ACESSO SPG</h1>
             <p id="loginSubtitle" class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Sistema Integrado</p>
         </div>
@@ -436,6 +440,11 @@
     <div id="syncModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300">
         <div class="bg-white rounded-3xl shadow-2xl px-12 py-8 flex flex-col items-center justify-center gap-4"><i data-lucide="loader-2" class="w-10 h-10 text-slate-800 animate-spin"></i><h3 id="syncModalTitle" class="text-lg font-bold text-slate-800">Sincronizando Dados</h3><p id="syncModalSub" class="hidden text-xs text-slate-500 -mt-2 text-center"></p></div>
     </div>
+
+    <!-- Botão "Instalar app" (aparece só quando o navegador permite instalar) -->
+    <button id="installAppBtn" type="button" onclick="spg_installApp()" class="hidden fixed bottom-4 right-4 z-[120] items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm px-4 py-3 rounded-full shadow-lg active:scale-95 transition-all">
+        <i data-lucide="download" class="w-4 h-4"></i><span>Instalar app</span>
+    </button>
 
     <!-- SCRIPT PRINCIPAL UNIFICADO E ESTRUTURADO -->
     <script>
@@ -772,6 +781,18 @@
         if ('serviceWorker' in navigator && location.protocol !== 'file:') {
             window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
         }
+
+        // Instalar como aplicativo: o botão só aparece quando o navegador permite instalar
+        let spg_installPrompt = null;
+        function spg_toggleInstallBtn(show) { const btn = document.getElementById('installAppBtn'); if (btn) { btn.classList.toggle('hidden', !show); btn.classList.toggle('flex', show); } }
+        window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); spg_installPrompt = event; spg_toggleInstallBtn(true); });
+        window.addEventListener('appinstalled', () => { spg_installPrompt = null; spg_toggleInstallBtn(false); });
+        async function spg_installApp() {
+            if (!spg_installPrompt) return;
+            spg_installPrompt.prompt();
+            await spg_installPrompt.userChoice;
+            spg_installPrompt = null; spg_toggleInstallBtn(false);
+        }
         setInterval(() => { if (document.visibilityState === 'visible') spg_pullAll(); }, 30000);
 
         function showConfirm(title, msg, type, btnHtml, callback) {
@@ -853,9 +874,9 @@
             const loginSubtitle = document.getElementById('loginSubtitle');
             document.getElementById('loginUser').value = ''; document.getElementById('loginPassword').value = ''; document.getElementById('loginError').classList.add('hidden');
             
-            if (context === 'colheita') { loginTitle.innerText = 'ACESSO COLHEITA'; loginLogo.src = 'https://i.imgur.com/wEozr34.png'; loginSubtitle.innerText = 'Área Restrita SPG Oásis'; } 
-            else if (context === 'pesagem') { loginTitle.innerText = 'ACESSO PESAGEM'; loginLogo.src = 'https://i.imgur.com/f7UnnL0.png'; loginSubtitle.innerText = 'Área Restrita Parceiros'; } 
-            else { loginTitle.innerText = 'ACESSO SPG'; loginLogo.src = 'https://i.imgur.com/wEozr34.png'; loginSubtitle.innerText = 'Sistema Integrado'; }
+            if (context === 'colheita') { loginTitle.innerText = 'ACESSO COLHEITA'; loginLogo.src = 'logo-spg-oasis.png'; loginSubtitle.innerText = 'Área Restrita SPG Oásis'; } 
+            else if (context === 'pesagem') { loginTitle.innerText = 'ACESSO PESAGEM'; loginLogo.src = 'logo-spg-sede.png'; loginSubtitle.innerText = 'Área Restrita Parceiros'; } 
+            else { loginTitle.innerText = 'ACESSO SPG'; loginLogo.src = 'logo-spg-oasis.png'; loginSubtitle.innerText = 'Sistema Integrado'; }
             
             loginScreen.classList.remove('hidden'); setTimeout(() => { loginScreen.classList.remove('opacity-0'); }, 10);
         }
@@ -941,7 +962,7 @@
                 document.getElementById('view-colheita').classList.add('hidden'); document.getElementById('view-colheita').classList.remove('block');
                 document.getElementById('view-pesagem').classList.add('hidden'); document.getElementById('view-pesagem').classList.remove('block');
                 document.getElementById('nav-actions-colheita').classList.add('hidden'); document.getElementById('nav-actions-pesagem').classList.add('hidden');
-                document.getElementById('nav-logo').src = 'https://i.imgur.com/wEozr34.png'; document.getElementById('favicon').href = 'https://i.imgur.com/wEozr34.png';
+                document.getElementById('nav-logo').src = 'logo-spg-oasis.png'; document.getElementById('favicon').href = 'icon-192.png';
                 document.getElementById('nav-title').innerText = 'SPG Oásis'; document.getElementById('nav-subtitle').innerText = 'Lançamento de Carregamentos no Campo';
                 f_render();
             } else if(tab === 'colheita') {
@@ -950,7 +971,7 @@
                 document.getElementById('view-pesagem').classList.add('hidden'); document.getElementById('view-pesagem').classList.remove('block');
                 document.getElementById('nav-actions-colheita').classList.remove('hidden'); document.getElementById('nav-actions-pesagem').classList.add('hidden');
                 
-                document.getElementById('nav-logo').src = 'https://i.imgur.com/wEozr34.png'; document.getElementById('favicon').href = 'https://i.imgur.com/wEozr34.png';
+                document.getElementById('nav-logo').src = 'logo-spg-oasis.png'; document.getElementById('favicon').href = 'icon-192.png';
                 document.getElementById('nav-title').innerText = 'SPG Oásis'; document.getElementById('nav-subtitle').innerText = 'Resumo de Colheita SPG Oásis';
 
                 if (!c_hasSynced) { c_syncAppOnLoad(); c_hasSynced = true; }
@@ -961,7 +982,7 @@
                 document.getElementById('nav-actions-pesagem').classList.remove('hidden'); document.getElementById('nav-actions-pesagem').classList.add('flex');
                 document.getElementById('nav-actions-colheita').classList.add('hidden');
 
-                document.getElementById('nav-logo').src = 'https://i.imgur.com/f7UnnL0.png'; document.getElementById('favicon').href = 'https://i.imgur.com/f7UnnL0.png';
+                document.getElementById('nav-logo').src = 'logo-spg-sede.png'; document.getElementById('favicon').href = 'icon-192.png';
                 document.getElementById('nav-title').innerText = 'SPG SEDE'; document.getElementById('nav-subtitle').innerText = 'Resumo da Pesagem Parceiros SPG SEDE';
 
                 if (!p_hasSynced) { p_syncAppOnLoad(); p_hasSynced = true; }
